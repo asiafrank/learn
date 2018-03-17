@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS sample;
+
+CREATE TABLE IF NOT EXISTS sample(
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT,
+  type TEXT,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE
+);
+

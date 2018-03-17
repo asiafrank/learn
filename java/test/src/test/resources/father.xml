@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE father>
+<father x="1" y="2">
+    <children>
+        <anotherchild name="kk" nickname="nn"/>
+        <child name="Frank" gender="male" birthday="1481504223"/>
+        <child name="Frank1" gender="male" birthday="1481504506"/>
+        <child name="Frank12" gender="male" birthday="1481504507"/>
+    </children>
+    <dreams>
+        <dream name="programmer">Easy</dream>
+        <dream name="engineer"/>
+        <dream name="leader"/>
+        <dream name="writer"/>
+    </dreams>
+    <read name="Thinking in Java">
+        <desc>Beginning</desc>
+    </read>
+    <read name="Java Concurrency in Practice"/>
+
+    <age value="35"/>
+</father>

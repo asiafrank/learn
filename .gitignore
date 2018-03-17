@@ -1,0 +1,66 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+Debug
+Release
+cmake-build-debug
+*.log
+
+# Project files
+.vs
+*.db
+*.opendb
+*.opensdf
+*.sdf
+.suo
+*.un~
+.DS_STORE
+.idea
+*.aps
+
+# Java Project ignore
+target
+.settings
+.idea
+*.iml
+.classpath
+.project
+.log
+journal
+snapshots
+build
+*.bin
+.gradle
+
+
+# white list
+!java/jna/jni-example/src/main/resources/*
