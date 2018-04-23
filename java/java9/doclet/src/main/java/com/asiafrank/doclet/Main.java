@@ -13,45 +13,55 @@ public class Main {
 
     /**
      * @param args output 文件输出目录，model 是 javadoc 输出，还是 markdown 输出。
-     *             例：output=F:\doc model=javadoc
-     *                 output=F:\doc model=markdown
+     *             例：output=F:\doc model=javadoc package=com.asiafrank.doclet
+     *                 output=F:\doc model=markdown package=com.asiafrank.doclet
      */
     public static void main(String[] args) {
         if (args == null || args.length <= 0) {
             System.exit(1);
         }
+        com.sun.tools.javadoc.Main.execute(buildArgs(args));
+    }
 
+    private static String[] buildArgs(String[] args) {
+        final String output_pre = "output=";
+        final String model_pre  = "model=";
+        final String pkg_pre    = "package=";
+
+        String output = "";
+        String model  = "";
+        String pkg    = "";
         for (String arg : args) {
-            System.out.println(arg);
+            if (arg.startsWith(output_pre))
+                output = arg.substring(output_pre.length());
+            if (arg.startsWith(model_pre))
+                model = arg.substring(model_pre.length());
+            if (arg.startsWith(pkg_pre))
+                pkg = arg.substring(pkg_pre.length());
         }
 
-        String model = "markdown";
-        String output = "F:\\doc";
-
         String userDir = System.getProperty("user.dir");
-        String srcPath = userDir + File.separator +
+        String srcPath = userDir  + File.separator +
                          "doclet" + File.separator +
-                         "src" + File.separator +
-                         "main" + File.separator +
+                         "src"    + File.separator +
+                         "main"   + File.separator +
                          "java";
 
-        String[] args0 = null;
-        if (model.equals("markdown")) {
-            args0 = new String[] {
+        if ("markdown".equals(model)) {
+            return new String[]{
+                    "-doclet", MarkdownDoclet.class.getCanonicalName(),
                     "-sourcepath", srcPath,
                     "-encoding", "UTF-8",
-                    "com.asiafrank.doclet",
+                    pkg,
                     "-output", output
             };
         } else {
-            args0 = new String[] {
+            return new String[] {
                     "-d", output,
                     "-sourcepath", srcPath,
                     "-encoding", "UTF-8",
-                    "com.asiafrank.doclet",
+                    pkg,
             };
         }
-
-        com.sun.tools.javadoc.Main.execute(args0);
     }
 }
