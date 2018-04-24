@@ -15,6 +15,7 @@ public class Main {
      * @param args output 文件输出目录，model 是 javadoc 输出，还是 markdown 输出。
      *             例：output=F:\doc model=javadoc package=com.asiafrank.doclet
      *                 output=F:\doc model=markdown package=com.asiafrank.doclet
+     *                 output=F:\doc model=markdown2 package=com.asiafrank.doclet
      */
     public static void main(String[] args) {
         if (args == null || args.length <= 0) {
@@ -50,6 +51,14 @@ public class Main {
         if ("markdown".equals(model)) {
             return new String[]{
                     "-doclet", MarkdownDoclet.class.getCanonicalName(),
+                    "-sourcepath", srcPath,
+                    "-encoding", "UTF-8",
+                    pkg,
+                    "-output", output
+            };
+        } else if ("markdown2".equals(model)) {
+            return new String[]{
+                    "-doclet", Markdown2Doclet.class.getCanonicalName(),
                     "-sourcepath", srcPath,
                     "-encoding", "UTF-8",
                     pkg,

@@ -1,5 +1,6 @@
 package com.asiafrank.doclet;
 
+import com.asiafrank.doclet.utils.IOUtils;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.Doclet;
 import com.sun.javadoc.MethodDoc;

@@ -1,4 +1,4 @@
-package com.asiafrank.doclet;
+package com.asiafrank.doclet.utils;
 
 import java.io.IOException;
 import java.io.OutputStream;
