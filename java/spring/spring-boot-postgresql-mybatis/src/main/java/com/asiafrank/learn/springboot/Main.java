@@ -2,6 +2,7 @@ package com.asiafrank.learn.springboot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 
 /**
  * Main
@@ -11,7 +12,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  * @author zhangxf
  */
-@SpringBootApplication
+@ServletComponentScan(basePackages = "com.asiafrank.learn.springboot")
+@SpringBootApplication(scanBasePackages = "com.asiafrank.learn.springboot")
 public class Main {
 
     public static void main(String[] args) {
