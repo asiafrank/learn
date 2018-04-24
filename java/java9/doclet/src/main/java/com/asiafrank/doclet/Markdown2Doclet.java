@@ -73,6 +73,7 @@ public class Markdown2Doclet extends Doclet {
         return true;
     }
 
+    // TODO: 测试，并添加图文并茂的注释. 补上单元测试
     private static Node buildTree() {
         if (pairs.isEmpty()) return new Node();
 
@@ -81,29 +82,48 @@ public class Markdown2Doclet extends Doclet {
         root.value = '\0';
         root.nexts = new LinkedList<>();
 
+        List<Node> currLevelNodes = root.nexts; // 0 level, root is -1 level
         for (TagPair tp : pairs) {
             String tagStart = tp.tagStart;
             char[] chars = tagStart.toCharArray();
             int len = chars.length;
-            for (int i = 0; i < len; i++) {
-                insert(chars[i], root, tp, i == (len - 1));
+            for (int l = 0; l < len; l++) { // l is level
+                char c = chars[l];
+
+                if (currLevelNodes.isEmpty()) {
+                    currLevelNodes.add(newNode(c, tp, l == (len - 1)));
+                    continue;
+                }
+
+                boolean contains = false;
+                for (Node n : currLevelNodes) {
+                    if (n.value == c) {           // if current level nodes contains the character
+                        contains = true;          // switch to next level
+                        if (n.nexts == null)
+                            n.nexts = new LinkedList<>();
+                        currLevelNodes = n.nexts;
+                        break;
+                    }
+                }
+
+                if (!contains) // if current level nodes not contains the character
+                    currLevelNodes.add(newNode(c, tp, l == (len - 1)));
             }
         }
         return root;
     }
 
-    /**
-     * 插入Node
-     */
-    private static void insert(char c, Node root, TagPair pair, boolean leaf) {
-        List<Node> nodes = root.nexts;
-        if (nodes.isEmpty()) {
-            Node n = new Node();
-            n.root = false;
-            n.value = c;
-            n.leaf = leaf;
+    private static Node newNode(char c, TagPair pair, boolean leaf) {
+        Node n = new Node();
+        n.root = false;
+        n.value = c;
+        n.leaf = leaf;
+        if (leaf) {
+            n.replaceStart = pair.replaceStart;
+            n.replaceEnd   = pair.replaceEnd;
+            n.end          = pair.tagEnd;
         }
-        // TODO:
+        return n;
     }
 
     public static int optionLength(String option) {
@@ -186,7 +206,7 @@ public class Markdown2Doclet extends Doclet {
     }
 
     /**
-     * 用它来构建语法树
+     * 用它来构建标签树，便于判断，相当于有限状态机
      * replaceStart 和 replaceEnd 为 null 或者空串，代表完全过滤
      * Root 节点的 value 为 '\0'
      */
