@@ -111,6 +111,8 @@ public class Markdown2Doclet extends Doclet {
         // 目前只实现了过滤单个 TagPair
         // TODO: 同时过滤多个 TagPair
         // TODO: 遇到<pre></pre>标签，内容不过滤
+        // TODO: 尝试抽象成有限状态机，使其变得容易理解
+        // https://www.cnblogs.com/skyfsm/p/7071386.html
         TagPair tp = pairs.get(0);
         char[] ta = tp.tagStartArray();
         int m = 0; // tag match index
@@ -131,7 +133,7 @@ public class Markdown2Doclet extends Doclet {
             if (tagToBuf) {
                 tagbuf.put(c);
                 if (c == ta[m]) { // match
-                    if (m == ta.length - 1) {
+                    if (m == ta.length - 1) { // full matching tagStart
                         contentToBuf = true;
                         tagEnd = tp.tagEnd;
                         m = 0;
