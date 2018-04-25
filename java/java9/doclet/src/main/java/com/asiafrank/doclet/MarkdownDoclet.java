@@ -14,6 +14,7 @@ import java.util.Objects;
 /**
  * # 基于 Markdown 语法的 Doclet
  * 这是 Markdown 语法的例子。
+ * Markdown 与 html 兼容
  *
  * > 如果需要将普通的 java 写法注释转成 Markdown 语法，并输出文件请使用 `model=markdown2` 参数.
  *

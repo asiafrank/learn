@@ -10,7 +10,7 @@ import java.util.*;
 
 /**
  * <p>将 java 注释（html格式）过滤字符并输出成 markdown 文本。
- *
+ * {@code codexx}
  * <pre>
  *  {@code}, {@docRoot}, {@index}, {@link}, {@linkplain}, {@literal}
  * </pre>
@@ -23,13 +23,10 @@ public class Markdown2Doclet extends Doclet {
 
     private static List<TagPair> pairs = new LinkedList<>();
 
-    private static Node tagRoot;
-
     static {
         pairs.add(new TagPair("{@code"     , '}', "", ""));
         pairs.add(new TagPair("{@docRoot"  , '}', ".", ""));
         pairs.add(new TagPair("{@index"    , '}', "", ""));
-        pairs.add(new TagPair("{@link"     , '}', "", ""));
         pairs.add(new TagPair("{@link"     , '}', "", ""));
         pairs.add(new TagPair("{@linkplain", '}', "", ""));
         pairs.add(new TagPair("{@literal"  , '}', "", ""));
@@ -53,8 +50,6 @@ public class Markdown2Doclet extends Doclet {
 
         if (output == null || output.isEmpty()) return false;
 
-        tagRoot = buildTree();
-
         ClassDoc[] classes = root.classes();
         for (ClassDoc cls : classes) {
             File f = new File(output + File.separator + cls.name() + ".md");
@@ -71,59 +66,6 @@ public class Markdown2Doclet extends Doclet {
             }
         }
         return true;
-    }
-
-    // TODO: 测试，并添加图文并茂的注释. 补上单元测试
-    private static Node buildTree() {
-        if (pairs.isEmpty()) return new Node();
-
-        Node root = new Node();
-        root.root = true;
-        root.value = '\0';
-        root.nexts = new LinkedList<>();
-
-        List<Node> currLevelNodes = root.nexts; // 0 level, root is -1 level
-        for (TagPair tp : pairs) {
-            String tagStart = tp.tagStart;
-            char[] chars = tagStart.toCharArray();
-            int len = chars.length;
-            for (int l = 0; l < len; l++) { // l is level
-                char c = chars[l];
-
-                if (currLevelNodes.isEmpty()) {
-                    currLevelNodes.add(newNode(c, tp, l == (len - 1)));
-                    continue;
-                }
-
-                boolean contains = false;
-                for (Node n : currLevelNodes) {
-                    if (n.value == c) {           // if current level nodes contains the character
-                        contains = true;          // switch to next level
-                        if (n.nexts == null)
-                            n.nexts = new LinkedList<>();
-                        currLevelNodes = n.nexts;
-                        break;
-                    }
-                }
-
-                if (!contains) // if current level nodes not contains the character
-                    currLevelNodes.add(newNode(c, tp, l == (len - 1)));
-            }
-        }
-        return root;
-    }
-
-    private static Node newNode(char c, TagPair pair, boolean leaf) {
-        Node n = new Node();
-        n.root = false;
-        n.value = c;
-        n.leaf = leaf;
-        if (leaf) {
-            n.replaceStart = pair.replaceStart;
-            n.replaceEnd   = pair.replaceEnd;
-            n.end          = pair.tagEnd;
-        }
-        return n;
     }
 
     public static int optionLength(String option) {
@@ -161,89 +103,69 @@ public class Markdown2Doclet extends Doclet {
     }
 
     private static CharBuffer buf = CharBuffer.allocate(1024);
+    private static CharBuffer tagbuf = CharBuffer.allocate(128);
 
     private static void transferAndWrite(String text, StringWriter writer) {
         char[] chars = text.toCharArray();
 
-        Node curr = tagRoot;
-        boolean writeToBuf = false;
+        // 目前只实现了过滤单个 TagPair
+        // TODO: 同时过滤多个 TagPair
+        // TODO: 遇到<pre></pre>标签，内容不过滤
+        TagPair tp = pairs.get(0);
+        char[] ta = tp.tagStartArray();
+        int m = 0; // tag match index
+        boolean tagToBuf = false;
+        boolean contentToBuf = false;
+        char tagEnd = '\0';
+
         for (char c : chars) {
-            Node child = isMatchChild(c, curr);
-            if (child != null) {
-                curr = child;
-                if (child.leaf)
-                    writeToBuf = true;
+            if (!tagToBuf) {
+                if (c == ta[m]) {
+                    tagToBuf = true;
+                    m++;
+                    tagbuf.put(c);
+                    continue;
+                }
             }
 
-            if (c == curr.end) {
-                buf.flip(); // flip to read
-                writer.append(curr.replaceStart);
-                writer.append(buf.toString());
-                writer.append(curr.replaceEnd);
-                curr = tagRoot;
-                buf.clear(); // clear for next write
-                writeToBuf = false;
+            if (tagToBuf) {
+                tagbuf.put(c);
+                if (c == ta[m]) { // match
+                    if (m == ta.length - 1) {
+                        contentToBuf = true;
+                        tagEnd = tp.tagEnd;
+                        m = 0;
+                        writer.append(tp.replaceStart);
+                        tagbuf.clear();
+                        tagToBuf = false;
+                        continue;
+                    }
+                    m++;
+                    continue;
+                } else { // not match
+                    m = 0;
+                    tagbuf.flip();
+                    writer.append(tagbuf.toString());
+                    tagbuf.clear();
+                    tagToBuf = false;
+                    continue;
+                }
             }
 
-            if (writeToBuf)
+            if (contentToBuf) {
+                if (c == tagEnd) {
+                    buf.flip();
+                    writer.append(buf.toString());
+                    writer.append(tp.replaceEnd);
+                    buf.clear();
+                    contentToBuf = false;
+                    continue;
+                }
                 buf.put(c);
-            else
-                writer.append(c);
+                continue;
+            }
+
+            writer.append(c);
         }
-    }
-
-    private static Node isMatchChild(char c, Node n) {
-        if (n == null) return null;
-
-        List<Node> nexts = n.nexts;
-        if (nexts == null || nexts.isEmpty()) return null;
-
-        for (Node n0 : nexts) {
-            if (n0.value == c)
-                return n0;
-        }
-        return null;
-    }
-
-    /**
-     * 用它来构建标签树，便于判断，相当于有限状态机
-     * replaceStart 和 replaceEnd 为 null 或者空串，代表完全过滤
-     * Root 节点的 value 为 '\0'
-     */
-    private static class Node {
-        /**
-         * true 根节点即 tagRoot
-         */
-        boolean root;
-
-        /**
-         * 当前节点代表的字符
-         */
-        char value;
-
-        /**
-         * 下一个节点的列表，即孩子列表
-         */
-        List<Node> nexts;
-
-        /**
-         * 判断是否是叶子节点
-         */
-        boolean leaf;
-
-        /**
-         * 当 leaf = true 时，replaceStart 的值就是 buf 内容前的值
-         */
-        String replaceStart;
-
-        /**
-         * 当 leaf = true 时，replaceEnd 的值就是 buf 内容后的值
-         */
-        String replaceEnd;
-
-        /**
-         * 当 leaf = true 并且，字符串已经读到 end 了，buf 中的字符都需要输出到 Writer 中，并重置 clean buf
-         */
-        char end;
     }
 }

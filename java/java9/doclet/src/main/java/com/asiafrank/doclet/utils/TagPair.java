@@ -16,6 +16,10 @@ public class TagPair {
         this.replaceEnd = replaceEnd;
     }
 
+    public char[] tagStartArray() {
+        return tagStart.toCharArray();
+    }
+
     @Override
     public String toString() {
         return tagStart + tagEnd;
