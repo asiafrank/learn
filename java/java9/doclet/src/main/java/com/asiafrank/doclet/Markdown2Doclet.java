@@ -10,13 +10,9 @@ import java.util.*;
 
 /**
  * <p>将 java 注释（html格式）过滤字符并输出成 markdown 文本。
- * {@code asdddddddffffffffffffffffffff}
- * {@docRoot dffffffffffffffffffffffffffffffffff}
- * {@literal xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
- * <pre>
- *  {@code}, {@docRoot}, {@index}, {@link}, {@linkplain}, {@literal}
- * </pre>
- *
+ * {@code 这是需要过滤的标签 code}
+ * {@docRoot 这是需要过滤的标签 docRoot, 替换成了'.'}
+ * {@literal 这是需要过滤的标签 literal}
  */
 @SuppressWarnings("deprecation")
 public class Markdown2Doclet extends Doclet {
@@ -106,37 +102,8 @@ public class Markdown2Doclet extends Doclet {
 
     private static CharBuffer tagbuf = CharBuffer.allocate(128);
 
-    /**
-     * <p>每个 tag 的匹配过程有如下三种状态。
-     * <pre>
-     *                                                    (8)
-     *           |-----------------------------------------------------------------------------|
-     *          \|/                                                                            |
-     *  +----------------+   (2)    +-------------+     （4）    +-------------+   (6)    +------------+
-     *  | 没有开始匹配(1) |--------->| 开始匹配 (3) |------------->| 匹配成功 (5) |--------->| 匹配结束(7) |
-     *  +---------------+          +-------------+       |      +-------------+          +------------+
-     *          /|\                                     \|/
-     *           |             (10)                +-----------+
-     *           |---------------------------------| 不匹配(9) |
-     *                                             +----------+
-     * </pre>
-     * <dl>
-     *   <li>(1)没有匹配 Tag 中的第一个字符
-     *   <li>(2)没有匹配只需将注释内容直接输出到 writer 即可
-     *   <li>(3)匹配了 Tag 中的第一个字符
-     *   <li>(4)匹配中，将接下来遇到的字符都存入 tagbuf 中，便于不匹配时，内容输出到 writer
-     *   <li>(5)遇到 tagStart 的最后一个字符，表示匹配成功
-     *   <li>(6)将接下来遇到的字符存入 buf 中
-     *   <li>(7)遇到 tagEnd 就表明匹配结束
-     *   <li>(8)状态变回没有匹配
-     *   <li>(9)在 Tag 匹配过程中，遇到不匹配字符
-     *   <li>(10)清理 tagbuf，并将状态变回到没有匹配
-     * </dl>
-     */
     private static void transferAndWrite(String text, StringWriter writer) {
         char[] chars = text.toCharArray();
-
-        // TODO: 遇到<pre></pre>标签，内容不过滤
 
         // 多个标签写在一起，则无法正确过滤
         char    tagStartFlag = '{';
