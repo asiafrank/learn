@@ -98,10 +98,18 @@ public class Markdown2Doclet extends Doclet {
         return writer.toString();
     }
 
-    private static CharBuffer buf = CharBuffer.allocate(1024);
-
     private static CharBuffer tagbuf = CharBuffer.allocate(128);
 
+    /**
+     * <dl>
+     * <li>(1) 没有遇到 tagStartFlag, 则正常写入 writer
+     * <li>(2) 遇到 tagStartFlag, 表示可能是个 tag, 则将接下来的字符都写入 tagbuf，tagbuf 中写入的字符数量达到
+     * 最长的 tag 字符数。
+     * <li>(3) 将 tagbuf 中的内容转换为字符串，与 TagPair 列表匹配，看是否完全命中。完全命中：就以该 TagPair 作为首尾判断依据；‘
+     * 没有命中：则将 tagbuf 中的内容输出到 writer 中，取消 tag 判断状态。
+     * <li>(5) 遇到命中的 TagPair 的 tagEnd 字符，表示 tag 中的内容结束。
+     * </dl>
+     */
     private static void transferAndWrite(String text, StringWriter writer) {
         char[] chars = text.toCharArray();
 
@@ -154,7 +162,6 @@ public class Markdown2Doclet extends Doclet {
             }
         }
         tagbuf.clear();
-        buf.clear();
     }
 
     private static TagPair getTagPair(String tagStr) {
