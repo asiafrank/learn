@@ -10,7 +10,9 @@ import java.util.*;
 
 /**
  * <p>将 java 注释（html格式）过滤字符并输出成 markdown 文本。
- * {@code codexx}
+ * {@code asdddddddffffffffffffffffffff}
+ * {@docRoot dffffffffffffffffffffffffffffffffff}
+ * {@literal xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
  * <pre>
  *  {@code}, {@docRoot}, {@index}, {@link}, {@linkplain}, {@literal}
  * </pre>
@@ -21,16 +23,14 @@ public class Markdown2Doclet extends Doclet {
 
     private static String newline = System.getProperty("line.separator");
 
-    private static List<TagPair> pairs = new LinkedList<>();
-
-    static {
-        pairs.add(new TagPair("{@code"     , '}', "", ""));
-        pairs.add(new TagPair("{@docRoot"  , '}', ".", ""));
-        pairs.add(new TagPair("{@index"    , '}', "", ""));
-        pairs.add(new TagPair("{@link"     , '}', "", ""));
-        pairs.add(new TagPair("{@linkplain", '}', "", ""));
-        pairs.add(new TagPair("{@literal"  , '}', "", ""));
-    }
+    private static TagPair[] pairs = {
+            new TagPair("{@code"     , '}', "", ""),
+            new TagPair("{@docRoot"  , '}', ".", ""),
+            new TagPair("{@index"    , '}', "", ""),
+            new TagPair("{@link"     , '}', "", ""),
+            new TagPair("{@linkplain", '}', "", ""),
+            new TagPair("{@literal"  , '}', "", "")
+    };
 
     /**
      * {@inheritDoc}
@@ -103,71 +103,115 @@ public class Markdown2Doclet extends Doclet {
     }
 
     private static CharBuffer buf = CharBuffer.allocate(1024);
+
     private static CharBuffer tagbuf = CharBuffer.allocate(128);
 
+    /**
+     * <p>每个 tag 的匹配过程有如下三种状态。
+     * <pre>
+     *                                                    (8)
+     *           |-----------------------------------------------------------------------------|
+     *          \|/                                                                            |
+     *  +----------------+   (2)    +-------------+     （4）    +-------------+   (6)    +------------+
+     *  | 没有开始匹配(1) |--------->| 开始匹配 (3) |------------->| 匹配成功 (5) |--------->| 匹配结束(7) |
+     *  +---------------+          +-------------+       |      +-------------+          +------------+
+     *          /|\                                     \|/
+     *           |             (10)                +-----------+
+     *           |---------------------------------| 不匹配(9) |
+     *                                             +----------+
+     * </pre>
+     * <dl>
+     *   <li>(1)没有匹配 Tag 中的第一个字符
+     *   <li>(2)没有匹配只需将注释内容直接输出到 writer 即可
+     *   <li>(3)匹配了 Tag 中的第一个字符
+     *   <li>(4)匹配中，将接下来遇到的字符都存入 tagbuf 中，便于不匹配时，内容输出到 writer
+     *   <li>(5)遇到 tagStart 的最后一个字符，表示匹配成功
+     *   <li>(6)将接下来遇到的字符存入 buf 中
+     *   <li>(7)遇到 tagEnd 就表明匹配结束
+     *   <li>(8)状态变回没有匹配
+     *   <li>(9)在 Tag 匹配过程中，遇到不匹配字符
+     *   <li>(10)清理 tagbuf，并将状态变回到没有匹配
+     * </dl>
+     */
     private static void transferAndWrite(String text, StringWriter writer) {
         char[] chars = text.toCharArray();
 
-        // 目前只实现了过滤单个 TagPair
-        // TODO: 同时过滤多个 TagPair
         // TODO: 遇到<pre></pre>标签，内容不过滤
-        // TODO: 尝试抽象成有限状态机，使其变得容易理解
-        // https://www.cnblogs.com/skyfsm/p/7071386.html
-        TagPair tp = pairs.get(0);
-        char[] ta = tp.tagStartArray();
-        int m = 0; // tag match index
-        boolean tagToBuf = false;
-        boolean contentToBuf = false;
-        char tagEnd = '\0';
 
+        // 多个标签写在一起，则无法正确过滤
+        char    tagStartFlag = '{';
+        boolean taging = false;
+        int     tagingLength = getTagingLength();
+        int     tagingIndex = 0;
+
+        TagPair currTP = null;
         for (char c : chars) {
-            if (!tagToBuf) {
-                if (c == ta[m]) {
-                    tagToBuf = true;
-                    m++;
-                    tagbuf.put(c);
-                    continue;
-                }
-            }
-
-            if (tagToBuf) {
+            if (currTP == null
+                && c == tagStartFlag)
+            {
+                taging = true;
                 tagbuf.put(c);
-                if (c == ta[m]) { // match
-                    if (m == ta.length - 1) { // full matching tagStart
-                        contentToBuf = true;
-                        tagEnd = tp.tagEnd;
-                        m = 0;
-                        writer.append(tp.replaceStart);
-                        tagbuf.clear();
-                        tagToBuf = false;
-                        continue;
-                    }
-                    m++;
-                    continue;
-                } else { // not match
-                    m = 0;
-                    tagbuf.flip();
-                    writer.append(tagbuf.toString());
-                    tagbuf.clear();
-                    tagToBuf = false;
-                    continue;
-                }
-            }
-
-            if (contentToBuf) {
-                if (c == tagEnd) {
-                    buf.flip();
-                    writer.append(buf.toString());
-                    writer.append(tp.replaceEnd);
-                    buf.clear();
-                    contentToBuf = false;
-                    continue;
-                }
-                buf.put(c);
                 continue;
             }
 
-            writer.append(c);
+            if (taging) {
+                tagbuf.put(c);
+                tagingIndex++;
+                if (tagingIndex == tagingLength) {
+                    tagbuf.flip();
+                    String tagStr = tagbuf.toString();
+                    tagbuf.clear();
+                    currTP = getTagPair(tagStr);
+                    if (currTP == null) {
+                        writer.append(tagStr);
+                    } else {
+                        writer.append(currTP.replaceStart);
+                        writer.append(tagStr.substring(currTP.size));
+                    }
+                    taging = false;
+                    tagingIndex = 0;
+                    continue;
+                }
+                continue;
+            }
+
+            if (currTP == null) {
+                writer.append(c);
+            } else {
+                if (c == currTP.tagEnd) {
+                    writer.append(currTP.replaceEnd);
+                    currTP = null;
+                } else {
+                    writer.append(c);
+                }
+            }
         }
+        tagbuf.clear();
+        buf.clear();
+    }
+
+    private static TagPair getTagPair(String tagStr) {
+        TagPair lastTP = null;
+        for (TagPair tp : pairs) {
+            if (tagStr.startsWith(tp.tagStart)) {
+                if (lastTP == null) {
+                    lastTP = tp;
+                } else {
+                    if (tp.size > lastTP.size)
+                        lastTP = tp;
+                }
+            }
+        }
+        return lastTP;
+    }
+
+    private static int getTagingLength() {
+        int len = 0;
+        for (TagPair tp : pairs) {
+            if (len < tp.tagStart.length()) {
+                len = tp.tagStart.length();
+            }
+        }
+        return len;
     }
 }
