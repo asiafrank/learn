@@ -61,6 +61,10 @@ build
 *.bin
 .gradle
 
+# Others
+*.pkc
+path to the Lib folder
 
 # white list
 !java/jna/jni-example/src/main/resources/*
+!java/netty-sample/src/main/resources/*
