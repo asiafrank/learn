@@ -35,11 +35,13 @@ public class Server {
         EventLoopGroup bossGroup   = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
+        final LoggingHandler loggingHandler = new LoggingHandler(LogLevel.INFO);
+
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
              .channel(NioServerSocketChannel.class)
-             .handler(new LoggingHandler(LogLevel.INFO))
+             .handler(loggingHandler)
              .childHandler(new ChannelInitializer<SocketChannel>() {
                  @Override
                  protected void initChannel(SocketChannel ch) throws Exception {
@@ -48,6 +50,7 @@ public class Server {
                          p.addLast(sslCtx.newHandler(ch.alloc()));
                      }
 
+                     p.addLast("log", loggingHandler);
                      p.addLast(new LineBasedFrameDecoder(1024));
                      p.addLast(new StringDecoder());
                      p.addLast(new StringEncoder());

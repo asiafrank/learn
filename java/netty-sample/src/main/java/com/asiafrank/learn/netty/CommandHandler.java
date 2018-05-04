@@ -132,9 +132,9 @@ public class CommandHandler extends SimpleChannelInboundHandler<String> {
         String response;
         boolean close = false;
         if (request.isEmpty()) {
-            response = "Please type something.\r\n";
+            response = "Please type something.";
         } else if ("quit".equals(request.toLowerCase())) {
-            response = "Good bye!\r\n";
+            response = "Good bye!";
             close = true;
         } else {
             response = cmd(request);
@@ -142,7 +142,7 @@ public class CommandHandler extends SimpleChannelInboundHandler<String> {
 
         // We do not need to write a ChannelBuffer here.
         // We know the encoder inserted at TelnetPipelineFactory will do the conversion.
-        ChannelFuture future = ctx.write(response);
+        ChannelFuture future = ctx.write(response + "\r\n");
 
         // Close the connection after sending 'Have a good day!'
         // if the client has sent 'bye'.
