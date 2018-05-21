@@ -1,5 +1,5 @@
 ## Java 使用中的问题
-### ThreadLocal 实现
+### 1. ThreadLocal 实现
 - Thread 对象包含一个叫 ThreadLocalMap 的属性，该 map 对象的 key 为ThreadLocal，value 为相应的值；ThreadLocalMap 存在目的是为了保证一个 Thread 实例能保存多个 ThreadLocal 的值
 - 一个 ThreadLocal 只能存储一个值，如果需要在一个 Thread 实例中包含多个值，则 new 出多个 ThreadLocal 使用即可；其实 ThreadLocal 自己不会保存值，值是以 value 形式保存在 ThreadLocalMap 中（key 为 ThreadLocal 对象）；每个 ThreadLocal 对象有自己的 threadLocalHashCode，该 hashCode 由 AtomicInteger 维护
 - ThreadLocalMap 并不直接暴露给用户使用，而是由 ThreadLocal 对象的 get 方法，并使用 Thread.currentThread() 从中获得 ThreadLocalMap 然后取得相应的 ThreadLocal 的值。
@@ -49,3 +49,11 @@ public void set(T value) {
         createMap(t, value);
 }
 ```
+
+### 2. Java NIO SelectableChannel.configureBlocking 作用
+- 当 SelectableChannel.configureBlocking(false) 时，每次 accept 不会阻塞，如果值接收，将会返回 null
+- 当 SelectableChannel.configureBlocking(true) 时，每次 accept 会阻塞，有值才会返回
+
+我们一般都将 configureBlocking 设为 false，是为了不阻塞线程，充分利用线程资源，达到多路复用的目的。
+
+多路复用IO模型参考：Unix网络编程第六章 https://www.zhihu.com/question/28594409/answer/74003996
