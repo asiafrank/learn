@@ -51,7 +51,7 @@ public void set(T value) {
 ```
 
 ### 2. Java NIO SelectableChannel.configureBlocking 作用
-- 当 SelectableChannel.configureBlocking(false) 时，每次 accept 不会阻塞，如果值接收，将会返回 null
+- 当 SelectableChannel.configureBlocking(false) 时，每次 accept 不会阻塞，如果没有值接收，将会返回 null
 - 当 SelectableChannel.configureBlocking(true) 时，每次 accept 会阻塞，有值才会返回
 
 我们一般都将 configureBlocking 设为 false，是为了不阻塞线程，充分利用线程资源，达到多路复用的目的。
