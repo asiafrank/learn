@@ -85,4 +85,4 @@
 - [ ] [Java](problem/java.md)
 - [ ] [Netty](problem/netty.md)
 - [ ] [分布式系统](problem/distributed-system.md)
-- [ ] [数据库](problem/databse.md)
+- [ ] [数据库](problem/database.md)
