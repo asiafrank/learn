@@ -66,6 +66,17 @@ build
 *.pkc
 path to the Lib folder
 
+# latex
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+*.toc
+*.gz
+
+
 # white list
 !java/jna/jni-example/src/main/resources/*
 !java/netty-sample/src/main/resources/*
