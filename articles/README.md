@@ -80,9 +80,11 @@
 - b.抄改 Sample 代码
 - c.应用到自己的项目中
 - d.抄改源码
+注：书读得越多，基础越扎实，学习新事物就越快！
 
 ## 学习上的常见问题
 - [ ] [Java](problem/java.md)
 - [ ] [Netty](problem/netty.md)
 - [ ] [分布式系统](problem/distributed-system.md)
 - [ ] [数据库](problem/database.md)
+
