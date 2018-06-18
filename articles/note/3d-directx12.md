@@ -310,7 +310,7 @@ uA&=\left [ x, y, z \right ]\begin{bmatrix}A_{11}& A_{12} & A_{13} \\ A_{21} & A
 \begin{bmatrix} zA_{31},zA_{32},zA_{33} \end{bmatrix}\\
 &=x\begin{bmatrix} A_{11},A_{12},A_{13}\end{bmatrix} +y\begin{bmatrix}A_{21},A_{22},A_{23} \end{bmatrix}+z\begin{bmatrix} A_{31},A_{32},A_{33} \end{bmatrix}\\
 &=xA_{1,*}+yA_{2,*}+zA_{3,*}
-\end{aligned}](img/3d-directx12-latex-1d35.png)
+\end{aligned}](img/3d-directx12-latex-1d35.png)  
 因此，得公式:  
 ![uA=xA_{1,*}+yA_{2,*}+zA_{3,*}](img/3d-directx12-latex-1d36.png)
 
@@ -357,6 +357,7 @@ uA&=\left [ x, y, z \right ]\begin{bmatrix}A_{11}& A_{12} & A_{13} \\ A_{21} & A
 - 5．将一个矩阵与它的逆矩阵相乘，其结果必定为单位矩阵：![MM^{-1}=M^{-1}M=I](img/3d-directx12-latex-1d52.png)。注意，矩阵与它的逆矩阵的相乘次序可以互换，这是矩阵乘法中的一个特例。
 
 逆矩阵在求解矩阵方程时非常有用。例如，我们给出矩阵方程pʹ=pM，已知pʹ和M的值，求解p。假设M是可逆矩阵（即，![M^{-1}](img/3d-directx12-latex-1d51.png)存在），那么我们可以按照如下步骤求解：
+
 ![p^{'}=pM](img/3d-directx12-latex-1d53.png)| |
 --------------------------------------------|----
 ![p^{'}M^{-1}=pMM^{-1}](img/3d-directx12-latex-1d54.png)|等式两边同时乘以![M^{-1}](img/3d-directx12-latex-1d51.png)

@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "directx-math", "directx-math\directx-math.vcxproj", "{6FBF856B-4925-443D-AD83-CE1D703AEDB4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Init_Direct3D", "Init_Direct3D\Init_Direct3D.vcxproj", "{939DF747-6EE9-4BDA-8559-BC5FD292F30D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{6FBF856B-4925-443D-AD83-CE1D703AEDB4}.Release|x64.Build.0 = Release|x64
 		{6FBF856B-4925-443D-AD83-CE1D703AEDB4}.Release|x86.ActiveCfg = Release|Win32
 		{6FBF856B-4925-443D-AD83-CE1D703AEDB4}.Release|x86.Build.0 = Release|Win32
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Debug|x64.ActiveCfg = Debug|x64
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Debug|x64.Build.0 = Debug|x64
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Debug|x86.ActiveCfg = Debug|Win32
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Debug|x86.Build.0 = Debug|Win32
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Release|x64.ActiveCfg = Release|x64
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Release|x64.Build.0 = Release|x64
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Release|x86.ActiveCfg = Release|Win32
+		{939DF747-6EE9-4BDA-8559-BC5FD292F30D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
