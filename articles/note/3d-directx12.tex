@@ -1,0 +1,77 @@
+\documentclass[11pt,a4paper,oldfontcommands]{memoir}
+\usepackage{ctex}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage[dvips]{graphicx}
+\usepackage{xcolor}
+\usepackage{times}
+
+\usepackage[
+breaklinks=true,colorlinks=true,
+%linkcolor=blue,urlcolor=blue,citecolor=blue,% PDF VIEW
+linkcolor=black,urlcolor=black,citecolor=black,% PRINT
+bookmarks=true,bookmarksopenlevel=2]{hyperref}
+
+\usepackage{geometry}
+% PDF VIEW
+% \geometry{total={210mm,297mm},
+% left=25mm,right=25mm,%
+% bindingoffset=0mm, top=25mm,bottom=25mm}
+% PRINT
+\geometry{total={210mm,297mm},
+left=20mm,right=20mm,
+bindingoffset=10mm, top=25mm,bottom=25mm}
+
+\OnehalfSpacing
+\chapterstyle{bianchi}
+\setsecheadstyle{\Large\bfseries\sffamily\raggedright}
+\setsubsecheadstyle{\large\bfseries\sffamily\raggedright}
+\setsubsubsecheadstyle{\bfseries\sffamily\raggedright}
+
+\pagestyle{plain}
+\makepagestyle{plain}
+\makeevenfoot{plain}{\thepage}{}{}
+\makeoddfoot{plain}{}{}{\thepage}
+\makeevenhead{plain}{}{}{}
+\makeoddhead{plain}{}{}{}
+\maxsecnumdepth{subsection} % chapters, sections, and subsections are numbered
+\maxtocdepth{subsection} % chapters, sections, and subsections are in the Table of Contents
+
+\begin{document}
+\thispagestyle{empty}
+{
+\sffamily
+\centering
+{\LARGE
+Introduction To 3D Game Programming with DirectX12 笔记
+}
+
+\vspace{3.5cm}
+（草稿）
+\clearpage
+\tableofcontents*
+\clearpage
+\chapter{向量代数(Vector Algebra)}
+\chapter{矩阵代数}
+\chapter{矩阵变换}
+\chapter{Direct3D 初始化}
+
+\chapter{渲染管道(The Rendering Pipeline)}
+\section{3D图像}
+\section{模型表达}
+\section{基本计算颜色}
+\begin{flushleft}
+计算机显示器在每个像素发射一种混合红、绿、蓝三种颜色的光。当这种混合光到达眼睛并且击中视网膜区域，视锥细胞收到刺激并将产生的神经冲动通过视觉神经传递到大脑。大脑解释这种信号为颜色。随着混合光的变化，使这些视锥细胞收到不同的刺激，从而使大脑中产生不同的颜色。
+\end{flushleft}
+
+\subsection{颜色计算}
+\begin{itemize}
+	\item 加法：$(0.0, 0.5, 0) + (0, 0.0, 0.25) = (0.0, 0.5, 0.25)$
+	\item 减法：$(1, 1, 1) - (1, 1, 0) = (0, 0, 1)$
+	\item 标量乘法：$0.5(1, 1, 1) = (0.5, 0.5, 0.5)$
+	\item 显然，点乘和叉乘对于颜色向量来说没有意义。然而，颜色向量有一特殊的运算称为调制或分量乘法：$(c_{r},c_{g},c_{b}) \otimes (k_{r},k_{g},k_{b}) = (c_{r}k_{r},c_{g}k_{g},c_{b}k_{b})$。该运算主要用来作为照明方程。举个例子，假设我们有一束入射光线（r，g，b），它会照射一个反射50％红光，75％绿光和25％蓝光的表面，并吸收剩余的光线。 然后反射光线的颜色由下式给出：$(r,g,b) \otimes (0.5,0.75,0.25) = (0.5r,0.75g,0.25b)$
+\end{itemize}
+
+\end{document}
+
