@@ -57,3 +57,7 @@ public void set(T value) {
 我们一般都将 configureBlocking 设为 false，是为了不阻塞线程，充分利用线程资源，达到多路复用的目的。
 
 多路复用IO模型参考：Unix网络编程第六章 https://www.zhihu.com/question/28594409/answer/74003996
+
+epoll,kqueue 原理参考 https://www.zhihu.com/question/20122137/answer/14049112
+
+为什么不用信号驱动IO，https://www.v2ex.com/t/207186
