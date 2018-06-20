@@ -28,6 +28,8 @@ breaklinks=true,colorlinks=true,
 linkcolor=black,urlcolor=black,citecolor=black,% PRINT
 bookmarks=true,bookmarksopenlevel=2]{hyperref}
 
+\usepackage{amsmath}
+
 \usepackage{geometry}
 % PDF VIEW
 % \geometry{total={210mm,297mm},
@@ -53,6 +55,7 @@ bindingoffset=10mm, top=25mm,bottom=25mm}
 \maxsecnumdepth{subsection} % chapters, sections, and subsections are numbered
 \maxtocdepth{subsection} % chapters, sections, and subsections are in the Table of Contents
 
+\graphicspath{ {./figure/} }
 \begin{document}
 \thispagestyle{empty}
 {
@@ -150,9 +153,29 @@ XMVECTOR XM_CALLCONV PackedVector::XMLoadColor(const XMCOLOR* pSource);
 \end{flushleft}
 
 \subsection{渲染管道概览(Overview of the rendering pipeline)}
+\subsection{输入汇编程序阶段(The Input Assembler Stage)}
+\subsubsection{顶点(Vertices)}
+\subsubsection{原始拓扑(Primitive Topology)}
+\subsubsection{指数(Indices)}
+\subsection{顶点着色器阶段(The Vertex Shader Stage)}
+\subsubsection{本地空间和世界空间(Local Space and World Space)}
+\subsubsection{视图空间(View Space)}
 \begin{flushleft}
-
+为了形成场景的二维图像，我们必须在场景中放置一个虚拟相机。 相机指定了观众可以看到的世界的多大的体积，以及我们需要生成多大的世界体积来生成二维图像。让我们将一个局部坐标系统（称为视图空间，眼图空间或相机空间）附加到相机，如图\ref{fig:5-19}所示; 也就是说，摄像机坐落在正视z轴的原点处，x轴指向摄像机的右侧，y轴指向摄像机的上方。 而不是描述相对于世界空间的场景顶点，基于相机坐标系，渲染管线的后面阶段很方便地描述它们。从世界空间到视图空间的坐标变换称为视图变换，相应的矩阵称为视图矩阵。\\
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-19}
+    \centering
+    \caption{转换顶点相对于世界空间的坐标，使它们相对于相机空间。}
+    \label{fig:5-19}
+\end{figure}
+如果$Q_{w}=(Q_{x},Q_{y},Q_{z},1)$，$u_{w}=(u_{x},u_{y},u_{z},0)$，$v_{w}=(v_{x},v_{y},v_{z},0)$，$w_{w}=(w_{x},w_{y},w_{z},0)$分别用相对于世界空间的齐次坐标来描述视图空间的原点，x轴，y轴和z轴，然后我们从§3.4.3知道坐标矩阵从视图空间的变化到世界空间是：
+$$W=
+\begin{bmatrix}
+u_{x} & u_{y} & u_{z} & 0\\
+v_{x} & v_{y} & v_{z} & 0\\
+w_{x} & w_{y} & w_{z} & 0\\
+Q_{x} & Q_{y} & Q_{z} & 1
+\end{bmatrix}$$
 \end{flushleft}
-
 \end{document}
 
