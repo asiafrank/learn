@@ -5,6 +5,8 @@
 \usepackage{microtype}
 \usepackage[dvips]{graphicx}
 \usepackage{xcolor}
+\definecolor{linkColor}{RGB}{0, 153, 230}
+
 \usepackage{times}
 \usepackage{listings}
 \usepackage{courier}
@@ -29,6 +31,7 @@ linkcolor=black,urlcolor=black,citecolor=black,% PRINT
 bookmarks=true,bookmarksopenlevel=2]{hyperref}
 
 \usepackage{amsmath}
+\usepackage{hyperref}
 
 \usepackage{geometry}
 % PDF VIEW
@@ -168,14 +171,153 @@ XMVECTOR XM_CALLCONV PackedVector::XMLoadColor(const XMCOLOR* pSource);
     \caption{转换顶点相对于世界空间的坐标，使它们相对于相机空间。}
     \label{fig:5-19}
 \end{figure}
-如果$Q_{w}=(Q_{x},Q_{y},Q_{z},1)$，$u_{w}=(u_{x},u_{y},u_{z},0)$，$v_{w}=(v_{x},v_{y},v_{z},0)$，$w_{w}=(w_{x},w_{y},w_{z},0)$分别用相对于世界空间的齐次坐标来描述视图空间的原点，x轴，y轴和z轴，然后我们从§3.4.3知道坐标矩阵从视图空间的变化到世界空间是：
+如果$Q_{w}=(Q_{x},Q_{y},Q_{z},1)$，$u_{w}=(u_{x},u_{y},u_{z},0)$，$v_{w}=(v_{x},v_{y},v_{z},0)$，$w_{w}=(w_{x},w_{y},w_{z},0)$分别用相对于世界空间的齐次坐标来描述视图空间的原点，x轴，y轴和z轴，然后我们从3.4.3一节知道坐标矩阵从视图空间的变化到世界空间是：
 $$W=
 \begin{bmatrix}
 u_{x} & u_{y} & u_{z} & 0\\
 v_{x} & v_{y} & v_{z} & 0\\
 w_{x} & w_{y} & w_{z} & 0\\
 Q_{x} & Q_{y} & Q_{z} & 1
-\end{bmatrix}$$
-\end{flushleft}
-\end{document}
+\end{bmatrix}$$\\
+然而，这不是我们想要的转换。我们想要的是倒置转换，即从世界空间转换成视图空间。回忆3.4.3节，倒置转换就是求矩阵的逆。因此$W^{-1}$就是从世界空间到视图空间的转换。\\
+世界坐标系统和视图坐标系统仅在位置和方向有区别，所以直观地得到 $W=RT$(也就是说世界矩阵能被分解为一个旋转跟一个平移(translation))。这让求逆变得简单：
+\begin{align*}
+V&=W^{-1}=(RT)^{-1}=T^{-1}R^{-1}=T^{-1}R^{T} \\
+&=\begin{bmatrix}
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0\\
+0 & 0 & 1 & 0\\
+-Q_{x} & -Q_{y} & -Q_{z} & 1
+\end{bmatrix}
+\begin{bmatrix}
+u_{x} & v_{x} & w_{x} & 0\\
+u_{y} & v_{y} & w_{y} & 0\\
+u_{z} & v_{z} & w_{z} & 0\\
+0 & 0 & 0 & 0
+\end{bmatrix} \\
+&=\begin{bmatrix}
+u_{x} & v_{x} & w_{x} & 0\\
+u_{y} & v_{y} & w_{y} & 0\\
+u_{z} & v_{z} & w_{z} & 0\\
+\mathbf{-Q\cdot u} & \mathbf{-Q\cdot v} & \mathbf{-Q\cdot w} & 1
+\end{bmatrix}
+\end{align*}
 
+所以，视图矩阵就是：
+\begin{align*}
+V=\begin{bmatrix}
+u_{x} & v_{x} & w_{x} & 0\\
+u_{y} & v_{y} & w_{y} & 0\\
+u_{z} & v_{z} & w_{z} & 0\\
+\mathbf{-Q\cdot u} & \mathbf{-Q\cdot v} & \mathbf{-Q\cdot w} & 1
+\end{bmatrix}
+\end{align*}
+现在我们用一种直观的方式来构造向量，这些向量用来建立视图矩阵。令\textbf{Q}为摄像机的位置，\textbf{T}为摄像机对准的目标点。然后，令\textbf{j}为世界空间向上方向的单位向量。(本书中，世界坐标系的 xz 构成的平面作为世界地平面，世界 y 轴描述了向上的方向；所以，$j=(0,1,0)$ 就是和世界 y 轴平行的单位向量。然而这只是约定，一些应用可能会选择 xy构成的平面作为地平面，z轴作为向上方向。)参考图片\ref{fig:5-20}，摄像机的朝向如下：
+$$w=\frac{T-Q}{||T-Q||}$$
+该向量描述的是摄像机的z轴，对准\textbf{w}右侧的单位向量：\\
+$$u=\frac{j\times w}{||j \times w||}$$
+该向量描述的是摄像机的 x 轴。最后，摄像机的y轴单位向量为：\\
+$$v=w \times u$$
+因为\textbf{w}和\textbf{u}是互相正交的单位向量，$w\times u$也必定是单位向量，没必要正规化。\\
+综上所述，给定摄像机的位置，目标点，和世界向上方向，我们就能求得摄像机的本地坐标系统，作为视图矩阵。
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-20}
+    \centering
+    \caption{根据相机位置，目标点和世界“向上”矢量构造相机坐标系。}
+    \label{fig:5-20}
+\end{figure}
+
+DirectXMath 库提供了计算视图矩阵的方法：
+\begin{lstlisting}
+// Outputs view matrix V
+XMVECTOR XM_CALLCONV XMMatrixLookAtLH(
+    FXMVECTOR EyePosition,    // Input camera position Q
+    FXMVECTOR FocusPosition,  // Input target point T
+    FXMVECTOR UpDirection);   // Input world up direction j
+\end{lstlisting}
+通常世界y轴就是向上的方向，所以$j=(0,1,0)$ 就是向上的向量。例：假设我们将摄像机放在相对于世界坐标的$(5,3,-10)$处，并且对准世界原点坐标$(0,0,0)$。可以通过下面方式获得视图矩阵：\\
+\begin{lstlisting}
+XMVECTOR pos    = XMVectorSet(5, 3, -10, 1.0f);
+XMVECTOR target = XMVectorZero();
+XMVECTOR up     = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+XMMATRIX V      = XMMatrixLookAtLH(pos, target, up);
+\end{lstlisting}
+\end{flushleft}
+\subsubsection{投影和均匀的剪辑空间(Projection and Homogeneous Clip Space)}
+\begin{flushleft}
+到目前为止我们描述了在世界空间中摄像机的位置和方向，但摄像机还有一个部分需要解决，即摄像机看到的空间体积。体积由视锥来描述（见图\ref{fig:5-21}）。
+\end{flushleft}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-21}
+    \centering
+    \caption{视锥定义了摄像机“看到”的空间体积}
+    \label{fig:5-21}
+\end{figure}
+\begin{flushleft}
+我们接下来的任务是将一个 3D 几何体在视锥中投影到 2D 投影窗口中。投影必须以平行线汇聚到消失点的方式完成，当一个物体的3D深度增加（距离拉远），投影的大小就减小。这就是\href{https://en.wikipedia.org/wiki/Perspective_(graphical)}{\textcolor{linkColor}{透视投影}}（如图\ref{fig:5-22}）。我们将一个顶点到视点(眼睛所在的位置，姑且叫视点吧)的连线称为顶点的投影线。然后我们定义透视投影变换就是3D顶点\textbf{v}变换成它的投影线和2D投影面板交叉点\textbf{v'}的过程；我们认为\textbf{v'}就是\textbf{v}的投影。一个3D物体的投影就是组成这个物体的所有顶点的投影。
+\end{flushleft}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-22}
+    \centering
+    \caption{两个圆柱体大小相同，但深度不同。距离眼睛近的圆柱体比距离远的圆柱体投影大。视锥中的几何体被投影到投影窗口；视锥外的集合体，投影到投影面板上，但在投影窗口外面(投影面板和投影窗口共面)}
+    \label{fig:5-22}
+\end{figure}
+
+\paragraph{定义一个视锥(Defining a Frustum)}
+\begin{flushleft}
+我们可以在视图空间中定义一个视锥，其投影中心位于原点处，并沿着正z轴向下看，通过以下四个量：近平面$n$，远平面$f$，垂直视场角$\alpha$ 和纵横比 $r$。请注意，在视图空间中，近平面和远平面平行于$xy$平面; 因此我们只需指定它们沿着z轴的原点距离。 纵横比由 $r=w/h$ 定义，其中$w$是投影窗口的宽度，$h$是投影窗口的高度（视图空间中的单位）。 投影窗口本质上是视图空间中场景的二维图像。 这里的图像最终将映射到后台缓冲区(back buffer); 因此，我们喜欢投影窗口尺寸的比率与后台缓冲区尺寸的比率相同。所以后缓冲区维度的比率通常被指定为长宽比(这是一个比例，所以它没有单位)。例，如果后台缓冲区尺寸是 $800 \times 600$，则 $r=\frac{800}{600} \approx 1.333$。如果投影窗口与后台缓冲区的纵横比不相同，则需要非均匀缩放来将投影窗口映射到后台缓冲区，这将导致失真（例如，投影窗口上的圆圈可能当映射到后台缓冲区时被拉伸成一个椭圆）。\\
+我们将水平视角标记为$\beta$，垂直视角标记为$\alpha$，纵横比为$r$。要看看$r$如何帮助我们找到$\beta$，请考虑图\ref{fig:5-23}。 请注意，投影窗口的实际尺寸并不重要，只需要保持纵横比。 因此，我们会选择2的方便高度，因此宽度必须为：\\
+$$r=\frac{w}{h}=\frac{w}{2}\Rightarrow w=2r$$
+\end{flushleft}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-23}
+    \centering
+    \caption{给定垂直视角$\alpha$和纵横比$r$，得出水平视角$\beta$}
+    \label{fig:5-23}
+\end{figure}
+\begin{flushleft}
+为了具有指定的垂直视场$\alpha$，投影窗口必须放置在距离原点的距离$d$处：
+$$\tan(\frac{\alpha}{2})=\frac{1}{d}\Rightarrow d=\cot(\frac{\alpha}{2})$$
+现在我们已经将投影窗沿$z$轴的距离d固定为当投影窗的高度为2时垂直视场$\alpha$。现在我们可以求解$\beta$。 看一下图\ref{fig:5-23}中的$xz$平面，我们现在看到：
+$$\tan(\frac{\beta}{2})=\frac{r}{d}=\frac{r}{\cot(\frac{\alpha}{2})}=r\cdot \tan(\frac{\alpha}{2})$$
+因此，考虑到垂直视角α和纵横比r，我们总能得到水平视角β：
+$$\beta=2\tan^{-1}(r\cdot\tan(\frac{\alpha}{2}))$$
+\end{flushleft}
+
+\paragraph{投影顶点(Projecting Vertices)}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-24}
+    \centering
+    \caption{相似三角}
+    \label{fig:5-24}
+\end{figure}
+\begin{flushleft}
+参考图\ref{fig:5-24}。 给定一个点$(x,y,z)$，我们希望在投影平面$z = d$上找到它的投影$(x',y',d)$。 通过分别考虑$x$和$y$坐标并使用相似的三角形，我们发现：
+\begin{align*}
+\frac{x'}{d}=\frac{x}{z}\Rightarrow x'=\frac{xd}{z}=\frac{x\cot(\alpha/2)}{z}=\frac{x}{z\tan(\alpha/2)}\\
+\frac{y'}{d}=\frac{y}{z}\Rightarrow y'=\frac{yd}{z}=\frac{y\cot(\alpha/2)}{z}=\frac{y}{z\tan(\alpha/2)}\\
+\end{align*}
+显然对于点$(x,y,z)$, $-r\leq x'\leq r,-1\leq y'\leq 1,n\leq z\leq f$
+\end{flushleft}
+
+\paragraph{标准化的设备坐标(Normalized Device Coordinate-NDC)}
+\begin{flushleft}
+上一节中投影点的坐标是在视图空间中计算的。 在视图空间中，投影窗口的高度为2，宽度为$2r$，其中$r$是纵横比。 问题在于，尺寸取决于宽高比。 这意味着我们需要告诉硬件高宽比，因为硬件稍后需要做一些涉及投影窗口尺寸的操作（比如将其映射到后台缓冲区）。 如果我们能够消除这种对长宽比的依赖性会更方便。 解决的办法是将投影的$x$坐标从区间$[-r，r]$缩放到$[-1，1]$像这样:
+\begin{align*}
+-r\leq x' \leq r \\
+-1\leq x'/r \leq 1
+\end{align*}
+
+在映射之后，$x$坐标和$y$坐标被称为标准化的设备坐标（NDC）（z坐标还没有被标准化），并且点$(x,y,z)$在视锥内当且仅当：
+\begin{align*}
+-1\leq x'/r \leq 1 \\
+-1\leq y' \leq 1 \\
+n \leq z \leq f
+\end{align*}
+
+从视图空间到NDC空间的转换可视为单位转换。 我们有一个关系，即一个NDC单位在$x$轴上等于视图空间中的$r$个单位（即 1ndc = \textbf{r} vs）。 所以给定$x$个视图空间单位，我们可以使用这个关系来转换单位：
+$$x\mathit{vs}\cdot \frac{1\mathit{ndc}}{r\mathit{vs}}=\frac{x}{r}\mathit{ndc}$$
+\end{flushleft}
+
+
+\end{document}
