@@ -161,7 +161,8 @@ XMVECTOR XM_CALLCONV PackedVector::XMLoadColor(const XMCOLOR* pSource);
 \subsubsection{原始拓扑(Primitive Topology)}
 \subsubsection{指数(Indices)}
 \subsection{顶点着色器阶段(The Vertex Shader Stage)}
-\subsubsection{本地空间和世界空间(Local Space and World Space)}
+\subsubsection{局部空间和世界空间(Local Space and World Space)}
+TODO
 \subsubsection{视图空间(View Space)}
 \begin{flushleft}
 为了形成场景的二维图像，我们必须在场景中放置一个虚拟相机。 相机指定了观众可以看到的世界的多大的体积，以及我们需要生成多大的世界体积来生成二维图像。让我们将一个局部坐标系统（称为视图空间，眼图空间或相机空间）附加到相机，如图\ref{fig:5-19}所示; 也就是说，摄像机坐落在正视z轴的原点处，x轴指向摄像机的右侧，y轴指向摄像机的上方。 而不是描述相对于世界空间的场景顶点，基于相机坐标系，渲染管线的后面阶段很方便地描述它们。从世界空间到视图空间的坐标变换称为视图变换，相应的矩阵称为视图矩阵。\\
@@ -180,7 +181,7 @@ w_{x} & w_{y} & w_{z} & 0\\
 Q_{x} & Q_{y} & Q_{z} & 1
 \end{bmatrix}$$\\
 然而，这不是我们想要的转换。我们想要的是倒置转换，即从世界空间转换成视图空间。回忆3.4.3节，倒置转换就是求矩阵的逆。因此$W^{-1}$就是从世界空间到视图空间的转换。\\
-世界坐标系统和视图坐标系统仅在位置和方向有区别，所以直观地得到 $W=RT$(也就是说世界矩阵能被分解为一个旋转跟一个平移(translation))。这让求逆变得简单：
+世界坐标系统和视图坐标系统仅在位置和方向有区别，所以直观地得到 $W=RT$(也就是说世界矩阵能被分解为一个旋转跟一个平移(translation))\footnote{$R$是\href{https://en.wikipedia.org/wiki/Orthogonal_matrix}{\textcolor{linkColor}{正交矩阵}}，所以有 $R^{-1}=R^{T}$}。这让求逆变得简单：
 \begin{align*}
 V&=W^{-1}=(RT)^{-1}=T^{-1}R^{-1}=T^{-1}R^{T} \\
 &=\begin{bmatrix}
@@ -243,7 +244,7 @@ XMVECTOR up     = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 XMMATRIX V      = XMMatrixLookAtLH(pos, target, up);
 \end{lstlisting}
 \end{flushleft}
-\subsubsection{投影和均匀的剪辑空间(Projection and Homogeneous Clip Space)}
+\subsubsection{投影和齐次裁剪空间(Projection and Homogeneous Clip Space)}
 \begin{flushleft}
 到目前为止我们描述了在世界空间中摄像机的位置和方向，但摄像机还有一个部分需要解决，即摄像机看到的空间体积。体积由视锥来描述（见图\ref{fig:5-21}）。
 \end{flushleft}
@@ -317,7 +318,40 @@ n \leq z \leq f
 
 从视图空间到NDC空间的转换可视为单位转换。 我们有一个关系，即一个NDC单位在$x$轴上等于视图空间中的$r$个单位（即 1ndc = \textbf{r} vs）。 所以给定$x$个视图空间单位，我们可以使用这个关系来转换单位：
 $$x\mathit{vs}\cdot \frac{1\mathit{ndc}}{r\mathit{vs}}=\frac{x}{r}\mathit{ndc}$$
+我们可以修改我们的投影公式，直接在NDC坐标中为我们提供投影的$x$坐标和$y$坐标：
+\begin{align*}\tag{eq.5.1}\label{eq.5.1}
+x'&=\frac{x}{rz\tan(\alpha/2)}\\
+y'&=\frac{y}{z\tan(\alpha/2)}
+\end{align*}
+请注意，在NDC坐标中，投影窗口的高度为2，宽度为2.因此，现在尺寸是固定的，硬件无需知道纵横比，但我们有责任始终在NDC中提供投影坐标空间（图形硬件假设我们会）。
 \end{flushleft}
 
-
+\paragraph{用矩阵来描述投影公式(Writing the Projection Equations with a Matrix)}
+\begin{flushleft}
+为了保持一致，我们将用一个矩阵来描述投影变换。不过，公式\ref{eq.5.1}是非线性的，无法用矩阵描述。所以我们要使用一种“技巧”将它分为两部分来实现：一个线性部分和一个非线性部分。非线性部分要除以$z$。我们会在下一节讨论“如何规范化$z$坐标”时讲解这一问题；现在读者只需要知道，我们会因为个除法操作而失去原始的z坐标。所以，我们必须在变换之前保存输入的z坐标；我们可以利用齐次坐标来解决一问题，将输入的$z$坐标复制给输出的$w$坐标。在矩阵乘法中，我们要将元素[2][3]设为1、元素[3][3]设为0（从0开始的索引）。我们的投影矩阵大致如下：
+\begin{align*}
+P=\begin{bmatrix}
+\frac{1}{r\tan(\alpha/2)} & 0 & 0 & 0\\
+0 & \frac{1}{\tan(\alpha/2)} & 0 & 0\\
+0 & 0 & A & 1\\
+0 & 0 & B & 0
+\end{bmatrix}
+\end{align*}
+注意矩阵中的常量$A$和$B$（它们将在下一节讨论）；这些常量用于把输入的$z$坐标变换到规范化区间。将一个任意点$(x,y,z,1)$与该矩阵相乘，可以得到：
+\begin{align*}\tag{eq.5.2}\label{eq.5.2}
+[x,y,z,1]\begin{bmatrix}
+\frac{1}{r\tan(\alpha/2)} & 0 & 0 & 0\\
+0 & \frac{1}{\tan(\alpha/2)} & 0 & 0\\
+0 & 0 & A & 1\\
+0 & 0 & B & 0
+\end{bmatrix}=\left[ \frac{x}{r\tan(\alpha/2)},\frac{y}{\tan(\alpha/2)},Az+B,z\right]
+\end{align*}
+在与投影矩阵（线性部分）相乘之后，我们要将每个坐标除以$w = z$（非线性部分），得到最终的变换结果：
+\begin{align*}\tag{eq.5.3}\label{eq.5.3}
+\left[ \frac{x}{r\tan(\alpha/2)},\frac{y}{\tan(\alpha/2)},Az+B,z\right]
+\xrightarrow[]{\text{除以$w$}}
+\left[ \frac{x}{rz\tan(\alpha/2)},\frac{y}{z\tan(\alpha/2)},A+\frac{B}{z},1\right]
+\end{align*}
+顺便提一句，你可能会问：“如何处理除数为0的情况”；对于一问题我们不必担心，因为近平面总是大于0的，其他的点都会被裁剪掉（参见5.9节）。有时，与$w$相除的过程也称为透视除法（perspective divide）或齐次除法（homogeneous divide）。我们可以看到$x$、$y$的投影坐标与公式\ref{eq.5.1}相同。
+\end{flushleft}
 \end{document}
