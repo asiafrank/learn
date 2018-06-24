@@ -680,6 +680,34 @@ D3D12_INPUT_ELEMENT_DESC desc2[] =
 \end{lstlisting}
 \end{flushleft}
 \section{顶点缓冲(Vertex Buffers)}
+\begin{flushleft}
+为了让GPU访问顶点数组，我们必须把它放置在一个称为缓冲（buffer）的GPU资源容器中， 我们称存储顶点的缓冲区叫顶点缓冲区。 缓冲区比纹理资源简单; 它们不是多维的，并且没有mipmap，过滤器或多采样支持。 无论何时我们需要为GPU提供一系列数据元素（如顶点），我们都会使用缓冲区。\\
+~\\
+就像4.3.8节一样，我们通过填充一个 D3D12\_RESOURCE\_DESC结构体来创建一个 ID3D12Resource 对象，并将其作为缓冲区资源。然后调用 ID3D12Device::CreateCommitedResource 方法。D3D12\_RESOURCE\_DESC 成员详情见 4.3.8 节。Direct3D 12 提供一个 C++ 包装类 CD3DX12\_RESOURCE\_DESC，它是 D3D12\_RESOURCE\_DESC 的衍生类，提供了方便的构造函数和方法。特别是，它提供了以下方法来简化描述缓冲区的D3D12\_RESOURCE\_DESC的构造：
+\begin{lstlisting}
+static inline CD3DX12_RESOURCE_DESC Buffer(
+    UINT64 width, 
+    D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+    UINT64 alignment = 0)
+{
+    return CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, 
+            alignment, width, 1, 1, 1, 
+            DXGI_FORMAT_UNKNOWN, 1, 0,
+            D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flags);
+}
+\end{lstlisting}
+对于一个缓冲区，width 相当于缓冲区的字节数。例，如果一个缓冲区存储64个浮点型（float），则 width 就是 64*sizeof(float)。\\
+~\\
+NOTICE: CD3DX12\_RESOURCE\_DESC类还提供了其他针对纹理资源和查询资源的方法：\\
+\begin{itemize}
+	\item 1. CD3DX12\_RESOURCE\_DESC::Tex1D
+	\item 2. CD3DX12\_RESOURCE\_DESC::Tex2D
+	\item 3. CD3DX12\_RESOURCE\_DESC::Tex3D
+\end{itemize}
+~\\
+NOTICE：回忆第4章深度/模板缓冲区(depth/stencil buffer)，这一阶段用ID3D12Resource 来表现 2D 纹理。所有在 Direct3D 12 的资源都用 ID3D12Resource 接口来表示。着和 Direct3D 11 中使用不同的接口表示不同的资源相反，像 ID3D11Buffer，ID3D11Texture2D。资源类型由 D3D12\_RESOURCE\_DESC::D3D12\_RESOURCE\_DIMENSION 属性指定。例：缓冲区有 D3D12\_RESOURCE\_DIMENSION\_BUFFER 和 2D 纹理 D3D12\_RESOURCE\_DIMENSION\_TEXTURE2D。\\
+~\\
 
+\end{flushleft}
 
 \end{document}
