@@ -366,8 +366,8 @@ P=\begin{bmatrix}
 $$g(z)=A+\frac{B}{z}$$
 我们现在需要让$A$和$B$满足以下条件：
 \begin{itemize}
-	\item 条件1：$g(n)=A+\frac{B}{n}$（近平面映射为0）
-	\item 条件2：$g(f)=A+\frac{B}{f}$（远平面映射为1）
+    \item 条件1：$g(n)=A+\frac{B}{n}$（近平面映射为0）
+    \item 条件2：$g(f)=A+\frac{B}{f}$（远平面映射为1）
 \end{itemize}
 由条件1得到$B$的结果为：$B=-An$。把它代入条件2，得到$A$的结果为：
 \begin{align*}
@@ -430,10 +430,10 @@ float D3DApp::AspectRatio() const
 镶嵌（Tessellation）是指通过添加三角形的方式对一个网格的三角形进行细分，这些新添加的三角形可以偏移到一个新的位置，让网格的细节更加丰富。如图\ref{fig:5-26}
 \end{flushleft}
 \begin{figure}[h]
-	\includegraphics[width=\textwidth]{5-26}
-	\centering
-	\caption{左图是原网格，右图是镶嵌后的网格}
-	\label{fig:5-26}
+    \includegraphics[width=\textwidth]{5-26}
+    \centering
+    \caption{左图是原网格，右图是镶嵌后的网格}
+    \label{fig:5-26}
 \end{figure}
 
 \begin{flushleft}
@@ -472,10 +472,10 @@ NOTICE：顶点位置在离开几何着色器之前，必须被变换到齐次�
     \label{fig:5-28}
 \end{figure}
 \begin{figure}[h]
-	\includegraphics[width=\textwidth]{5-29}
-	\centering
-	\caption{齐次裁剪空间中$xw$平面上的截头体边界}
-	\label{fig:5-29}
+    \includegraphics[width=\textwidth]{5-29}
+    \centering
+    \caption{齐次裁剪空间中$xw$平面上的截头体边界}
+    \label{fig:5-29}
 \end{figure}
 [Blinn78]描述了如何在4D齐次空间中实现裁剪算法（图\ref{fig:5-29}）。在透视除法之后，平截头体内的点$ (\frac{x}{w},\frac{y}{w},\frac{z}{w},1) $将位于规范化设备空间，它的边界如下：
 \begin{align*}
@@ -529,16 +529,16 @@ n&=\frac{e_{0}\times e_{1}}{||e_{0}\times e_{1}||}
 现在，3D空间中的大部分物体都是封闭实心物体。当我们按照这一方式将每个三角形的法线指向物体外侧时，摄像机就不会看到实心物体朝后的三角形，因为朝前的三角形挡住了朝后的三角形；图\ref{fig:5-31}和图\ref{fig:5-32}分别以2D和3D形式说明了一概念。由于朝前的三角形挡住了朝后的三角形，所以绘制它们是毫无意义的。背面消隐（backface culling）是指让管线放弃对朝后的三角形的处理。这可以将所要处理的三角形的数量降低到原数量的一半。
 \end{flushleft}
 \begin{figure}[h]
-	\includegraphics[width=\textwidth]{5-31}
-	\centering
-	\caption{(a)一个带有朝前和朝后三角形的实心物体。(b)在剔除了朝后的三角形之后的场景。注意，背面消隐不会影响最终的图像，因为朝后的三角形会被朝前的三角形阻挡。}
-	\label{fig:5-31}
+    \includegraphics[width=\textwidth]{5-31}
+    \centering
+    \caption{(a)一个带有朝前和朝后三角形的实心物体。(b)在剔除了朝后的三角形之后的场景。注意，背面消隐不会影响最终的图像，因为朝后的三角形会被朝前的三角形阻挡。}
+    \label{fig:5-31}
 \end{figure}
 \begin{figure}[h]
-	\includegraphics[width=\textwidth]{5-32}
-	\centering
-	\caption{（左图）当以透明方式绘制立方体时，我们可以看到所有的6个面。（右图）当以实心方式绘制立方体时，我们无法看到朝后的3个面，因为朝前的3个面挡住了它们——所以朝后的三角形可以被直接丢弃，不再接受后续处理，没人能看到些朝后的三角形。}
-	\label{fig:5-32}
+    \includegraphics[width=\textwidth]{5-32}
+    \centering
+    \caption{（左图）当以透明方式绘制立方体时，我们可以看到所有的6个面。（右图）当以实心方式绘制立方体时，我们无法看到朝后的3个面，因为朝前的3个面挡住了它们——所以朝后的三角形可以被直接丢弃，不再接受后续处理，没人能看到些朝后的三角形。}
+    \label{fig:5-32}
 \end{figure}
 \begin{flushleft}
 默认情况下，Direct3D将（相对于观察者）顺时针方向环绕的三角形视为朝前的三角形，将（相对于观察者）逆时针方向环绕的三角形视为朝后的三角形。不过，这一约定可以通过修改Direct3D渲染状态颠倒过来。
@@ -550,10 +550,10 @@ n&=\frac{e_{0}\times e_{1}}{||e_{0}\times e_{1}||}
 correct interpolation）来实现。本质上，三角形表面内部的像素颜色都是通过顶点插值得到的。
 \end{flushleft}
 \begin{figure}[h]
-	\includegraphics[width=\textwidth]{5-33}
-	\centering
-	\caption{通过对三角形顶点之间的属性值进行线性插值，可以得到三角形表面上的任一属性值p(s,t)。}
-	\label{fig:5-33}
+    \includegraphics[width=\textwidth]{5-33}
+    \centering
+    \caption{通过对三角形顶点之间的属性值进行线性插值，可以得到三角形表面上的任一属性值p(s,t)。}
+    \label{fig:5-33}
 \end{figure}
 \begin{flushleft}
 我们不必关心透视精确插值的数学细节，因为硬件会自动完成这一工作；不过，有兴趣的读者可以在[Eberly01]中查阅相关的数学推导过程。图5.34介绍了一点基本思路：
@@ -581,10 +581,10 @@ merger，简称OM）阶段。在该阶段中，某些像素片段会被丢弃（
 ~\\
 {\large Objectives:}
 \begin{itemize}
-	\item 发现用于定义，存储和绘制几何数据的Direct3D接口方法。
-	\item 学习如何写一个基本顶点和像素着色器
-	\item 了解如何用管线状态对象配置渲染管线
-	\item 理解如何创建和绑定缓冲数据常量到管线中，并且熟悉根签名
+    \item 发现用于定义，存储和绘制几何数据的Direct3D接口方法。
+    \item 学习如何写一个基本顶点和像素着色器
+    \item 了解如何用管线状态对象配置渲染管线
+    \item 理解如何创建和绑定缓冲数据常量到管线中，并且熟悉根签名
 \end{itemize}
 \end{flushleft}
 \section{定点和顶点布局(Vertices and Input Layouts)}
@@ -632,9 +632,9 @@ typedef struct D3D12_INPUT_ELEMENT_DESC
 1. SemanticName： 一个与元素相关的字符串。它可以是任何有效的语义名。语义（semantic）用于将顶点结构体中的元素映射为顶点着色器参数（参见图\ref{fig:6-1}）。\\
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{6-1}
-	\centering
-	\caption{顶点结构体中的每个元素分别由D3D11\_INPUT\_ELEMENT\_DESC数组中的对应元素描述。语义名和语义索引提供了一种将顶点元素映射为顶点着色器参数的方法。}
-	\label{fig:6-1}
+    \centering
+    \caption{顶点结构体中的每个元素分别由D3D11\_INPUT\_ELEMENT\_DESC数组中的对应元素描述。语义名和语义索引提供了一种将顶点元素映射为顶点着色器参数的方法。}
+    \label{fig:6-1}
 \end{figure}
 2. SemanticIndex：附加在语义上的索引值。图\ref{fig:6-1}说明了使用该索引的原因；举例来说，当顶点结构体包含多组纹理坐标时，我们不是添加一个新的语义名，而是在语义名的后面加上一个索引值。在着色器代码中没有指定索引的语义默认索引为0，例如，在图\ref{fig:6-1}中的POSITION相当于POSITION0。\\
 3. Format：一个用于指定元素格式的DXGI\_FORMAT枚举类型成员；下面是一些常用的格式：
@@ -700,14 +700,366 @@ static inline CD3DX12_RESOURCE_DESC Buffer(
 ~\\
 NOTICE: CD3DX12\_RESOURCE\_DESC类还提供了其他针对纹理资源和查询资源的方法：\\
 \begin{itemize}
-	\item 1. CD3DX12\_RESOURCE\_DESC::Tex1D
-	\item 2. CD3DX12\_RESOURCE\_DESC::Tex2D
-	\item 3. CD3DX12\_RESOURCE\_DESC::Tex3D
+    \item 1. CD3DX12\_RESOURCE\_DESC::Tex1D
+    \item 2. CD3DX12\_RESOURCE\_DESC::Tex2D
+    \item 3. CD3DX12\_RESOURCE\_DESC::Tex3D
 \end{itemize}
 ~\\
 NOTICE：回忆第4章深度/模板缓冲区(depth/stencil buffer)，这一阶段用ID3D12Resource 来表现 2D 纹理。所有在 Direct3D 12 的资源都用 ID3D12Resource 接口来表示。着和 Direct3D 11 中使用不同的接口表示不同的资源相反，像 ID3D11Buffer，ID3D11Texture2D。资源类型由 D3D12\_RESOURCE\_DESC::D3D12\_RESOURCE\_DIMENSION 属性指定。例：缓冲区有 D3D12\_RESOURCE\_DIMENSION\_BUFFER 和 2D 纹理 D3D12\_RESOURCE\_DIMENSION\_TEXTURE2D。\\
 ~\\
+对于常量几何(不以每帧为基础改变的几何图形)，我们将顶点缓冲区(vertex buffer)放入默认堆(D3D12\_HEAP\_TYPE\_DEFAULT)中，以提升性能。通常，一个游戏中大多数几何图形都是常量集合，像树、建筑、地形、人物等。顶点缓冲区初始化之后，只有GPU需要从顶点缓冲区中读取并画几何图形，所以默认堆就变得有意义了。然而，如果CPU不能将顶点缓冲区写入到默认堆中，我们如何才能初始化顶点缓冲区呢？\\
+~\\
+另外要新建实际的缓冲区资源，我们需要用D3D12\_HEAP\_TYPE\_UPLOAD新建一个中间上传缓冲资源。回忆4.3.8节，当我们需要从CPU到GPU复制数据时，我们将一个资源提交到上传队中。在创建上传缓冲区之后，从系统内存中复制顶点数据到上传缓冲区，然后从上唇缓冲区复制顶点数据到实际的顶点缓冲区中。\\
+~\\
+因为一个中间上传缓冲区需要初始化数据后的默认缓冲区(D3D12\_HEAP\_TYPE\_DEFAULT)，所以为了代码重用性 d3dUtil.h/cpp 中建立了下面工具方法：
+\begin{lstlisting}
+Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
+    ID3D12Device* device,
+    ID3D12GraphicsCommandList* cmdList,
+    const void* initData,
+    UINT64 byteSize,
+    Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer)
+{
+ComPtr<ID3D12Resource> defaultBuffer;
 
+    // Create the actual default buffer resource.
+    ThrowIfFailed(device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        D3D12_HEAP_FLAG_NONE,
+        &CD3DX12_RESOURCE_DESC::Buffer(byteSize),
+        D3D12_RESOURCE_STATE_COMMON,
+        nullptr,
+        IID_PPV_ARGS(defaultBuffer.GetAddressOf())));
+
+    // In order to copy CPU memory data into our default buffer, we need to create
+    // an intermediate upload heap. 
+    ThrowIfFailed(device->CreateCommittedResource(
+        &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+        D3D12_HEAP_FLAG_NONE,
+        &CD3DX12_RESOURCE_DESC::Buffer(byteSize),
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(uploadBuffer.GetAddressOf())));
+
+    // Describe the data we want to copy into the default buffer.
+    D3D12_SUBRESOURCE_DATA subResourceData = {};
+    subResourceData.pData = initData;
+    subResourceData.RowPitch = byteSize;
+    subResourceData.SlicePitch = subResourceData.RowPitch;
+
+    // Schedule to copy the data to the default buffer resource.  
+    // At a high level, the helper function UpdateSubresources
+    // will copy the CPU memory into the intermediate upload heap.  
+    // Then, using ID3D12CommandList::CopySubresourceRegion,
+    // the intermediate upload heap data will be copied to mBuffer.
+    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), 
+        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
+    UpdateSubresources<1>(cmdList, defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &subResourceData);
+    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
+        D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
+
+    // Note: uploadBuffer has to be kept alive after the above function calls because
+    // the command list has not been executed yet that performs the actual copy.
+    // The caller can Release the uploadBuffer after it knows the copy has been executed.
+    return defaultBuffer;
+}
+\end{lstlisting}
+D3D12\_SUBRESOURCE\_DATA 结构体定义如下：\\
+\begin{lstlisting}
+typedef struct D3D12_SUBRESOURCE_DATA
+{
+    const void *pData;
+    LONG_PTR RowPitch;
+    LONG_PTR SlicePitch;
+} D3D12_SUBRESOURCE_DATA;
+\end{lstlisting}
+1. pData: 指向系统内存数组的指针，该系统内存数组包含了初始化缓冲区所需要的数据。如果缓冲区能保存 n 个顶点，则系统内存数组必须包含至少 n 个顶点的空间，以此来初始化整个缓冲区。\\
+2. RowPitch：对于缓冲区，数据复制的字节大小。\\
+3. SlicePitch：对于缓冲区，数据复制的字节大小。\\
+~\\
+下面代码展示了如何该类如何用于创建一个8顶点立方体的默认缓冲区，并且各个定点颜色不同：\\
+\begin{lstlisting}
+Vertex vertices[] = 
+{
+    {XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White)},
+    {XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black)},
+    {XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red)},
+    {XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green)},
+    {XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue)},
+    {XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow)},
+    {XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan)},
+    {XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta)}
+};
+const UINT64 vbByteSize = 8 * sizeof(Vertex);
+ComPtr<ID3D12Resource> VertexBufferGPU = nullptr;
+ComPtr<ID3D12Resource> VertexBufferUploader = nullptr;
+VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+    md3dDevice.Get(),
+    mCommandList.Get(),
+    vertices, vbByteSize,
+    VertexBufferUploader);
+\end{lstlisting}
+Vertex 类型定义如下：\\
+\begin{lstlisting}
+struct Vertex
+{
+    XMFLOAT3 Pos;
+    XMFLOAT4 Color;
+}
+\end{lstlisting}
+为了将顶点缓冲区绑定到管道，我们需要为顶点缓冲区资源创建一个顶点缓冲区视图(vertex buffer view)。不像一个RTV(render target view)，我们不需要一个针对顶点缓冲区视图的描述堆(descriptor heap)。一个顶点缓冲区视图由 D3D12\_VERTEX\_BUFFER\_VIEW\_DESC 结构体表示：\\
+\begin{lstlisting}
+typedef struct D3D12_VERTEX_BUFFER_VIEW
+{
+    D3D12_GPU_VIRTUAL_ADDRESS BufferLocation;
+    UINT SizeInBytes;
+    UINT StrideInBytes;
+} D3D12_VERTEX_BUFFER_VIEW;
+\end{lstlisting}
+1. BufferLocation：创建一个视图所需要的顶点缓冲区资源的虚拟地址。我们可以使用 ID3D12Resource::GetGPUVirtualAddress 方法获得该值。\\
+2. SizeInBytes：从BufferLocation开始在顶点缓冲区中查看的字节数。 \\
+3. StrideInBytes：每个顶点元素的字节大小。\\
+在顶点缓冲区创建之后，我们再创建它的视图，我们能将其绑定到管道(pipeline)的一个输入槽(input slot)，给输入汇编程序阶段(input assembler stage)提供顶点数据。使用下面方法就能做到：\\
+\begin{lstlisting}
+void ID3D12GraphicsCommandList::IASetVertexBuffers(
+    UINT StartSlot,
+    UINT NumBuffer,
+    const D3D12_VERTEX_BUFFER_VIEW *pViews);
+\end{lstlisting}
+1. StartSlot：绑定顶点缓冲区的开始输入槽。共16个输入槽，0-15。\\
+2. NumBuffers：绑定到输入槽的顶点缓冲区个数。如果开始槽索引为k，绑定了 n 个缓冲区，则绑定缓冲区的输入槽分别是$I_{k},I_{k}+1,...,I_{k}+n-1$。\\
+3. pViews：指向顶点缓冲区视图数组的第一个元素的指针。\\
+调用例子：\\
+\begin{lstlisting}
+D3D12_VERTEX_BUFFER_VIEW vbv;
+vbv.BufferLocation = VertexBufferGPU->GetGPUVirtualAddress();
+vbv.StrideInBytes = sizeof(Vertex);
+vbv.SizeInBytes = 8 * sizeof(Vertex);
+D3D12_VERTEX_BUFFER_VIEW vertexBuffers[1] = {vbv};
+mCommandList->IASetVertexBuffers(0, 1, vertexBuffers);
+\end{lstlisting}
+IASetVertexBuffers 方法可能看起来有点复杂，因为它支持一个顶点缓冲区数组设置到不同的输入槽。然而,我们只使用一个输入槽。本章结尾会有练习，让你使用两个输入槽。\\
+一个顶点缓冲区将保持绑定到输入插槽，直到您更改为止。 因此，如果您使用多个顶点缓冲区，则可以像这样构造代码：\\
+\begin{lstlisting}
+ID3D12Resource* mVB1; // stores vertices of type Vertex1
+ID3D12Resource* mVB2; // stores vertices of type Vertex2
+D3D12_VERTEX_BUFFER_VIEW_DESC mVBView1; // view to mVB1
+D3D12_VERTEX_BUFFER_VIEW_DESC mVBView2; // view to mVB2
+
+/*...Create the vertex buffers and views...*/
+mCommandList->IASetVertexBuffers(0, 1, &VBView1);
+/*...draw objects using vertex buffer 1...*/
+
+mCommandList->IASetVertexBuffers(0, 1, &mVBView2);
+/*...draw objects using vertex buffer 2...*/
+\end{lstlisting}
+给输入槽设置顶点缓冲区并不意味着绘制它们；这一步只是给管道提供顶点数据。最后一步才是绘制顶点，使用 ID3D12GraphicsCommandList::DrawInstanced 方法：\\
+\begin{lstlisting}
+void ID3D12GraphicsCommandList::DrawInstanced(
+    UINT VertexCountPerInstance,
+    UINT InstanceCount,
+    UINT StartVertexLocation,
+    UINT StartInstanceLocation);
+\end{lstlisting}
+1. VertexCountPerInstance：绘制顶点的数量(每个实例)。\\
+2. InstanceCount：用于称为实例的高级技术; 现在，将其设置为1，因为我们只绘制一个实例。\\
+3. StartVertexLocation：指定开始绘制的顶点缓冲区中第一个顶点的索引（从零开始）。\\
+4. StartInstanceLocation：用于称为实例的高级技术; 现在，将其设置为0。\\
+VertexCountPerInstance和StartVertexLocation这两个参数定义要绘制的顶点缓冲区中的顶点的连续子集;见图\ref{fig:6-2}。\\
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{6-2}
+    \centering
+    \caption{StartVertexLocation 表示开始绘制的顶点缓冲区的第一个元素。VertexCountPerInstance 表示绘制顶点的个数。}
+    \label{fig:6-2}
+\end{figure}
+
+DrawInstanced 方法没有制定顶点的基本类型。它们需要被绘制成点，线列表，还是三角列表？回忆5.5.2节，基本拓扑状态是通过 ID3D12GraphicsCommandList::IASetPrimitiveTopology 方法设置的。例：\\
+\begin{lstlisting}
+mCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+\end{lstlisting}
 \end{flushleft}
+\section{索引和索引缓冲区(Indices and Index Buffers)}
+\begin{flushleft}
+与顶点类似，为了让GPU访问索引数组，需要将索引数组放到GPU缓冲区资源中(ID3D12Resource)。我们将存储索引的缓冲区叫索引缓冲区(index buffer)。因为 d3dUtil::CreateDefaultBuffer 方法能通过 void* 作用于一般数据，我们同样使用该方法来创建索引缓冲区(或任何默认缓冲区)。\\
+为了将索引缓冲区绑定到管道，我们需要为索引缓冲区资源创建一个索引缓冲区视图。 与顶点缓冲区视图一样，我们不需要一个描述符堆用于索引缓冲区视图。 索引缓冲区视图由D3D12\_INDEX\_BUFFER\_VIEW结构表示：\\
+\begin{lstlisting}
+typedef struct D3D12_INDEX_BUFFER_VIEW
+{
+    D3D12_GPU_VIRTUAL_ADDRESS bufferLocation;
+    UINT SizeInBytes;
+    DXGI_FORMAT Format;
+} D3D12_INDEX_BUFFER_VIEW;
+\end{lstlisting}
+1. BufferLocation: 创建视图的顶点缓冲区资源的虚拟地址。 我们可以使用ID3D12Resource :: GetGPUVirtualAddress方法来获取它。\\
+2. SizeInBytes：从BufferLocation开始在索引缓冲区中查看的字节数。\\
+3. Format：索引的格式必须是16位索引的 DXGI\_FORMAT\_R16\_UINT 或32位索引的 DXGI\_FORMAT\_R32\_UINT。 如果索引值需要额外的32位范围，则应使用16位索引来减少内存和带宽，并仅使用32位索引。\\
+~\\
+就顶点缓冲区和其他Direct3D资源而言，在我们可以使用它之前，我们需要将它绑定到管道。 使用 ID3D12CommandList::SetIndexBuffer方法将索引缓冲区绑定到输入汇编程序阶段。 以下代码显示了如何创建一个定义多维数据集三角形的索引缓冲区，创建一个视图并将其绑定到管道：\\
+\begin{lstlisting}
+std::uint16_t indices[] = {
+    // front face
+    0, 1, 2,
+    0, 2, 3,
+    
+    // back face
+    4, 6, 5,
+    4, 7, 6,
+    
+    // left face
+    4, 6, 1,
+    4, 1, 0,
+    
+    // right face
+    3, 2, 6,
+    3, 6, 7,
+    
+    // top face
+    1, 5, 6,
+    1, 6, 2,
+    
+    // bottom face
+    4, 0, 3,
+    4, 3, 7
+};
+
+const UINT ibByteSize = 36 * sizeof(std::uint16_t);
+
+ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
+ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
+IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), indices, ibByteSize, IndexBufferUploader);
+D3D12_INDEX_BUFFER_VIEW ibv;
+ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
+ibv.Format = DXGI_FORMAT_R16_UINT;
+ibv.SizeInBytes = ibByteSize;
+
+mCommandList->IASetIndexBuffer(&ibv);
+\end{lstlisting}
+最后，使用索引时，用 ID3D12GraphicsCommandList::DrawIndexedInstanced 方法，而不是 DrawInstanced：\\
+\begin{lstlisting}
+void ID3D12GraphicsCommandList::DrawIndexedInstanced(
+    UINT IndexCountPerInstance,
+    UINT InstanceCount,
+    UINT StartIndexLocation,
+    INT BaseVertexLocation,
+    UINT StartInstanceLocation);
+\end{lstlisting}
+1. IndexCountPerInstance：要绘制的索引数量(每个实例)。\\
+2. InstanceCount：用于称为实例的高级技术; 现在，将其设置为1，因为我们只绘制一个实例。\\
+3. StartIndexLocation：索引缓冲区中的一个元素索引，标志着开始读取索引的起始点。\\
+4. BaseVertexLocation：在获取顶点之前，要将此整数值添加到此绘图调用使用的索引中。\\
+5. StartInstanceLocation：用于称为实例的高级技术, 目前指定为0。\\
+~\\
+为了说明这些参数，请考虑以下情况。假设我们有三个对象：一个球体，一个盒子和一个圆柱体。首先，每个对象都有自己的顶点缓冲区和自己的索引缓冲区。每个本地索引缓冲区中的索引都与相应的本地顶点缓冲区有关。现在假设我们将球体，盒子和圆柱体的顶点和索引连接成一个全局顶点和索引缓冲区，如图\ref{fig:6-3}所示。 （可能会连接顶点和索引缓冲区，因为在更改顶点和索引缓冲区时会有一些API开销，这很可能不是瓶颈，但是如果有许多小的顶点和索引缓冲区可以很容易地合并，值得这样做是出于性能方面的原因。）在这个串联之后，索引不再是正确的，因为它们存储索引位置相对于它们相应的本地顶点缓冲区而不是全局索引位置;因此需要重新计算索引以正确地将索引指向全局顶点缓冲区。原始盒子索引是在假设盒子的顶点贯穿索引的情况下计算出来的 0, 1, ..., numBoxVertices-1\\
+但是合并之后，就成为：\\
+\begin{lstlisting}
+firstBoxVertexPos,
+firstBoxVertexPos+1,
+...,
+firstBoxVertexPos+numBoxVertices-1
+\end{lstlisting}
+ 
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{6-3}
+    \centering
+    \caption{将几个顶点缓冲区连接成一个大的顶点缓冲区，并将几个索引缓冲区连接成一个大的索引缓冲区。}
+    \label{fig:6-3}
+\end{figure}
+
+因此，要更新索引，我们需要为每个框索引添加第一个BoxVertexPos。 同样，我们需要为每个柱面索引添加firstCylVertexPos。 请注意，球体的指标不需要改变（因为第一个球体顶点位置为零）。 让我们把对象的第一个顶点相对于全局顶点缓冲区的位置称为它的基本顶点位置。 通常，对象的新索引是通过将其基本顶点位置添加到每个索引来计算的。 我们可以让Direct3D通过将基本顶点位置传递给DrawIndexedInstanced的第四个参数来完成它，而不必自己计算新的索引。\\
+然后我们可以用以下三个调用一个接一个地绘制球体，盒子和圆柱体：\\
+\begin{lstlisting}
+mCmdList->DrawIndexedInstanced(numSphereIndices, 1, 0, 0, 0);
+mCmdList->DrawIndexedInstanced(numBoxIndices, 1, firstBoxIndex, firstBoxVertexPos, 0);
+mCmdList->DrawIndexedInstanced(numCylIndices, 1, firstCylIndex, firstCylVertexPos, 0);
+\end{lstlisting}
+下一章(chapter)"Shapse"代码样例就使用了这样的技术。
+\end{flushleft}
+\section{顶点着色器例子(Example Vertex Shader)}
+TODO
+\section{像素着色器例子(Example Pixel Shader)}
+TODO
+\section{常量缓冲区(Constant Buffers)}
+\subsection{创建常量缓冲区(Creating Constant Buffers)}
+\begin{flushleft}
+常量缓冲区是GPU资源（ID3D12Resource）的一个例子，其数据内容可在着色器程序中引用。 正如我们将在本书中学习的那样，着色器程序中也可以引用纹理和其他类型的缓冲区资源。 6.4节中的示例顶点着色器的代码如下：
+\begin{lstlisting}
+cbuffer cbPerObject: register(b0)
+{
+    float4x4 gWorldViewProj;
+}
+\end{lstlisting}
+此代码引用一个名为cbPerObject的cbuffer对象（常量缓冲区）。 在这个例子中，常量缓冲区存储一个名为gWorldViewProj的4×4矩阵，表示用于将点从本地空间转换为同类剪辑空间的组合世界，视图和投影矩阵。 在HLSL中，4×4矩阵由内置的float4x4类型声明; 要声明3×4矩阵和2×4矩阵，例如，您将分别使用float3x4和float2x2类型。\\
+与顶点和索引缓冲区不同，常量缓冲区通常由CPU每帧更新一次。 例如，如果摄像机每帧移动一次，则每帧必须使用新的视图矩阵更新常量缓冲区。 因此，我们在上传堆而不是默认堆中创建常量缓冲区，以便我们可以从CPU更新内容。\\
+常量缓冲区也有特殊的硬件要求，它们的大小必须是最小硬件分配大小（256字节）的倍数。\\
+通常我们需要多个相同类型的常量缓冲区。 例如，上面的常量缓冲区cbPerObject存储每个对象不同的常量，所以如果我们有n个对象，那么我们将需要n个这种类型的常量缓冲区。 以下代码显示了我们如何创建一个存储NumElements多个常量缓冲区的缓冲区：
+\begin{lstlisting}
+struct ObjectConstants
+{
+    DirectX::XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
+};
+UINT elementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+ComPtr<ID3D12Resource> mUploadCBuffer;
+device->CreateCommittedResource(
+    &CB3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), 
+    D3D12_HEAP_FLAG_NONE, 
+    &CD3DX12_RESOURCE_DESC::Buffer(elementByteSize * NumElements),
+    D3D12_RESOURCE_STATE_GENERIC_READ,
+    nullptr, 
+    IID_PPV_ARGS(&mUploadCBuffer));
+\end{lstlisting}
+我们可以将mUploadCBuffer视为存储ObjectConstants类型的常量缓冲区数组（使用填充为256的倍数）。 当需要绘制一个对象时，我们只需将一个常量缓冲区视图（CBV）绑定到缓冲区的一个存储该对象常量的子区域。 请注意，我们经常会调用缓冲区mUploadCBuffer作为常量缓冲区，因为它存储了一个常量缓冲区数组。\\
+工具函数 d3dUtil::CalcConstantBufferByteSize 会进行算术运算将缓冲区的字节大小舍入为最小硬件分配大小（256字节）的倍数：\\
+\begin{lstlisting}
+static UINT CalcConstantBufferByteSize(UINT byteSize)
+{
+    // Constant buffers must be a multiple of the minimum hardware
+    // allocation size (usually 256 bytes).  So round up to nearest
+    // multiple of 256.  We do this by adding 255 and then masking off
+    // the lower 2 bytes which store all bits < 256.
+    // Example: Suppose byteSize = 300.
+    // (300 + 255) & ~255
+    // 555 & ~255
+    // 0x022B & ~0x00ff
+    // 0x022B & 0xff00
+    // 0x0200
+    // 512
+    return (byteSize + 255) & ~255;
+}
+\end{lstlisting}
+NOTICE: 即使我们以256的倍数分配常量数据，也不需要在HLSL结构中明确填充相应的常量数据，因为它是隐式完成的：\\
+\begin{lstlisting}
+// Implicitly padded to 256 bytes.
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+};
+
+// Explicitly padded to 256 bytes.
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+    float4x4 Pad0;
+    float4x4 Pad1;
+    float4x4 Pad1;
+}
+\end{lstlisting}
+NOTICE: 为避免处理将常量缓冲区元素舍入为256字节的倍数，可以明确地将所有常量缓冲区结构填充为256字节的整数倍。\\
+~\\
+Direct3D 12推出了着色器模型5.1。 Shader model 5.1引入了一种替代HLSL语法来定义一个常量缓冲区，如下所示：\\
+\begin{lstlisting}
+struct ObjectConstants
+{
+    float4x4 gWorldViewProj;
+    uint matIndex;
+};
+ConstantBuffer<ObjectConstants> gObjConstants : register(b0);
+\end{lstlisting}
+这里常量缓冲区的数据元素只是在一个单独的结构中定义，然后从该结构创建一个常量缓冲区。 然后使用数据成员语法在着色器中访问常量缓冲区的字段：\\
+\begin{lstlisting}
+uint index = gObjConstants.matIndex;
+\end{lstlisting}
+\end{flushleft}
+
+\subsection{更新常量缓冲区(Updating Constant Buffers)}
 
 \end{document}
