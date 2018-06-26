@@ -1061,5 +1061,272 @@ uint index = gObjConstants.matIndex;
 \end{flushleft}
 
 \subsection{更新常量缓冲区(Updating Constant Buffers)}
+\begin{flushleft}
+因为一个常量缓冲区是由 D3D12\_HEAP\_TYPE\_UPLOAD 的堆类型创建的，所以我们能从CPU上传常量缓冲区资源。为了做到这一点，要先通过 Map 方法获得资源数据的指针：\\
+\begin{lstlisting}
+ComPtr<ID3D12Resource> mUploadBuffer;
+BYTE* mMappedData = nullptr;
+mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData));
+\end{lstlisting}
+第一个参数表示要映射的子资源索引。 对于一个缓冲区，唯一的子资源就是缓冲区本身，所以我们将其设置为0.第二个参数是一个指向D3D12\_RANGE结构的可选指针，该结构描述要映射的内存范围; 指定null映射整个资源。 第三个参数返回一个指向映射数据的指针。 要将数据从系统内存复制到常量缓冲区，我们只需执行一个memcpy即可：\\
+\begin{lstlisting}
+memcpy(mMappedData, &data, dataSizeInBytes);
+\end{lstlisting}
+当我们处理完常量缓冲区后，我们应该在释放内存之前 Unmap 它：\\
+\begin{lstlisting}
+if (mUploadBuffer != nullptr)
+    mUploadBuffer->Unmap(0, nullptr);
+mMappedData = nullptr;
+\end{lstlisting}
+Unmap 的第一个参数表示要映射的子资源索引，对于 buffer，这里设为0。第二个参数是一个指向D3D12\_RANGE结构的可选指针，该结构描述要unmap的内存范围; 指定null，unmap 整个资源。
+\end{flushleft}
+
+\subsection{上传缓冲区帮助工具(Upload Buffer Helper)}
+\begin{flushleft}
+在上传缓冲区周围构建一个简单的包装器很方便。 我们在UploadBuffer.h中定义了以下类，以便更轻松地处理上传缓冲区。 它为我们处理上传缓冲区资源的构建和销毁，处理映射和取消映射资源，并提供CopyData方法来更新缓冲区中的特定元素。 当我们需要从CPU更改上传缓冲区的内容时（例如，当视图矩阵发生变化时），我们使用CopyData方法。 请注意，这个类可以用于任何上传缓冲区，不一定是一个常量缓冲区。 但是，如果我们将它用于常量缓冲区，则需要通过isConstantBuffer构造函数参数进行指示。 如果它正在存储一个常量缓冲区，那么它会自动填充内存，使每个常量缓冲区为256字节的倍数。
+\end{flushleft}
+\begin{lstlisting}
+template<typename T>
+class UploadBuffer
+{
+public:
+    UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) : 
+        mIsConstantBuffer(isConstantBuffer)
+    {
+        mElementByteSize = sizeof(T);
+
+        // Constant buffer elements need to be multiples of 256 bytes.
+        // This is because the hardware can only view constant data 
+        // at m*256 byte offsets and of n*256 byte lengths. 
+        // typedef struct D3D12_CONSTANT_BUFFER_VIEW_DESC {
+        // UINT64 OffsetInBytes; // multiple of 256
+        // UINT   SizeInBytes;   // multiple of 256
+        // } D3D12_CONSTANT_BUFFER_VIEW_DESC;
+        if(isConstantBuffer)
+            mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
+
+        ThrowIfFailed(device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(mElementByteSize*elementCount),
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&mUploadBuffer)));
+
+        ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
+
+        // We do not need to unmap until we are done with the resource.  However, we must not write to
+        // the resource while it is in use by the GPU (so we must use synchronization techniques).
+    }
+
+    UploadBuffer(const UploadBuffer& rhs) = delete;
+    UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
+    ~UploadBuffer()
+    {
+        if(mUploadBuffer != nullptr)
+            mUploadBuffer->Unmap(0, nullptr);
+
+        mMappedData = nullptr;
+    }
+
+    ID3D12Resource* Resource()const
+    {
+        return mUploadBuffer.Get();
+    }
+
+    void CopyData(int elementIndex, const T& data)
+    {
+        memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T));
+    }
+
+private:
+    Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
+    BYTE* mMappedData = nullptr;
+
+    UINT mElementByteSize = 0;
+    bool mIsConstantBuffer = false;
+};
+\end{lstlisting}
+\begin{flushleft}
+通常情况下，对象的世界矩阵在移动/旋转/缩放时会发生变化，视图矩阵会在摄像机移动/旋转时发生变化，并且在窗口大小调整时投影矩阵发生变化。 在本章的演示中，我们允许用户使用鼠标旋转和移动摄像头，并且我们在更新函数的每一帧中使用新的视图矩阵更新组合的世界视图投影矩阵：
+\end{flushleft}
+\begin{lstlisting}
+void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
+TODO....
+\end{lstlisting}
+
+\subsection{常量缓冲区描述符(Constant Buffer Descriptor)}
+\begin{flushleft}
+回想一下4.1.6节，我们通过描述符对象将资源绑定到渲染管道。 到目前为止，我们已经使用渲染目标，深度/模板缓冲区，顶点和索引缓冲区的描述符/视图。 我们还需要描述符来将常量缓冲区绑定到管道。 常量缓冲区描述符位于D3D12\_DESCRIPTOR\_HEAP\_TYPE\_CBV\_SRV\_UAV类型的描述符堆中。 这样的堆可以存储常量缓冲区，着色器资源和无序访问描述符的混合。 为了存储这些新类型的描述符，我们需要创建一个新的描述符堆类型：\\
+\begin{lstlisting}
+D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+cbvHeapDesc.NumDescriptors = 1;
+cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+cbvHeapDesc.NodeMask = 0;
+
+ComPtr<ID3D12DescriptorHeap> mCbvHeap;
+md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap));
+\end{lstlisting}
+这段代码与我们如何创建渲染目标和深度/模板缓冲区描述符堆相似。 然而，一个重要的区别是我们指定了D3D12\_DESCRIPTOR\_HEAP\_FLAG\_SHADER\_VISIBLE标志来表示这些描述符将被着色器程序访问。 在4.1.6节的演示中，我们没有SRV或UAV描述符，我们只绘制一个对象; 因此，我们只需要1个描述符来存储1个CBV。\\
+通过填写一个D3D12_CONSTANT_BUFFER_VIEW_DESC实例并调用ID3D12Device::CreateConstantBufferView来创建一个常量缓冲区视图：\\
+\begin{lstlisting}
+// Constant data per-object.
+struct ObjectConstants
+{
+    XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
+};
+
+// Constant buffer to store the constants of n object.
+std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), n, true);
+
+UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+// Address to start of the buffer (0th constant buffer).
+D3D12_CPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+
+// Offset to the ith object constant buffer in the buffer.
+int boxCBufIndex = i;
+cbAddress += boxCBufIndex * objCBByteSize;
+
+D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+cbvDesc.BufferLocation = cbAddress;
+cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+md3dDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+\end{lstlisting}
+D3D12\_CONSTANT\_BUFFER\_VIEW\_DESC 结构描述了要绑定到HLSL常量缓冲区结构的常量缓冲区资源的子集。 如前所述，通常一个常量缓冲区存储n个对象的每个对象常量数组，但我们可以通过使用 BufferLocation 和 SizeInBytes 来获取第i个对象常量数据的视图。 由于硬件要求，D3D12\_CONSTANT\_BUFFER\_VIEW_DESC::SizeInBytes 和D3D12\_CONSTANT\_BUFFER\_VIEW\_DESC::OffsetInBytes 成员必须为256个字节的倍数。 例如，如果您指定了64，那么您将得到以下调试错误：\\
+\begin{lstlisting}
+D3D12 ERROR: ID3D12Device::CreateConstantBufferView: SizeInBytes of 64 is invalid. Device requires SizeInBytes be multiple of 256.
+
+D3D12 ERROR: ID3D12Device::CreateConstantBufferView: OffsetInBytes of 64 is invalid. Device requires OffsetInBytes be a multiple of 256.
+\end{lstlisting}
+\end{flushleft}
+
+\subsection{根签名和描述符表(Root Signature and Descriptor Tables)}
+\begin{flushleft}
+通常，不同的着色器程序会希望在执行绘制调用之前将不同的资源绑定到渲染管道。 资源被绑定到特定的寄存器插槽，在那里它们可以被着色器程序访问。 例如，以前的顶点和像素着色器只需要一个常量缓冲区被绑定到寄存器b0。 本书稍后将使用的更高级的顶点和像素着色器集合将期望将几个常量缓冲区，纹理和采样器绑定到各种寄存器槽：\\
+\begin{lstlisting}
+// Texture resourcce bound to texture register slot 0.
+Texture2D gDiffuseMap : register(t0);
+
+// Sampler resources bound to sampler register slots 0-5.
+SamplerState gsamPointWrap        : register(s0);
+SamplerState gsamPointClamp       : register(s1);
+SamplerState gsamLinearWrap       : register(s2);
+SamplerState gsamLinearClamp      : register(s3);
+SamplerState gsamAnisotropicWrap  : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
+
+// cbuffer resource bound to cbuffer register slots 0-2
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorld;
+    float4x4 gTexTransform;
+};
+
+// Constant data that varies per material.
+cbuffer cbPass : register(b1)
+{
+    float4x4 gView;
+    float4x4 gProj;
+    [...] // Other fields omitted for brevity.
+};
+
+cbuffer cbMaterial : register(b2)
+{
+    float4   gDiffuseAlbedo;
+    float3   gFresnelR0;
+    float    gRoughness;
+    float4x4 gMatTransform;
+};
+\end{lstlisting}
+根签名定义了在绘制调用可以执行之前应用程序将绑定到渲染管道的资源以及这些资源被映射到着色器输入寄存器的位置。 根签名必须与将要使用的着色器兼容（即，根签名必须提供着色器期望在绘制调用执行之前绑定到渲染管道的所有资源）; 这将在创建管道状态对象时进行验证（§6.9）。 不同的绘制调用可能会使用一组不同的着色器程序，这需要不同的根签名。\\
+~\\
+NOTICE: 如果我们将着色器程序看作函数，并将着色器期望的输入资源作为函数参数来考虑，那么根签名可以被认为是定义函数签名（因此称为根签名）。 通过绑定不同的资源作为参数，着色器输出将会不同。 所以，例如，顶点着色器将取决于输入到着色器的实际顶点以及绑定资源。\\
+~\\
+Direct3D中的根签名由ID3D12RootSignature接口表示。 它由一组根参数定义，这些参数描述了着色器对绘制调用所期望的资源。 根参数可以是根常量，根描述符或描述符表。 我们将在下一章讨论根常量和根描述符; 在本章中，我们将只使用描述符表。 描述符表指定描述符堆中描述符的连续范围。\\
+下面的代码创建一个根签名，该签名具有一个根描述符表，该描述符表足够大以存储一个CBV（常量缓冲区视图）：\\
+\begin{lstlisting}
+// Root parameter can be a table, root descriptor or root constants.
+CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+
+// Create a single descriptor table of CBVs.
+CD3DX12_DESCRIPTOR_RANGE cbvTable;
+cbvTable.Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+    1,  // Number of descriptors in table
+    0); // base shader register arguments are bound to for this root parameter
+
+slotRootParameter[0].InitAsDescriptorTable(
+    1,          // Number of ranges
+    &cbvTable); // Pointer to array of ranges
+
+// A root signature is an array of root parameters.
+CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, 
+    slotRootParameter, 0, nullptr, 
+    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT);
+
+// create a root signature with a single slot with pints to a
+// descriptor range consisting of a single constant buffer.
+ComPtr<ID3DBlob> serializedRootSig = nullptr;
+ComPtr<ID3DBlob> errorBlob = nullptr;
+
+HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, 
+    D3D_ROOT_SIGNATURE_VERSION_1,
+    serializedRootSig.GetAddressOf(),
+    errorBlob.GetAddressOf());
+
+ThrowIfFailed(md3dDevice->CreateRootSignature(
+    0,
+    serializedRootSig->GetBufferPointer(),
+    serializedRootSig->GetBufferSize(),
+    IID_PPV_ARGS(&mRootSignature)));
+\end{lstlisting}
+下一章我们再解释 CD3DX12\_ROOT\_PARAMETER 和 CD3DX12\_DESCRIPTOR\_RANGE，现在仅理解如下代码：\\
+\begin{lstlisting}
+CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+
+CD3DX12_DESCRIPTOR_RANGE cbvTable;
+cbvTable.Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE_CBV, // table type
+    1,  // Number of descriptors in table
+    0); // base shader register arguments are bound to for this root parameter
+
+slotRootParameter[0].InitAsDescriptorTable(
+    1,          // Number of ranges
+    &cbvTable); // Pointer to array of ranges
+\end{lstlisting}
+创建一个根参数，该参数需要1个CBV的描述符表被绑定到常量缓冲寄存器0（即，HLSL代码中的寄存器（b0））。\\
+~\\
+NOTICE: 我们在本章中的根签名示例非常简单。 在本书中，我们将看到许多根签名的例子，并且它们会根据需要增加复杂性。
+~\\
+根签名仅定义应用程序将绑定到渲染管道的资源; 它实际上并没有做任何资源绑定。 一旦使用命令列表设置了根签名，我们使用ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable将描述符表绑定到管道：\\
+\begin{lstlisting}
+void ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable(
+    UINT RootParameterIndex,
+    D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor);
+\end{lstlisting}
+1. RootParameterIndex: 设置根参数的索引。\\
+2. BaseDescriptor: 处理堆中的描述符，指定要设置的表中的第一个描述符。 例如，如果根签名指定该表具有五个描述符，则将BaseDescriptor和堆中接下来的四个描述符设置为此根表。\\
+以下代码将根签名和CBV堆设置为命令列表，并将描述符表设置为标识要绑定到管道的资源：\\
+\begin{lstlisting}
+mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+ID3D12DescriptorHeap* descriptorHeaps[] = {mCbvHeap.Get()};
+mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+// Offset the CBV we want to use for this draw call.
+CD3DX12_GPU_DESCRIPTOR_HANDLE cbv(mCbvHeap->GetGPUDescriptorHandleForheapStart());
+cbv.Offset(cbvIndex, mCbvSrvUavDescriptorSize);
+mCommandList->SetGraphicsRootDescriptorTable(0, cbv);
+\end{lstlisting}
+~\\
+NOTICE: 为了提高性能，请尽可能缩小根签名，并尽量减少每个渲染帧更改根签名的次数。\\
+NOTICE: 只要内容的任何部分在绘图/分派调用之间发生变化，应用程序绑定的根签名（描述符表，根常量和根描述符）的内容就会自动得到D3D12驱动程序的版本控制。 所以每个绘图/分派都会得到一个独特的全套根签名状态。\\
+NOTICE: 如果更改根签名，则会丢失所有现有的绑定。 也就是说，您需要重新绑定新根签名所需的所有资源。
+\end{flushleft}
+
+\section{编译着色器(Compiling Shaders)}
 
 \end{document}
