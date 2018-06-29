@@ -8,7 +8,7 @@
 
 ### List
 - 图形
-  - [ ] [Introduction To 3D Game Programming with DirectX12](note/3d-directx12.md)
+  - [ ] Introduction To 3D Game Programming with DirectX12
   - [ ] Fundamentals of Computer Graphics
   - [ ] Practical Rendering & Computation with Direct3D 11
   - [ ] Real Time Rendering
@@ -23,7 +23,7 @@
   - [ ] 算法分析导论
   - [ ] 具体数学
 - 数据库
-  - [ ] [数据库系统概念(第六版)](note/database-system-concepts-6th.md)
+  - [ ] 数据库系统概念(第六版)
   - [ ] 高性能MySQL
   - [ ] PostgreSQL 手册
 - 操作系统
