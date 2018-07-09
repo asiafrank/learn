@@ -1,0 +1,492 @@
+\chapter{渲染管道(The Rendering Pipeline)}
+\section{3D图像(The 3D Illusion)}
+\section{模型表达(Model Representation)}
+\section{基本计算颜色(Basic Computer Color)}
+\begin{flushleft}
+计算机显示器在每个像素发射一种混合红、绿、蓝三种颜色的光。当这种混合光到达眼睛并且击中视网膜区域，视锥细胞收到刺激并将产生的神经冲动通过视觉神经传递到大脑。大脑解释这种信号为颜色。随着混合光的变化，使这些视锥细胞收到不同的刺激，从而使大脑中产生不同的颜色。\\
+\end{flushleft}
+
+\subsection{颜色运算(Color Operations)}
+\begin{itemize}
+    \item 加法：$(0.0, 0.5, 0) + (0, 0.0, 0.25) = (0.0, 0.5, 0.25)$
+    \item 减法：$(1, 1, 1) - (1, 1, 0) = (0, 0, 1)$
+    \item 标量乘法：$0.5(1, 1, 1) = (0.5, 0.5, 0.5)$
+    \item 显然，点乘和叉乘对于颜色向量来说没有意义。然而，颜色向量有一特殊的运算称为调制或分量乘法：$(c_{r},c_{g},c_{b}) \otimes (k_{r},k_{g},k_{b}) = (c_{r}k_{r},c_{g}k_{g},c_{b}k_{b})$。该运算主要用来作为照明方程。举个例子，假设我们有一束入射光线（r，g，b），它会照射一个反射50％红光，75％绿光和25％蓝光的表面，并吸收剩余的光线。 然后反射光线的颜色由下式给出：$(r,g,b) \otimes (0.5,0.75,0.25) = (0.5r,0.75g,0.25b)$
+\end{itemize}
+
+\subsection{128位颜色(128-Bit Color)}
+\begin{flushleft}
+通常我们会合并另外的颜色分量，称作 alpha 分量。alpha 分量常用来表示颜色的透明度（透明度在混合中很有用，因为我们还没有使用混合，目前只需将 alpha 分量设为 1 即可）。包含 alpha 分量意味着我们用 4D 颜色向量$(r, g, b, a), 0 \leq r,g,b,a \leq 1$ 为了用 128-bits 表示一种颜色，每个分量使用浮点型值。因为数学上，一种颜色就是一个 4D 向量，我们能在代码中使用 XMVECTOR 类型来表示一种颜色，并且每当调用 DirectX Math 中的向量函数时都会受益于 SIMD (如，颜色加减和标量乘法)。为了方便分量乘法，DirectX Math 库提供了下面方法：
+\begin{lstlisting}
+// Return c1 \otimes c2
+XMVECTOR XM_CALLCONV XMColorModulate(FXMVECTOR C1, FXMVECTOR C2);
+\end{lstlisting}
+\end{flushleft}
+
+\subsection{32位颜色(32-Bit Color)}
+\begin{flushleft}
+要以32位大小来表示一个颜色，可以给每个分量分配一个字节(8-bit)大小。这样一来，每个分量最多能表现256种色调——0代表无强度，255代表满强度，中间值代表中间强度。看似每个分量一个字节很小，但是组合在一起$(256 \times 256 \times 256)$就表示百万种不同的颜色。DirectX Math 库(\#include <DirectXPackedVector.h>) DirectX::PackedVector 命名空间(namespace)下提供了以下数据结构来存储32位颜色：
+\begin{lstlisting}
+namespace DirectX
+{
+namespace PackedVector
+{
+    // ARGB Color; 8-8-8-8 bit unsigned normalized integer components packed
+    // into a 32 bit integer. The normalized color is packed into 32 bits
+    // using 8 bit unsigned, normalized integers for the alpha, red, green,
+    // and blue components.
+    // The alpha component is stored in the most significant bits and the
+    // blue component in the least significant bits (A8R8G8B8):
+    // [32] aaaaaaaa rrrrrrrr gggggggg bbbbbbbb [0]
+    struct XMCOLOR
+    {
+        union
+        {
+            struct
+            {
+                uint8_t b; // Blue: 0/255 to 255/255
+                uint8_t g; // Green: 0/255 to 255/255
+                uint8_t r; // Red: 0/255 to 255/255
+                uint8_t a; // Alpha: 0/255 to 255/255
+            };
+            uint32_t c;
+        };
+        XMCOLOR() {}
+        XMCOLOR(uint32_t Color) : c(Color) {}
+        XMCOLOR(float _r, float _g, float _b, float _a);
+        explicit XMCOLOR(_In_reads_(4) const float *pArray);
+        operator uint32_t () const { return c; }
+        XMCOLOR& operator= (const XMCOLOR& Color) 
+        { c = Color.c; return *this; }
+        XMCOLOR& operator= (const uint32_t Color) 
+        { c = Color; return *this; }
+    };
+} // end PackedVector namespace
+} // end DirectX namespace
+\end{lstlisting}
+一个32位颜色数据能被转换为128位颜色数据： 将整数区间$[0, 255]$ 映射到实数区间$[0, 1]$。每个数除以255即可，也就是说 设$0 \leq n \leq 255$，且 n 是整数，则 $0 \leq \frac{n}{255} \leq 1$ 就是需要的范围 0 到 1 的颜色强度。例：(80,140,200,255)转换如下：
+$$ (80,140,200,255)\rightarrow (\frac{80}{255},\frac{140}{255},\frac{200}{255},\frac{255}{255}) \approx (0.31,0.55,0.78,1.0)$$
+另一方面，128位颜色能转换为32位颜色：将每个分量乘以255并且四舍五入取整。例：
+$$(0.3,0.6,0.9,1.0)\rightarrow (0.3\cdot 255,0.6\cdot 255,0.9\cdot 255,1.0\cdot 255)=(77,153,230,255)$$
+
+在将32位颜色转换为128位颜色时通常必须执行额外的位操作，反之，因为8位颜色组件通常打包为32位整数值（如 unsigned int），XMCOLOR 就是如此。DirectXMath 库定义了一个方法以 XMCOLOR 作为参数，返回XMVECTOR：
+\begin{lstlisting}
+XMVECTOR XM_CALLCONV PackedVector::XMLoadColor(const XMCOLOR* pSource);
+\end{lstlisting}
+\end{flushleft}
+
+\section{渲染管道概览(Overview of the rendering pipeline)}
+\section{输入汇编程序阶段(The Input Assembler Stage)}
+\subsection{顶点(Vertices)}
+\subsection{原始拓扑(Primitive Topology)}
+\subsection{指数(Indices)}
+\section{顶点着色器阶段(The Vertex Shader Stage)}
+\subsection{局部空间和世界空间(Local Space and World Space)}
+TODO
+\subsection{视图空间(View Space)}
+\begin{flushleft}
+为了形成场景的二维图像，我们必须在场景中放置一个虚拟相机。 相机指定了观众可以看到的世界的多大的体积，以及我们需要生成多大的世界体积来生成二维图像。让我们将一个局部坐标系统（称为视图空间，眼图空间或相机空间）附加到相机，如图\ref{fig:5-19}所示; 也就是说，摄像机坐落在正视z轴的原点处，x轴指向摄像机的右侧，y轴指向摄像机的上方。 而不是描述相对于世界空间的场景顶点，基于相机坐标系，渲染管线的后面阶段很方便地描述它们。从世界空间到视图空间的坐标变换称为视图变换，相应的矩阵称为视图矩阵。\\
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-19}
+    \centering
+    \caption{转换顶点相对于世界空间的坐标，使它们相对于相机空间。}
+    \label{fig:5-19}
+\end{figure}
+如果$Q_{w}=(Q_{x},Q_{y},Q_{z},1)$，$u_{w}=(u_{x},u_{y},u_{z},0)$，$v_{w}=(v_{x},v_{y},v_{z},0)$，$w_{w}=(w_{x},w_{y},w_{z},0)$分别用相对于世界空间的齐次坐标来描述视图空间的原点，x轴，y轴和z轴，然后我们从3.4.3一节知道坐标矩阵从视图空间的变化到世界空间是：
+$$W=
+\begin{bmatrix}
+u_{x} & u_{y} & u_{z} & 0\\
+v_{x} & v_{y} & v_{z} & 0\\
+w_{x} & w_{y} & w_{z} & 0\\
+Q_{x} & Q_{y} & Q_{z} & 1
+\end{bmatrix}$$\\
+然而，这不是我们想要的转换。我们想要的是倒置转换，即从世界空间转换成视图空间。回忆3.4.3节，倒置转换就是求矩阵的逆。因此$W^{-1}$就是从世界空间到视图空间的转换。\\
+世界坐标系统和视图坐标系统仅在位置和方向有区别，所以直观地得到 $W=RT$(也就是说世界矩阵能被分解为一个旋转跟一个平移(translation))\footnote{$R$是\href{https://en.wikipedia.org/wiki/Orthogonal_matrix}{\textcolor{linkColor}{正交矩阵}}，所以有 $R^{-1}=R^{T}$}。这让求逆变得简单：
+\begin{align*}
+V&=W^{-1}=(RT)^{-1}=T^{-1}R^{-1}=T^{-1}R^{T} \\
+&=\begin{bmatrix}
+1 & 0 & 0 & 0\\
+0 & 1 & 0 & 0\\
+0 & 0 & 1 & 0\\
+-Q_{x} & -Q_{y} & -Q_{z} & 1
+\end{bmatrix}
+\begin{bmatrix}
+u_{x} & v_{x} & w_{x} & 0\\
+u_{y} & v_{y} & w_{y} & 0\\
+u_{z} & v_{z} & w_{z} & 0\\
+0 & 0 & 0 & 0
+\end{bmatrix} \\
+&=\begin{bmatrix}
+u_{x} & v_{x} & w_{x} & 0\\
+u_{y} & v_{y} & w_{y} & 0\\
+u_{z} & v_{z} & w_{z} & 0\\
+\mathbf{-Q\cdot u} & \mathbf{-Q\cdot v} & \mathbf{-Q\cdot w} & 1
+\end{bmatrix}
+\end{align*}
+
+所以，视图矩阵就是：
+\begin{align*}
+V=\begin{bmatrix}
+u_{x} & v_{x} & w_{x} & 0\\
+u_{y} & v_{y} & w_{y} & 0\\
+u_{z} & v_{z} & w_{z} & 0\\
+\mathbf{-Q\cdot u} & \mathbf{-Q\cdot v} & \mathbf{-Q\cdot w} & 1
+\end{bmatrix}
+\end{align*}
+现在我们用一种直观的方式来构造向量，这些向量用来建立视图矩阵。令\textbf{Q}为摄像机的位置，\textbf{T}为摄像机对准的目标点。然后，令\textbf{j}为世界空间向上方向的单位向量。(本书中，世界坐标系的 xz 构成的平面作为世界地平面，世界 y 轴描述了向上的方向；所以，$j=(0,1,0)$ 就是和世界 y 轴平行的单位向量。然而这只是约定，一些应用可能会选择 xy构成的平面作为地平面，z轴作为向上方向。)参考图片\ref{fig:5-20}，摄像机的朝向如下：
+$$w=\frac{T-Q}{||T-Q||}$$
+该向量描述的是摄像机的z轴，对准\textbf{w}右侧的单位向量：\\
+$$u=\frac{j\times w}{||j \times w||}$$
+该向量描述的是摄像机的 x 轴。最后，摄像机的y轴单位向量为：\\
+$$v=w \times u$$
+因为\textbf{w}和\textbf{u}是互相正交的单位向量，$w\times u$也必定是单位向量，没必要正规化。\\
+综上所述，给定摄像机的位置，目标点，和世界向上方向，我们就能求得摄像机的本地坐标系统，作为视图矩阵。
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-20}
+    \centering
+    \caption{根据相机位置，目标点和世界“向上”矢量构造相机坐标系。}
+    \label{fig:5-20}
+\end{figure}
+
+DirectXMath 库提供了计算视图矩阵的方法：
+\begin{lstlisting}
+// Outputs view matrix V
+XMVECTOR XM_CALLCONV XMMatrixLookAtLH(
+    FXMVECTOR EyePosition,    // Input camera position Q
+    FXMVECTOR FocusPosition,  // Input target point T
+    FXMVECTOR UpDirection);   // Input world up direction j
+\end{lstlisting}
+通常世界y轴就是向上的方向，所以$j=(0,1,0)$ 就是向上的向量。例：假设我们将摄像机放在相对于世界坐标的$(5,3,-10)$处，并且对准世界原点坐标$(0,0,0)$。可以通过下面方式获得视图矩阵：\\
+\begin{lstlisting}
+XMVECTOR pos    = XMVectorSet(5, 3, -10, 1.0f);
+XMVECTOR target = XMVectorZero();
+XMVECTOR up     = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+XMMATRIX V      = XMMatrixLookAtLH(pos, target, up);
+\end{lstlisting}
+\end{flushleft}
+\subsection{投影和齐次裁剪空间(Projection and Homogeneous Clip Space)}
+\begin{flushleft}
+到目前为止我们描述了在世界空间中摄像机的位置和方向，但摄像机还有一个部分需要解决，即摄像机看到的空间体积。体积由视锥来描述（见图\ref{fig:5-21}）。
+\end{flushleft}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-21}
+    \centering
+    \caption{视锥定义了摄像机“看到”的空间体积}
+    \label{fig:5-21}
+\end{figure}
+\begin{flushleft}
+我们接下来的任务是将一个 3D 几何体在视锥中投影到 2D 投影窗口中。投影必须以平行线汇聚到消失点的方式完成，当一个物体的3D深度增加（距离拉远），投影的大小就减小。这就是\href{https://en.wikipedia.org/wiki/Perspective_(graphical)}{\textcolor{linkColor}{透视投影}}（如图\ref{fig:5-22}）。我们将一个顶点到视点(眼睛所在的位置，姑且叫视点吧)的连线称为顶点的投影线。然后我们定义透视投影变换就是3D顶点\textbf{v}变换成它的投影线和2D投影面板交叉点\textbf{v'}的过程；我们认为\textbf{v'}就是\textbf{v}的投影。一个3D物体的投影就是组成这个物体的所有顶点的投影。
+\end{flushleft}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-22}
+    \centering
+    \caption{两个圆柱体大小相同，但深度不同。距离眼睛近的圆柱体比距离远的圆柱体投影大。视锥中的几何体被投影到投影窗口；视锥外的集合体，投影到投影面板上，但在投影窗口外面(投影面板和投影窗口共面)}
+    \label{fig:5-22}
+\end{figure}
+
+\paragraph{定义一个视锥(Defining a Frustum)}
+\begin{flushleft}
+我们可以在视图空间中定义一个视锥，其投影中心位于原点处，并沿着正z轴向下看，通过以下四个量：近平面$n$，远平面$f$，垂直视场角$\alpha$ 和纵横比 $r$。请注意，在视图空间中，近平面和远平面平行于$xy$平面; 因此我们只需指定它们沿着z轴的原点距离。 纵横比由 $r=w/h$ 定义，其中$w$是投影窗口的宽度，$h$是投影窗口的高度（视图空间中的单位）。 投影窗口本质上是视图空间中场景的二维图像。 这里的图像最终将映射到后台缓冲区(back buffer); 因此，我们喜欢投影窗口尺寸的比率与后台缓冲区尺寸的比率相同。所以后缓冲区维度的比率通常被指定为长宽比(这是一个比例，所以它没有单位)。例，如果后台缓冲区尺寸是 $800 \times 600$，则 $r=\frac{800}{600} \approx 1.333$。如果投影窗口与后台缓冲区的纵横比不相同，则需要非均匀缩放来将投影窗口映射到后台缓冲区，这将导致失真（例如，投影窗口上的圆圈可能当映射到后台缓冲区时被拉伸成一个椭圆）。\\
+我们将水平视角标记为$\beta$，垂直视角标记为$\alpha$，纵横比为$r$。要看看$r$如何帮助我们找到$\beta$，请考虑图\ref{fig:5-23}。 请注意，投影窗口的实际尺寸并不重要，只需要保持纵横比。 因此，我们会选择2的方便高度，因此宽度必须为：\\
+$$r=\frac{w}{h}=\frac{w}{2}\Rightarrow w=2r$$
+\end{flushleft}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-23}
+    \centering
+    \caption{给定垂直视角$\alpha$和纵横比$r$，得出水平视角$\beta$}
+    \label{fig:5-23}
+\end{figure}
+\begin{flushleft}
+为了具有指定的垂直视场$\alpha$，投影窗口必须放置在距离原点的距离$d$处：
+$$\tan(\frac{\alpha}{2})=\frac{1}{d}\Rightarrow d=\cot(\frac{\alpha}{2})$$
+现在我们已经将投影窗沿$z$轴的距离d固定为当投影窗的高度为2时垂直视场$\alpha$。现在我们可以求解$\beta$。 看一下图\ref{fig:5-23}中的$xz$平面，我们现在看到：
+$$\tan(\frac{\beta}{2})=\frac{r}{d}=\frac{r}{\cot(\frac{\alpha}{2})}=r\cdot \tan(\frac{\alpha}{2})$$
+因此，考虑到垂直视角α和纵横比r，我们总能得到水平视角β：
+$$\beta=2\tan^{-1}(r\cdot\tan(\frac{\alpha}{2}))$$
+\end{flushleft}
+
+\paragraph{投影顶点(Projecting Vertices)}
+\begin{figure}[t]
+    \includegraphics[width=\textwidth]{5-24}
+    \centering
+    \caption{相似三角}
+    \label{fig:5-24}
+\end{figure}
+\begin{flushleft}
+参考图\ref{fig:5-24}。 给定一个点$(x,y,z)$，我们希望在投影平面$z = d$上找到它的投影$(x',y',d)$。 通过分别考虑$x$和$y$坐标并使用相似的三角形，我们发现：
+\begin{align*}
+\frac{x'}{d}=\frac{x}{z}\Rightarrow x'=\frac{xd}{z}=\frac{x\cot(\alpha/2)}{z}=\frac{x}{z\tan(\alpha/2)}\\
+\frac{y'}{d}=\frac{y}{z}\Rightarrow y'=\frac{yd}{z}=\frac{y\cot(\alpha/2)}{z}=\frac{y}{z\tan(\alpha/2)}\\
+\end{align*}
+显然对于点$(x,y,z)$, $-r\leq x'\leq r,-1\leq y'\leq 1,n\leq z\leq f$
+\end{flushleft}
+
+\paragraph{标准化的设备坐标(Normalized Device Coordinate-NDC)}
+\begin{flushleft}
+上一节中投影点的坐标是在视图空间中计算的。 在视图空间中，投影窗口的高度为2，宽度为$2r$，其中$r$是纵横比。 问题在于，尺寸取决于宽高比。 这意味着我们需要告诉硬件高宽比，因为硬件稍后需要做一些涉及投影窗口尺寸的操作（比如将其映射到后台缓冲区）。 如果我们能够消除这种对长宽比的依赖性会更方便。 解决的办法是将投影的$x$坐标从区间$[-r，r]$缩放到$[-1，1]$像这样:
+\begin{align*}
+-r\leq x' \leq r \\
+-1\leq x'/r \leq 1
+\end{align*}
+
+在映射之后，$x$坐标和$y$坐标被称为标准化的设备坐标（NDC）（z坐标还没有被标准化），并且点$(x,y,z)$在视锥内当且仅当：
+\begin{align*}
+-1\leq x'/r \leq 1 \\
+-1\leq y' \leq 1 \\
+n \leq z \leq f
+\end{align*}
+
+从视图空间到NDC空间的转换可视为单位转换。 我们有一个关系，即一个NDC单位在$x$轴上等于视图空间中的$r$个单位（即 1ndc = \textbf{r} vs）。 所以给定$x$个视图空间单位，我们可以使用这个关系来转换单位：
+$$x\mathit{vs}\cdot \frac{1\mathit{ndc}}{r\mathit{vs}}=\frac{x}{r}\mathit{ndc}$$
+我们可以修改我们的投影公式，直接在NDC坐标中为我们提供投影的$x$坐标和$y$坐标：
+\begin{align*}\tag{eq.5.1}\label{eq.5.1}
+x'&=\frac{x}{rz\tan(\alpha/2)}\\
+y'&=\frac{y}{z\tan(\alpha/2)}
+\end{align*}
+请注意，在NDC坐标中，投影窗口的高度为2，宽度为2.因此，现在尺寸是固定的，硬件无需知道纵横比，但我们有责任始终在NDC中提供投影坐标空间（图形硬件假设我们会）。
+\end{flushleft}
+
+\paragraph{用矩阵来描述投影公式(Writing the Projection Equations with a Matrix)}
+\begin{flushleft}
+为了保持一致，我们将用一个矩阵来描述投影变换。不过，公式\ref{eq.5.1}是非线性的，无法用矩阵描述。所以我们要使用一种“技巧”将它分为两部分来实现：一个线性部分和一个非线性部分。非线性部分要除以$z$。我们会在下一节讨论“如何规范化$z$坐标”时讲解这一问题；现在读者只需要知道，我们会因为个除法操作而失去原始的z坐标。所以，我们必须在变换之前保存输入的z坐标；我们可以利用齐次坐标来解决一问题，将输入的$z$坐标复制给输出的$w$坐标。在矩阵乘法中，我们要将元素[2][3]设为1、元素[3][3]设为0（从0开始的索引）。我们的投影矩阵大致如下：
+\begin{align*}
+P=\begin{bmatrix}
+\frac{1}{r\tan(\alpha/2)} & 0 & 0 & 0\\
+0 & \frac{1}{\tan(\alpha/2)} & 0 & 0\\
+0 & 0 & A & 1\\
+0 & 0 & B & 0
+\end{bmatrix}
+\end{align*}
+注意矩阵中的常量$A$和$B$（它们将在下一节讨论）；这些常量用于把输入的$z$坐标变换到规范化区间。将一个任意点$(x,y,z,1)$与该矩阵相乘，可以得到：
+\begin{align*}\tag{eq.5.2}\label{eq.5.2}
+[x,y,z,1]\begin{bmatrix}
+\frac{1}{r\tan(\alpha/2)} & 0 & 0 & 0\\
+0 & \frac{1}{\tan(\alpha/2)} & 0 & 0\\
+0 & 0 & A & 1\\
+0 & 0 & B & 0
+\end{bmatrix}=\left[ \frac{x}{r\tan(\alpha/2)},\frac{y}{\tan(\alpha/2)},Az+B,z\right]
+\end{align*}
+在与投影矩阵（线性部分）相乘之后，我们要将每个坐标除以$w = z$（非线性部分），得到最终的变换结果：
+\begin{align*}\tag{eq.5.3}\label{eq.5.3}
+\left[ \frac{x}{r\tan(\alpha/2)},\frac{y}{\tan(\alpha/2)},Az+B,z\right]
+\xrightarrow[]{\text{除以$w$}}
+\left[ \frac{x}{rz\tan(\alpha/2)},\frac{y}{z\tan(\alpha/2)},A+\frac{B}{z},1\right]
+\end{align*}
+顺便提一句，你可能会问：“如何处理除数为0的情况”；对于一问题我们不必担心，因为近平面总是大于0的，其他的点都会被裁剪掉（参见5.9节）。有时，与$w$相除的过程也称为透视除法（perspective divide）或齐次除法（homogeneous divide）。我们可以看到$x$、$y$的投影坐标与公式\ref{eq.5.1}相同。
+\end{flushleft}
+
+\paragraph{规范化深度值}
+\begin{flushleft}
+你可能认为在投影之后可以丢弃原始的3D $z$坐标，因为所有的投影点已经摆放在2D投影窗口上，形成了我们最终看到的2D图像，不会再使用3D $z$坐标了。其实不然，我们仍然需要为深度缓存算法提供3D深度信息。就如同Direct3D希望我们把$x$、$y$投影坐标映射到一个规范化区间一样，Direct3D也希望我们将深度坐标映射到一个规范化区间$[0,1]$中。所以，我们需要创建一个保序函数（order preserving function）$g(x)$把$[n,f]$区间映射到$[0,1]$区间。由于该函数是保序的，所以当$z_{1},z_{2}∈[n,f]$且$z_{1}<z_{2}$时，必有$g(z_{1})<g(z_{2})$。这样，即使深度值已经被变换过了，相对的深度关系还是会被完好无损地保留下来，我们依然可以在规范化区间中得到正确的深度测试结果，这就是我们要为深度缓存算法做的全部工作。
+通过缩放和平移可以实现从$[n ,f]$到$[0,1]$的映射。但是，这种方式无法与我们当前的投影方程整合。我们可以从公式\ref{eq.5.3}中看到经过变换的$z$坐标为：
+$$g(z)=A+\frac{B}{z}$$
+我们现在需要让$A$和$B$满足以下条件：
+\begin{itemize}
+    \item 条件1：$g(n)=A+\frac{B}{n}$（近平面映射为0）
+    \item 条件2：$g(f)=A+\frac{B}{f}$（远平面映射为1）
+\end{itemize}
+由条件1得到$B$的结果为：$B=-An$。把它代入条件2，得到$A$的结果为：
+\begin{align*}
+A+\frac{-An}{f}=1\\
+\frac{Af-An}{f}=1\\
+Af-An=f\\
+A=\frac{f}{f-n}
+\end{align*}
+所以：
+\begin{align*}
+g(z)=\frac{f}{f-n}-\frac{nf}{(f-n)z}
+\end{align*}
+从$g(z)$的曲线图（图\ref{fig:5-25}）中可以看出，它会限制增长的幅度（保序）而且是非线性的。从图中我们还可以看到，区间中的大部分取值落在近平面附近。因此，大多数深度值被映射到了一个很窄的取值范围内。这会导致深度缓冲区出现精度问题（由于所能表示的数值范围有限，计算机将无法识别变换后的深度值之间的微小差异）。通常的建议是让近平面和远平面尽可能接近，把深度的精度性问题减小到最低程度。
+\end{flushleft}
+\begin{figure}[b]
+    \includegraphics[width=\textwidth]{5-25}
+    \centering
+    \caption{相对于不同近平面的$g(z)$曲线图}
+    \label{fig:5-25}
+\end{figure}
+\begin{flushleft}
+现在我们已经解出了A和B，我们可以确定出完整的透视投影矩阵：
+\begin{align*}
+P=\begin{bmatrix}
+\frac{1}{r\tan(\alpha/2)} & 0 & 0 & 0\\
+0 & \frac{1}{\tan(\alpha/2)} & 0 & 0\\
+0 & 0 & \frac{f}{f-n} & 1\\
+0 & 0 & \frac{-nf}{f-n} & 0
+\end{bmatrix}
+\end{align*}
+在与投影矩阵相乘之后，进行透视除法之前，几何体所处的空间称为齐次裁剪空间（homogeneous clip space）或投影空间（projection space）。在透视除法之后，几何体所处的空间称为规范化设备空间（normalized device coordinates，简称NDC）。
+\end{flushleft}
+
+\paragraph{XMMatrixPerspectiveFovLH}
+\begin{flushleft}
+一个透视投影矩阵能由下面的 DirectX Math 函数生成：
+\begin{lstlisting}
+// Return the projection matrix
+XMMATRIX XM_CALLCONV XMMatrixPerspectiveFovLH(
+    float FovAngleY, // vertical field of view angle in radians
+    float Aspecct,     // aspect ratio = width / height
+    float NearZ,       // distance to near plane
+    float FarZ);         // distance to far plane
+\end{lstlisting}
+下面代码展示了如何使用 XMMatrixPerspectiveFovLH。这里，我们定义垂直视角为$45^{\circ}$，近平面$z=1$，远平面$z=1000$（这些长度都在视图空间）
+\begin{lstlisting}
+XMMATRIX P= XMMatrixPerspectiveFovLH(0.25f*XM_PI, AspectRatio(),1.0f,1000.0f);
+\end{lstlisting}
+纵横比匹配窗口的纵横比：
+\begin{lstlisting}
+float D3DApp::AspectRatio() const
+{
+  return static_cast<float>(mClientWidth) / mClientHeight;
+}
+\end{lstlisting}
+\end{flushleft}
+
+\section{镶嵌阶段(曲面细分阶段)(The Tessellation Stages)}
+\begin{flushleft}
+镶嵌（Tessellation）是指通过添加三角形的方式对一个网格的三角形进行细分，这些新添加的三角形可以偏移到一个新的位置，让网格的细节更加丰富。如图\ref{fig:5-26}
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-26}
+    \centering
+    \caption{左图是原网格，右图是镶嵌后的网格}
+    \label{fig:5-26}
+\end{figure}
+
+\begin{flushleft}
+下面是曲面细分的好处：
+\begin{itemize}
+    \item 我们可以实现细节层次(level-of-detail, LOD)，使靠近相机的三角形通过细分产生更多细节，而那些远离相机的三角形则保持不变。通过这种方式，我们只需在需要细节的地方使用更多的三角形就可以了。
+    \item 我们可以在内存中保存一个低细节（低细节意味着三角形数量少）的网格，但可以实时地添加额外的三角形，这样可以节省内存。
+    \item 我们可以在一个低细节的网格上处理动画和物理效果，而只在渲染时才使用细分过的高细节网格。
+\end{itemize}
+曲面细分阶段是Direct3D 11中新添加的，这样我们就可以在GPU上对几何体进行细分了。而在Direct3D 11之前，如果你想要实现曲面细分，则必须在CPU上完成，经过细分的几何体还要发送到GPU用于渲染。然而，将新的几何体从CPU内存发送到显存是很慢的，而且还会增加CPU的负担。因此，在Direct3D 11出现之前，曲面细分的方法在实时图形中并不流行。Direct3D 11提供了一个可以完全在硬件上实现的曲面细分API。这样曲面细分就成为了一个非常有吸引力的技术了。曲面细分阶段是可选的（即在需要的时候才使用它）。我们要在第14章才会详细介绍曲面细分。
+\end{flushleft}
+
+\section{几何着色阶段(The Geometry Shader Stage)}
+\begin{flushleft}
+几何着色器阶段（geometry shader stage）是可选的，我们在第12章之前不会用到它，所以这里只做一个简短的概述。几何着色器以完整的图元作为输入数据。例如，当我们绘制三角形列表时，输入到几何着色器的数据是构成三角形的三个点。（注意，这三个点是从顶点着色器传递过来的。）几何着色器的主要优势是它可以创建或销毁几何体。例如，输入图元可以被扩展为一个或多个其他图元，或者几何着色器可以根据某些条件拒绝输出某些图元。这一点与顶点着色器有明显的不同：顶点着色器无法创建顶点，只要输入一个顶点，那么就必须输出一个顶点。几何着色器通常用于将一个点扩展为一个四边形，或者将一条线扩展为一个四边形。\\
+~\\
+我们可以在图5.11中看到一个“流输出（stream output）”箭头。也就是，几何着色器可以将顶点数据流输出到内存中的一个顶点缓冲区内，这些顶点可以在管线的随后阶段中渲染出来。这是一项高级技术，我们会在后面的章节中对它进行讨论。\\
+~\\
+NOTICE：顶点位置在离开几何着色器之前，必须被变换到齐次裁剪空间。
+\end{flushleft}
+
+\section{裁剪(Clipping)}
+\begin{flushleft}
+我们必须完全丢弃在平截头体之外的几何体，裁剪与平截头体边界相交的几何体，只留下平截头体内的部分；图 \ref{fig:5-27}以2D形式说明了一概念。
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-27}
+    \centering
+    \caption{(a)裁剪之前，(b)裁剪之后}
+    \label{fig:5-27}
+\end{figure}
+我们可以将平截头体视为由6个平面界定的空间范围：顶、底、左、右、近、远平面。要裁剪与平截头体方向相反的多边形，其实就是逐个裁剪与每个平截头体平面方向相反的多边形，当裁剪一个与平面方向相反的多边形时（参见图\ref{fig:5-28}），我们将保留平面正半空间中的部分，而丢弃平面负半空间中的部分。对一个与平面方向相反的凸多边形进行裁剪，得到的结果仍然会是一个凸多边形。由于硬件会自动完成所有的裁剪工作，所以我们不在这里讲解具体的实现细节；有兴趣的读者可以参阅[Sutherland74]，了解一下目前流行的Sutherland-Hodgeman裁剪算法。它基本思路是：求出平面与多边形边之间的交点，然后对顶点进行排序，形成新的裁剪后的多边形。\\
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-28}
+    \centering
+    \caption{(a)裁剪一个与平面方向相反的三角形，(b)裁剪后的三角形。注意，裁剪后的三角形已经不再是一个三角形了，它是一个四边形。所以，硬件必须将这个四边形重新划分为三角形，对于凸多边形来说这是一个非常简单的处理过程。}
+    \label{fig:5-28}
+\end{figure}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-29}
+    \centering
+    \caption{齐次裁剪空间中$xw$平面上的截头体边界}
+    \label{fig:5-29}
+\end{figure}
+[Blinn78]描述了如何在4D齐次空间中实现裁剪算法（图\ref{fig:5-29}）。在透视除法之后，平截头体内的点$ (\frac{x}{w},\frac{y}{w},\frac{z}{w},1) $将位于规范化设备空间，它的边界如下：
+\begin{align*}
+-1\leq x/w \leq 1\\
+-1\leq y/w \leq 1\\
+0 \leq z/w \leq 1
+\end{align*}
+那么在透视除法之前，平截头体内的4D点(x , y , z , w)在齐次裁剪空间中的边界为：
+\begin{align*}
+-w\leq x \leq w\\
+-w\leq y \leq w\\
+0 \leq z \leq w
+\end{align*}
+也就是，顶点被限定在以下4D平面构成的空间范围内：
+\begin{align*}
+\mathit{Left:}&w=-x\\
+\mathit{Right:}&w=x\\
+\mathit{Bottom:}&w=-y\\
+\mathit{Top:}&w=y\\
+\mathit{Near:}&z=0\\
+\mathit{Far:}&z=w
+\end{align*}
+只要我们知道齐次剪裁空间中的平截头体平面方程，我们就能使用任何一种裁剪算法（比如Sutherland-Hodgeman）。注意，由线段/平面相交测试的数学推论可知，这个测试在$\mathbf{R}^{4}$也能使用，所以我们可以在齐次裁剪空间中进行4D点和4D平面的相交测试。
+\end{flushleft}
+
+\section{光栅化阶段(The Rasterization Stage)}
+\begin{flushleft}
+光栅化（rasterization）阶段的主要任务是为投影后的3D三角形计算像素颜色。
+\end{flushleft}
+\subsection{视口变换(Viewport Transform)}
+\begin{flushleft}
+在裁剪之后，硬件会自动执行透视除法，将顶点从齐次裁剪空间变换到规范化设备空间（NDC）。一旦顶点进入NDC空间，构成2D图像的2D x、y坐标就会被变换到后台缓冲区中的一个称为视口的矩形区域内（回顾4.2.8节）。在该变换之后，$x$、$y$坐标将以像素为单位。通常，视口变换不修改$z$坐标，因为z坐标还要由深度缓存使用，但是我们可以通过 D3D12\_VIEWPORT 结构体的 MinDepth 和 MaxDepth 值修改z坐标的取值范围。MinDepth 和 MaxDepth 的值必须在0和1之间。
+\end{flushleft}
+\subsection{背面剔除(Backface Culling)}
+\begin{flushleft}
+一个三角形有两个面。我们使用如下约定来区分这两个面。假设三角形的顶点按照$v_{0}$、$v_{1}$、$v_{2}$的顺序排列，我们这样来计算三角形的法线$n$：
+\begin{align*}
+e_{0}&=v_{1}-v_{0}\\
+e_{1}&=v_{2}-v_{1}\\
+n&=\frac{e_{0}\times e_{1}}{||e_{0}\times e_{1}||}
+\end{align*}
+带有法线向量的面为正面，而另一个面为背面。图\ref{fig:5-30}说明了这一概念。
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-30}
+    \centering
+    \caption{左边的三角形正对我们的观察点，而右边的三角形背对我们的观察点。}
+    \label{fig:5-30}
+\end{figure}
+当观察者看到三角形的正面时，我们说三角形是朝前的；当观察者看到三角形的背面时， 我们说三角形是朝后的。如图\ref{fig:5-30}所示，左边的三角形是朝前的，而右边的三角形是朝后的。而且，按照我们的观察角度，左边的三角形会按顺时针方向环绕，而右边的三角形会按逆时针方向环绕。这不是巧合：因为按照我们选择的约定（即，我们计算三角形法线的方式），按顺时针方向环绕的三角形（相对于观察者）是朝前的，而按逆时针方向环绕的三角形（相对于观察者）是朝后的。\\
+~\\
+现在，3D空间中的大部分物体都是封闭实心物体。当我们按照这一方式将每个三角形的法线指向物体外侧时，摄像机就不会看到实心物体朝后的三角形，因为朝前的三角形挡住了朝后的三角形；图\ref{fig:5-31}和图\ref{fig:5-32}分别以2D和3D形式说明了一概念。由于朝前的三角形挡住了朝后的三角形，所以绘制它们是毫无意义的。背面消隐（backface culling）是指让管线放弃对朝后的三角形的处理。这可以将所要处理的三角形的数量降低到原数量的一半。
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-31}
+    \centering
+    \caption{(a)一个带有朝前和朝后三角形的实心物体。(b)在剔除了朝后的三角形之后的场景。注意，背面消隐不会影响最终的图像，因为朝后的三角形会被朝前的三角形阻挡。}
+    \label{fig:5-31}
+\end{figure}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-32}
+    \centering
+    \caption{（左图）当以透明方式绘制立方体时，我们可以看到所有的6个面。（右图）当以实心方式绘制立方体时，我们无法看到朝后的3个面，因为朝前的3个面挡住了它们——所以朝后的三角形可以被直接丢弃，不再接受后续处理，没人能看到些朝后的三角形。}
+    \label{fig:5-32}
+\end{figure}
+\begin{flushleft}
+默认情况下，Direct3D将（相对于观察者）顺时针方向环绕的三角形视为朝前的三角形，将（相对于观察者）逆时针方向环绕的三角形视为朝后的三角形。不过，这一约定可以通过修改Direct3D渲染状态颠倒过来。
+\end{flushleft}
+
+\subsection{顶点属性插值(Vertex Attribute Interpolation)}
+\begin{flushleft}
+如前所述，我们通过指定三角形的3个顶点来定义一个三角形。除位置外，顶点还可以包含其他属性，比如颜色、法线向量和纹理坐标。在视口变换之后，这些属性必须为三角形表面上的每个像素进行插值。顶点深度值也必须进行插值，以使每个像素都有一个可用于深度缓存算法的深度值。对屏幕空间中的顶点属性进行插值，其实就是对3D空间中的三角形表面进行线性插值（如图\ref{fig:5-33}所示）；这一工作需要借助所谓的透视矫正插值（perspective
+correct interpolation）来实现。本质上，三角形表面内部的像素颜色都是通过顶点插值得到的。
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-33}
+    \centering
+    \caption{通过对三角形顶点之间的属性值进行线性插值，可以得到三角形表面上的任一属性值p(s,t)。}
+    \label{fig:5-33}
+\end{figure}
+\begin{flushleft}
+我们不必关心透视精确插值的数学细节，因为硬件会自动完成这一工作；不过，有兴趣的读者可以在[Eberly01]中查阅相关的数学推导过程。图5.34介绍了一点基本思路：
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{5-34}
+    \centering
+    \caption{一条3D线被投影到投影窗口上（在屏幕空间中投影是一条2D线）。我们看到，在3D线上取等距离的点，在2D屏幕空间上的投影点却不是等距离的。所以，我们在3D空间中执行线性插值，在屏幕空间需要执行非线性插值。}
+    \label{fig:5-34}
+\end{figure}
+
+\section{像素着色器阶段(The Pixel Shader Stage)}
+\begin{flushleft}
+像素着色器（Pixel shader）是由我们编写的在GPU上执行的程序。像素着色器会处理每个像素片段（pixel fragment），它的输入是插值后的顶点属性，由此计算出一个颜色。像素着色器可以非常简单地输出一个颜色，也可以很复杂，例如实现逐像素光照、反射和阴影等效果。
+\end{flushleft}
+\section{输出合并阶段(The Output Merger Stage)}
+\begin{flushleft}
+当像素片段由像素着色器生成之后，它们会被传送到渲染管线的输出合并（output
+merger，简称OM）阶段。在该阶段中，某些像素片段会被丢弃（例如，未能通过深度测试或模板测试）。未丢弃的像素片段会被写入后台缓冲区。混合（blending）工作是在该阶段中完成的，一个像素可以与后台缓冲区中的当前像素进行混合，并以混合后的值作为该像素的最终颜色。某些特殊效果，比如透明度，就是通过混合来实现的；我们会在第10章专门讲解混合。
+\end{flushleft}

@@ -1,0 +1,64 @@
+\chapter{Direct3D 初始化(Direct3D Initialization)}
+// TODO 补充完整
+\section{准备(Preliminaries)}
+\subsection{Direct3D 12 概览(Direct3D 12 Overview)}
+\subsection{COM}
+\subsection{纹理格式(Textures Formats)}
+\subsection{交换链与翻页(The Swap Chain and Page Flipping)}
+\subsection{深度缓冲(Depth buffering)}
+\subsection{资源与描述符(Resources and Descriptors)}
+\subsection{多重采样理论(Multisampling Theory)}
+
+\section{CPU/GPU 相互作用(CPU/GPU Interaction)}
+\subsection{命令队列和命令列表(The Command Queue and Command Lists)}
+\subsection{CPU/GPU 同步(CPU/GPU synchronization)}
+\subsection{资源过渡(Resource Transitions)}
+\begin{flushleft}
+由于有两个并行运行的处理器，出现了许多同步问题。\\
+假设我们有一些资源R存储我们想绘制的几何几何的位置。 此外，假设CPU更新R的数据以存储位置p1，然后将引用R的绘图命令C添加到命令队列中，以便在位置p1处绘制几何图形。 将命令添加到命令队列不会阻塞CPU，因此CPU将继续运行。 在GPU执行绘图命令C之前（如图4.7），CPU继续并覆盖R的数据以存储新位置p2将会是错误的。
+\end{flushleft}
+TODO
+\subsection{资源转换(Resource Transitions)}
+\begin{flushleft}
+为了实现常见的渲染效果，GPU通常在一步中写入资源R，然后在后面的步骤中从资源R中读取。但是，GPU尚未完成写入或未开始写入资源时，读取资源会造成资源危险 。为了解决这个问题，Direct3D将一个状态关联到资源。资源在创建时处于默认状态，并由应用程序告知Direct3D任何状态转换。这使GPU可以做任何需要做的工作来完成转换并防止资源危害。例如，如果我们正在写入资源，比如说纹理，我们会将纹理状态设置为渲染目标状态;当我们需要读取纹理时，我们会将其状态更改为着色器资源状态。通过向Direct3D通知转换，GPU可以采取措施避免危害，例如，在从资源读取之前等待所有写入操作完成。出于性能原因，资源转移的负担落在应用程序开发人员身上。应用程序开发人员知道这些转换何时发生。自动转换跟踪系统会带来额外的开销。\\
+通过在命令列表上设置转换资源障碍数组来指定资源转换; 它是一个数组，以防您想要通过一次API调用转换多个资源。 在代码中，资源屏障由D3D12\_RESOURCE\_BARRIER\_DESC结构表示。 以下辅助函数（在d3dx12.h中定义）返回给定资源的转换资源屏障描述，并指定之前和之后的状态：\\
+\begin{lstlisting}
+struct CD3DX12_RESOURCE_BARRIER : public D3D12_RESOURCE_BARRIER
+{
+    // […] convenience methods
+    static inline CD3DX12_RESOURCE_BARRIER Transition(
+        _In_ ID3D12Resource* pResource,
+        D3D12_RESOURCE_STATES stateBefore,
+        D3D12_RESOURCE_STATES stateAfter,
+        UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+        D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE)
+    {
+        CD3DX12_RESOURCE_BARRIER result;
+        ZeroMemory(&result, sizeof(result));
+        D3D12_RESOURCE_BARRIER &barrier = result;
+        result.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        result.Flags = flags;
+        barrier.Transition.pResource = pResource;
+        barrier.Transition.StateBefore = stateBefore;
+        barrier.Transition.StateAfter = stateAfter;
+        barrier.Transition.Subresource = subresource;
+        return result;
+    }
+    // […] more convenience methods
+};
+\end{lstlisting}
+注意到CD3DX12\_RESOURCE\_BARRIER扩展了D3D12\_RESOURCE\_BARRIER\_DESC并添加了便利方法。 大多数Direct3D 12结构都有助手的变体，我们更喜欢这些变体以方便使用。 CD3DX12的变体全部在d3dx12.h中定义。 该文件不是核心DirectX 12 SDK的一部分，但可以从Microsoft下载。 为方便起见，本书源代码的Common目录中包含一个副本。\\
+本章示例应用程序中的一个函数示例如下：\\
+\begin{lstlisting}
+mCommandList->ResourceBarrier(1,
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_PRESENT,
+            D3D12_RESOURCE_STATE_RENDER_TARGET));
+\end{lstlisting}
+此代码将表示我们在屏幕上显示的图像的纹理从呈现状态转换为呈现目标状态。 注意资源屏障已被添加到命令列表中。 您可以将资源屏障转换看作是指示GPU资源状态正在转换的命令，以便在执行后续命令时可以采取必要的步骤来防止资源危险。\\
+~\\
+NOTICE:除转换类型外，还有其他类型的资源屏障。 目前，我们只需要转换类型。 我们将在需要时介绍其他类型。
+\end{flushleft}
+\subsection{多线程命令(Multithreading with Commands)}
+TODO....
