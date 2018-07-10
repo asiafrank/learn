@@ -9,6 +9,8 @@
 ### List
 - 图形
   - [ ] Introduction To 3D Game Programming with DirectX12
+    - [DirectXTK12 Tutorial](https://github.com/Microsoft/DirectXTK12/wiki/Getting-Started)
+    - [DirectX game development with C++ in Visual Studio](https://blogs.msdn.microsoft.com/vcblog/2017/04/11/directx-game-development-with-c-in-visual-studio/)
   - [ ] Fundamentals of Computer Graphics
   - [ ] Practical Rendering & Computation with Direct3D 11
   - [ ] Real Time Rendering
