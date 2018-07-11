@@ -388,19 +388,306 @@ firstBoxVertexPos+numBoxVertices-1
     \label{fig:6-3}
 \end{figure}
 
-因此，要更新索引，我们需要为每个框索引添加第一个BoxVertexPos。 同样，我们需要为每个柱面索引添加firstCylVertexPos。 请注意，球体的指标不需要改变（因为第一个球体顶点位置为零）。 让我们把对象的第一个顶点相对于全局顶点缓冲区的位置称为它的基本顶点位置。 通常，对象的新索引是通过将其基本顶点位置添加到每个索引来计算的。 我们可以让Direct3D通过将基本顶点位置传递给DrawIndexedInstanced的第四个参数来完成它，而不必自己计算新的索引。\\
+因此，要更新索引，我们需要为每个Box索引添加第一个 firstBoxVertexPos。 同样，我们需要为每个柱面索引添加 firstCylVertexPos。 请注意，球体的指标不需要改变（因为第一个球体顶点位置为零）。 让我们把对象的第一个顶点相对于全局顶点缓冲区的位置称为它的基本顶点位置。 通常，对象的新索引是通过将其基本顶点位置添加到每个索引来计算的。 我们可以让 Direct3D 通过将基本顶点位置传递给 DrawIndexedInstanced 的第四个参数来完成它，而不必自己计算新的索引。\\
 然后我们可以用以下三个调用一个接一个地绘制球体，盒子和圆柱体：\\
 \begin{lstlisting}
 mCmdList->DrawIndexedInstanced(numSphereIndices, 1, 0, 0, 0);
 mCmdList->DrawIndexedInstanced(numBoxIndices, 1, firstBoxIndex, firstBoxVertexPos, 0);
 mCmdList->DrawIndexedInstanced(numCylIndices, 1, firstCylIndex, firstCylVertexPos, 0);
 \end{lstlisting}
-下一章(chapter)"Shapse"代码样例就使用了这样的技术。
+下一章(chapter)"Shapes"代码样例就使用了这样的技术。
 \end{flushleft}
+
+
 \section{顶点着色器例子(Example Vertex Shader)}
-TODO
+\begin{flushleft}
+下面是简单顶点着色器的实现（回忆5.6节）：
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+};
+
+void VS(float3 iPosL      : POSITION,
+        float4 iColor     : COLOR,
+        out float4 oPosH  : SV_POSITION,
+        out float4 oColor : COLOR)
+{
+    // Transform to homogeneous clip space.
+    oPosH = mul(float4(iPosL, 1.0f), gWorldViewProj);
+    // Just pass vertex color into the pixel shader.
+    oColor = iColor;
+}
+\end{lstlisting}
+\begin{flushleft}
+着色器使用一种称为高级着色语言（HLSL）的语言编写，它具有与 C++ 类似的语法，因此很容易学习。 附录B提供了对HLSL的简明参考。 我们教授HLSL和编程着色器的方法将以示例为基础。 也就是说，随着本书的进展，我们将介绍我们需要的任何新的HLSL概念，以便实现手头的演示。 着色器通常用基于文本的文件编写，扩展名为.hlsl。\\
+顶点着色器是名为VS的函数。 请注意，您可以为顶点着色器指定任何有效的函数名称。 该顶点着色器有四个参数; 前两个是输入参数，后两个是输出参数（由out关键字表示）。 HLSL没有引用或指针，因此要从函数返回多个值，您需要使用结构或输出参数。 在HLSL中，函数始终内联。\\
+前两个输入参数构成顶点着色器的输入签名(input signature)，并对应于我们用于绘制的自定义顶点结构中的数据成员。 参数语义“:POSITION”和“:COLOR”用于将顶点结构中的元素映射到顶点着色器输入参数，如图\ref{fig:6-4}所示。
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{6-4}
+    \centering
+    \caption{每个顶点元素都有一个由 D3D12\_INPUT\_ELEMENT\_DESC 数组指定的相关语义。 顶点着色器的每个参数也具有附加的语义。语义用于将顶点元素与顶点着色器参数进行匹配。}
+    \label{fig:6-4}
+\end{figure}
+
+\begin{flushleft}
+输出参数也有附加的语义（“:SV\_POSITION”和“:COLOR”）。 这些用于将顶点着色器输出映射到下一级的相应输入（几何着色器或像素着色器）。 请注意，SV\_POSITION 语义是特殊的（SV代表系统值）。 它用于表示在同构剪辑空间中保存顶点位置的顶点着色器输出元素。 我们必须将SV\_POSITION语义附加到位置输出，因为GPU需要知道这个值，因为它涉及其他属性不涉及的操作，例如剪切，深度测试和光栅化。 非系统值的输出参数的语义名称可以是任何有效的语义名称。\\
+第一行通过乘以4x4矩阵 gWorldViewProj 将顶点位置从局部空间转换为齐次剪辑空间：\\
+\end{flushleft}
+\begin{lstlisting}
+// Transform to homogeneous clip space.
+oPosH = mul(float4(iPosL, 1.0f), gWorldViewProj);
+\end{lstlisting}
+\begin{flushleft}
+构造函数语法 float4(iPosL，1.0f) 构造一个4D向量，相当于 float4(iPosL.x，iPosL.y，iPosL.z，1.0f); 因为我们知道顶点的位置是点而不是矢量，所以我们在第四个分量中放置 1(w = 1)。float2 和 float3 类型分别代表2D和3D向量。 矩阵变量 gWorldViewProj 存在于所谓的常量缓冲区中，这将在下一节中讨论。 内置函数 mul 用于向量矩阵乘法。顺便提一下，对于不同大小的矩阵乘法，mul 函数是重载(overloaded)的; 例如，您可以使用它来乘以两个4x4矩阵，两个3x3矩阵，或1x3矢量和3x3矩阵。 着色器主体中的最后一行只是将输入颜色复制到输出参数，以便将颜色输入到管道的下一个阶段：\\
+\end{flushleft}
+\begin{lstlisting}
+oColor = iColor;
+\end{lstlisting}
+\begin{flushleft}
+我们可以使用返回类型和输入签名(input signature)的结构（而不是长参数列表）等效地重写上面的顶点着色器：\\
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+};
+struct VertexIn
+{
+    float3 PosL : POSITION;
+    float4 Color : COLOR;
+};
+struct VertexOut
+{
+    float4 PosH : SV_POSITION;
+    float4 Color : COLOR;
+};
+VertexOut VS(VertexIn vin)
+{
+    VertexOut vout;
+    // Transform to homogeneous clip space.
+    vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+    // Just pass vertex color into the pixel shader.
+    vout.Color = vin.Color;
+    return vout;
+}
+\end{lstlisting}
+\begin{flushleft}
+NOTICE: 如果没有几何着色器（第12章中介绍几何着色器），则顶点着色器必须使用 SV\_POSITION 语义输出齐次剪辑空间中的顶点位置，因为这是硬件在离开顶点时期望顶点所在的空间 着色器（如果没有几何着色器）。 如果存在几何着色器，则输出齐次剪辑空间位置的作业可以推迟到几何着色器。\\
+~\\
+NOTICE: 顶点着色器（或几何着色器）不执行透视分割; 它只是投影矩阵部分。 透视分割将稍后由硬件完成。
+\end{flushleft}
+
+\subsection{输入布局描述和输入签名链接(Input Layout Description and Input Signature Linking)}
+\begin{flushleft}
+从图\ref{fig:6-4}中可以看出，提供给管道的顶点属性之间存在链接，这是由输入布局描述定义的。 如果您输入的顶点不提供顶点着色器所需的所有输入，则会产生错误。 例如，以下顶点着色器输入签名和顶点数据不兼容：\\
+\end{flushleft}
+\begin{lstlisting}
+//––––—
+// C++ app code
+//––––—
+struct Vertex
+{
+    XMFLOAT3 Pos;
+    XMFLOAT4 Color;
+};
+D3D12_INPUT_ELEMENT_DESC desc[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0},
+    {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0}
+};
+//––––—
+// Vertex shader
+//––––—
+struct VertexIn
+{
+    float3 PosL   : POSITION;
+    float4 Color  : COLOR;
+    float3 Normal : NORMAL;
+};
+struct VertexOut
+{
+    float4 PosH  : SV_POSITION;
+    float4 Color : COLOR;
+};
+VertexOut VS(VertexIn vin) {...}
+\end{lstlisting}
+
+\begin{flushleft}
+正如我们将在6.9节中看到的那样，当我们创建一个 ID3D12PipelineState 对象时，我们必须同时指定输入布局描述和顶点着色器。 然后，Direct3D将验证输入布局描述和顶点着色器是否兼容。\\
+顶点数据和输入签名不需要完全匹配。 所需要的是顶点数据提供顶点着色器期望的所有数据。 因此，允许顶点数据提供顶点着色器不使用的附加数据。 也就是说，以下是兼容的：
+\end{flushleft}
+
+\begin{lstlisting}
+//––––—
+// C++ app code
+//––––—
+struct Vertex
+{
+   XMFLOAT3 Pos;
+   XMFLOAT4 Color;
+   XMFLOAT3 Normal;
+};
+D3D12_INPUT_ELEMENT_DESC desc[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0},
+    {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0},
+    {"NORMAL",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0 }
+};
+//––––—
+// Vertex shader
+//––––—
+struct VertexIn
+{
+    float3 PosL  : POSITION;
+    float4 Color : COLOR;
+};
+struct VertexOut
+{
+    float4 PosH  : SV_POSITION;
+    float4 Color : COLOR;
+};
+VertexOut VS(VertexIn vin) {...}
+\end{lstlisting}
+\begin{flushleft}
+现在考虑顶点结构和输入签名具有匹配的顶点元素的情况，但颜色属性的类型是不同的：\\
+\end{flushleft}
+\begin{lstlisting}
+//––––—
+// C++ app code
+//––––—
+struct Vertex
+{
+    XMFLOAT3 Pos;
+    XMFLOAT4 Color;
+};
+D3D12_INPUT_ELEMENT_DESC desc[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0},
+    {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+                 D3D12_INPUT_PER_VERTEX_DATA, 0}
+};
+//––––—
+// Vertex shader
+//––––—
+struct VertexIn
+{
+    float3 PosL : POSITION;
+    int4 Color  : COLOR;
+};
+struct VertexOut
+{
+    float4 PosH  : SV_POSITION;
+    float4 Color : COLOR;
+};
+VertexOut VS(VertexIn vin) {...}
+\end{lstlisting}
+
+\begin{flushleft}
+这实际上是合法的，因为Direct3D允许重新解释输入寄存器中的位。 但是，VC++调试输出窗口提供以下警告：\\
+\end{flushleft}
+\begin{lstlisting}
+D3D12 WARNING: ID3D11Device::CreateInputLayout: The
+provided input signature expects to read an element with
+SemanticName/Index: ‘COLOR’/0 and component(s) of the
+type ‘int32’. However, the matching entry in the Input
+Layout declaration, element[1], specifies mismatched
+format: ‘R32G32B32A32_FLOAT’. This is not an error, since
+behavior is well defined: The element format determines
+what data conversion algorithm gets applied before it
+shows up in a shader register. Independently, the shader
+input signature defines how the shader will interpret the
+data that has been placed in its input registers, with no
+change in the bits stored. It is valid for the
+application to reinterpret data as a different type once
+it is in the vertex shader, so this warning is issued
+just in case reinterpretation was not intended by the
+author.
+\end{lstlisting}
+
+\begin{figure}[h]
+	\includegraphics[width=\textwidth]{6-5}
+	\centering
+	\caption{每个顶点元素都有一个由 D3D12\_INPUT\_ELEMENT\_DESC 数组指定的相关语义。 顶点着色器的每个参数也具有附加的语义。 语义用于将顶点元素与顶点着色器参数进行匹配。 同样，顶点着色器的每个输出都有一个附加的语义，每个像素着色器输入参数都有一个附加的语义。 这些语义用于将顶点着色器输出映射到像素着色器输入参数。}
+	\label{fig:6-5}
+\end{figure}
+
 \section{像素着色器例子(Example Pixel Shader)}
-TODO
+\begin{flushleft}
+如5.10.3节中所述，在光栅化期间，从顶点着色器（或几何着色器）输出的顶点属性在三角形的像素上进行插值。 然后将插值作为输入（5.11节）输入像素着色器。 假设没有几何着色器，图\ref{fig:6-5}说明了到目前为止顶点数据的路径。
+\end{flushleft}
+
+\begin{flushleft}
+像素着色器就像顶点着色器，因为它是为每个像素片段执行的函数。 给定像素着色器输入，像素着色器的作用是计算像素片段的颜色值。 我们注意到像素片段可能无法存活并使其进入后缓冲区; 例如，它可能被剪裁在像素着色器中（HLSL包含clip 函数,可以丢弃进一步处理的像素片段），被另一个具有较小深度值的像素片段遮挡，或者像素片段可能被稍后丢弃 管道测试就像模板缓冲测试一样。 因此，后缓冲器上的像素可以具有多个像素片段候选; 这是“像素片段”和“像素”的含义之间的区别，尽管有时这些术语可以互换使用，但上下文通常会明确其含义。\\
+~\\
+NOTICE: 作为硬件优化，在将像素片段设置到像素着色器之前（例如，early-z rejection），可能会使管道拒绝像素片段。 这是首先进行深度测试的地方，并且如果确定像素片段被深度测试遮挡，则跳过像素着色器。 但是，有些情况可能会禁用early-z rejection优化。 例如，如果像素着色器修改像素的深度，则必须执行像素着色器，因为如果像素着色器更改像素着色器，我们实际上不知道像素着色器的深度。\\
+~\\
+下面是一个简单的像素着色器，它对应于§6.4中给出的顶点着色器。 为完整起见，再次显示顶点着色器。\\
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+};
+void VS(float3 iPos : POSITION, 
+        float4 iColor : COLOR,
+        out float4 oPosH : SV_POSITION,
+        out float4 oColor : COLOR)
+{
+    // Transform to homogeneous clip space.
+    oPosH = mul(float4(iPos, 1.0f), gWorldViewProj);
+    // Just pass vertex color into the pixel shader.
+    oColor = iColor;
+}
+
+float4 PS(float4 posH  : SV_POSITION, 
+          float4 color : COLOR) : SV_Target
+{
+    return pin.Color;
+}
+\end{lstlisting}
+\begin{flushleft}
+在此示例中，像素着色器仅返回插值颜色值。 请注意，像素着色器输入与顶点着色器输出完全匹配; 这是一项要求。 像素着色器返回4D颜色值，函数参数列表后面的SV\_TARGET语义指示返回值类型应与渲染目标格式匹配。\\
+我们可以使用输入/输出结构等效地重写上面的顶点和像素着色器。 符号的不同之处在于我们将语义附加到输入/输出结构的成员，并且我们使用return语句来输出而不是输出参数。
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+};
+struct VertexIn
+{
+    float3 Pos   : POSITION;
+    float4 Color : COLOR;
+};
+struct VertexOut
+{
+    float4 PosH : SV_POSITION;
+    float4 Color : COLOR;
+};
+VertexOut VS(VertexIn vin)
+{
+    VertexOut vout;
+    // Transform to homogeneous clip space.
+    vout.PosH = mul(float4(vin.Pos, 1.0f), gWorldViewProj);
+    // Just pass vertex color into the pixel shader.
+    vout.Color = vin.Color;
+    return vout;
+}
+float4 PS(VertexOut pin) : SV_Target
+{
+    return pin.Color;
+}
+\end{lstlisting}
+
 \section{常量缓冲区(Constant Buffers)}
 \subsection{创建常量缓冲区(Creating Constant Buffers)}
 \begin{flushleft}
@@ -513,8 +800,9 @@ template<typename T>
 class UploadBuffer
 {
 public:
-    UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) : 
-        mIsConstantBuffer(isConstantBuffer)
+    UploadBuffer(ID3D12Device* device, UINT elementCount, 
+                 bool isConstantBuffer) 
+                 : mIsConstantBuffer(isConstantBuffer)
     {
         mElementByteSize = sizeof(T);
 
@@ -526,7 +814,8 @@ public:
         // UINT   SizeInBytes;   // multiple of 256
         // } D3D12_CONSTANT_BUFFER_VIEW_DESC;
         if(isConstantBuffer)
-            mElementByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(T));
+            mElementByteSize = d3dUtil::CalcConstantBufferByteSize(
+                                                         sizeof(T));
 
         ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -536,10 +825,13 @@ public:
             nullptr,
             IID_PPV_ARGS(&mUploadBuffer)));
 
-        ThrowIfFailed(mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mMappedData)));
+        ThrowIfFailed(mUploadBuffer->Map(0, nullptr, 
+                          reinterpret_cast<void**>(&mMappedData)));
 
-        // We do not need to unmap until we are done with the resource.  However, we must not write to
-        // the resource while it is in use by the GPU (so we must use synchronization techniques).
+        // We do not need to unmap until we are done with the resource.
+        // However, we must not write to
+        // the resource while it is in use by the GPU 
+        // (so we must use synchronization techniques).
     }
 
     UploadBuffer(const UploadBuffer& rhs) = delete;
@@ -559,7 +851,8 @@ public:
 
     void CopyData(int elementIndex, const T& data)
     {
-        memcpy(&mMappedData[elementIndex*mElementByteSize], &data, sizeof(T));
+        memcpy(&mMappedData[elementIndex*mElementByteSize], &data, 
+                                                         sizeof(T));
     }
 
 private:
@@ -605,12 +898,15 @@ struct ObjectConstants
 
 // Constant buffer to store the constants of n object.
 std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
-mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), n, true);
+mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
+                                        md3dDevice.Get(), n, true);
 
-UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+                                           sizeof(ObjectConstants));
 
 // Address to start of the buffer (0th constant buffer).
-D3D12_CPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+D3D12_CPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()
+                                          ->GetGPUVirtualAddress();
 
 // Offset to the ith object constant buffer in the buffer.
 int boxCBufIndex = i;
@@ -618,17 +914,23 @@ cbAddress += boxCBufIndex * objCBByteSize;
 
 D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 cbvDesc.BufferLocation = cbAddress;
-cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(
+                                           sizeof(ObjectConstants));
 
-md3dDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+md3dDevice->CreateConstantBufferView(&cbvDesc, mCbvHeap
+                             ->GetCPUDescriptorHandleForHeapStart());
 \end{lstlisting}
 \begin{flushleft}
 D3D12\_CONSTANT\_BUFFER\_VIEW\_DESC 结构描述了要绑定到HLSL常量缓冲区结构的常量缓冲区资源的子集。 如前所述，通常一个常量缓冲区存储n个对象的每个对象常量数组，但我们可以通过使用 BufferLocation 和 SizeInBytes 来获取第i个对象常量数据的视图。 由于硬件要求，D3D12\_CONSTANT\_BUFFER\_VIEW\_DESC::SizeInBytes 和D3D12\_CONSTANT\_BUFFER\_VIEW\_DESC::OffsetInBytes 成员必须为256个字节的倍数。 例如，如果您指定了64，那么您将得到以下调试错误：\\
 \end{flushleft}
 \begin{lstlisting}
-D3D12 ERROR: ID3D12Device::CreateConstantBufferView: SizeInBytes of 64 is invalid. Device requires SizeInBytes be multiple of 256.
+D3D12 ERROR: ID3D12Device::CreateConstantBufferView: 
+             SizeInBytes of 64 is invalid. 
+             Device requires SizeInBytes be multiple of 256.
 
-D3D12 ERROR: ID3D12Device::CreateConstantBufferView: OffsetInBytes of 64 is invalid. Device requires OffsetInBytes be a multiple of 256.
+D3D12 ERROR: ID3D12Device::CreateConstantBufferView: 
+             OffsetInBytes of 64 is invalid. 
+             Device requires OffsetInBytes be a multiple of 256.
 \end{lstlisting}
 
 \subsection{根签名和描述符表(Root Signature and Descriptor Tables)}
@@ -669,7 +971,7 @@ cbuffer cbMaterial : register(b2)
     float4x4 gMatTransform;
 };
 \end{lstlisting}
-根签名定义了在绘制调用可以执行之前应用程序将绑定到渲染管道的资源以及这些资源被映射到着色器输入寄存器的位置。 根签名必须与将要使用的着色器兼容（即，根签名必须提供着色器期望在绘制调用执行之前绑定到渲染管道的所有资源）; 这将在创建管道状态对象时进行验证（§6.9）。 不同的绘制调用可能会使用一组不同的着色器程序，这需要不同的根签名。\\
+根签名定义了在绘制调用可以执行之前应用程序将绑定到渲染管道的资源以及这些资源被映射到着色器输入寄存器的位置。 根签名必须与将要使用的着色器兼容（即，根签名必须提供着色器期望在绘制调用执行之前绑定到渲染管道的所有资源）; 这将在创建管道状态对象时进行验证（6.9节）。 不同的绘制调用可能会使用一组不同的着色器程序，这需要不同的根签名。\\
 ~\\
 NOTICE: 如果我们将着色器程序看作函数，并将着色器期望的输入资源作为函数参数来考虑，那么根签名可以被认为是定义函数签名（因此称为根签名）。 通过绑定不同的资源作为参数，着色器输出将会不同。 所以，例如，顶点着色器将取决于输入到着色器的实际顶点以及绑定资源。\\
 ~\\
@@ -811,8 +1113,10 @@ ComPtr<ID3DBlob> d3dUtil::CompileShader(
 
     ComPtr<ID3DBlob> byteCode = nullptr;
     ComPtr<ID3DBlob> errors;
-    hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+    hr = D3DCompileFromFile(filename.c_str(), defines, 
+                            D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                            entrypoint.c_str(), target.c_str(), 
+                            compileFlags, 0, &byteCode, &errors);
 
     if(errors != nullptr)
         OutputDebugStringA((char*)errors->GetBufferPointer());
@@ -824,14 +1128,16 @@ ComPtr<ID3DBlob> d3dUtil::CompileShader(
 // Here is an example of calling this function:
 ComPtr<ID3DBlob> mvsByteCode = nullptr;
 ComPtr<ID3DBlob> mpsByteCode = nullptr;
-mvsByteCode = d3dUtil::CompileShader(L"Shaders\color.hlsl", nullptr, "VS", "vs_5_0");
-mpsByteCode = d3dUtil::CompileShader(L"Shaders\color.hlsl", nullptr, "PS", "ps_5_0");
+mvsByteCode = d3dUtil::CompileShader(L"Shaders\color.hlsl", 
+                                     nullptr, "VS", "vs_5_0");
+mpsByteCode = d3dUtil::CompileShader(L"Shaders\color.hlsl", 
+                                     nullptr, "PS", "ps_5_0");
 \end{lstlisting}
 HLSL错误和警告将通过ppErrorMsgs参数返回。 例如，如果我们拼错了mul函数，那么我们得到以下错误输出到调试窗口：\\
 \begin{lstlisting}
 Shaders\color.hlsl(29, 14-55): error X3004: undecleared identifier 'mu'
 \end{lstlisting}
-编译着色器不会将其绑定到渲染管道以供使用。 我们将在§6.9中看到如何做到这一点。
+编译着色器不会将其绑定到渲染管道以供使用。 我们将在6.9节中看到如何做到这一点。
 \end{flushleft}
 
 \subsection{离线编译(Offline Compilation)}
@@ -845,8 +1151,10 @@ Shaders\color.hlsl(29, 14-55): error X3004: undecleared identifier 'mu'
 对编译着色器使用.cso（compiled shader object）扩展名是常见做法。\\
 要离线编译着色器，我们使用DirectX附带的FXC工具。 这是一个命令行工具。 要通过入口点分别编译VS和PS(保存在color.hlsl中的顶点和像素着色器)，为了debug，我们将编写指令：\\
 \begin{lstlisting}
-fxc "color.hlsl" /Od /Zi /T vs_5_0 /E "VS" /Fo "color_vs.cso" /Fc "color_vs.asm"
-fxc "color.hlsl" /Od /Zi /T ps_5_0 /E "PS" /Fo "color_ps.cso" /Fc "color_ps.asm"
+fxc "color.hlsl" /Od /Zi /T vs_5_0 /E "VS" /Fo 
+    "color_vs.cso" /Fc "color_vs.asm"
+fxc "color.hlsl" /Od /Zi /T ps_5_0 /E "PS" /Fo 
+    "color_ps.cso" /Fc "color_ps.asm"
 \end{lstlisting}
 要通过入口点分别编译VS和PS(保存在color.hlsl中的顶点和像素着色器)，为了发布，我们将编写指令：\\
 \begin{lstlisting}
@@ -878,10 +1186,11 @@ vout.PosH = mul(float4(vin.Pos, 1.0f), worldViewProj);
 然后，我们从输出窗口中看到这一个错误的日志（最重要的错误是修复的关键错误）：\\
 \begin{lstlisting}
 color.hlsl(29,42-54): error X3004: undeclared identifier 'worldViewProj'
-color.hlsl(29,14-55): error X3013: 'mul': no matching 2 parameter intrinsic function
+color.hlsl(29,14-55): error X3013: 'mul': no matching 2 parameter 
+                      intrinsic function
 color.hlsl(29,14-55): error X3013: Possible intriinsic function are:
 color.hlsl(29,14-55): error X3013: mul(float|half...
-\begin{lstlisting}
+\end{lstlisting}
 在编译期看到错误比运行期方便得多。\\
 我们已经展示了如何将顶点和像素着色器离线编译为.cso文件。 因此，我们不再需要在运行时执行它（即，我们不需要调用D3DCompileFromFile）。 但是，我们仍然需要将编译的着色器对象字节码从.cso文件加载到我们的应用程序中。 这可以使用标准C ++文件输入机制完成，如下所示：\\
 \begin{lstlisting}

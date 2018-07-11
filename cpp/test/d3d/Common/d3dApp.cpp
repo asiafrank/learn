@@ -581,6 +581,20 @@ void D3DApp::CalculateFrameStats()
     
     static int frameCnt = 0;
     static float timeElapsed = 0.0f;
+    static const float baseSleepInterval = 1000 / 60; // 基准间隔 1000 ms / 60 frameCnt
+    static float currSleepInterval = baseSleepInterval; // 当前间隔
+
+    float deltaTime = mTimer.DeltaTime();
+    if (deltaTime >= baseSleepInterval)
+    {
+        currSleepInterval = 1;
+    }
+    else
+    {
+        currSleepInterval = baseSleepInterval - deltaTime;
+    }
+
+    Sleep(currSleepInterval);
 
     frameCnt++;
 
