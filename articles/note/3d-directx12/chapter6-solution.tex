@@ -15,7 +15,7 @@ struct Vertex
 };
 \end{lstlisting}
 \begin{flushleft}
-答:\\
+解:\\
 \end{flushleft}
 \begin{lstlisting}
 std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
@@ -55,7 +55,7 @@ struct VColorData
 位置元素挂在输入槽0上，颜色元素挂在输入槽1上。此外还需注意 D3D12\_INPUT\_ELEMENT\_DESC::AlignedByteOffset 对于两个元素来说都是0；然后使用 ID3D12CommandList::IASetVertexBuffers 方法来将缓冲区绑定到槽0和槽1。然后，Direct3D将使用来自不同输入槽的元素来组合顶点。 这可以用作优化。 例如，在阴影映射算法中，我们需要每帧绘制两次场景：一次从光源的角度（阴影传递），一次从主摄像头的角度（主传递）。 阴影传递仅需要位置数据和纹理坐标（对于经过alpha测试的几何体）。 因此我们可以将顶点数据分成两个槽：一个槽包含位置和纹理坐标，另一个槽包含其他顶点属性（例如，法线和切线矢量）。 现在我们可以轻松地仅在阴影传递所需的顶点数据中流动（位置和纹理坐标），从而为阴影传递节省数据带宽。 主渲染过程将使用两个顶点输入槽来获取所需的所有顶点数据。 为了提高性能，建议最小化用于小于或等于3的小数字的输入槽数。\\
 \end{flushleft}
 \begin{flushleft}
-答：TODO
+答：TODO，可以参考 chapter7 LandAndWaves 例子
 \end{flushleft}
 
 %---------- 3 ----------------
@@ -75,10 +75,10 @@ struct VColorData
   // D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST 改为 D3D11_PRIMITIVE_TOPOLOGY_POINTLIST
   mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
   \end{lstlisting}
-  \item 2. 同 1 改为 D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP 即可
-  \item 3. 同 1 改为 D3D11_PRIMITIVE_TOPOLOGY_LINELIST 即可
-  \item 4. 同 1 改为 D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP 即可
-  \item 5. 同 1 改为 D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST 即可
+  \item 2. 同 1 改为 D3D11\_PRIMITIVE\_TOPOLOGY\_LINESTRIP 即可
+  \item 3. 同 1 改为 D3D11\_PRIMITIVE\_TOPOLOGY\_LINELIST 即可
+  \item 4. 同 1 改为 D3D11\_PRIMITIVE\_TOPOLOGY\_TRIANGLESTRIP 即可
+  \item 5. 同 1 改为 D3D11\_PRIMITIVE\_TOPOLOGY\_TRIANGLELIST 即可
 \end{itemize}
 
 \end{flushleft}
