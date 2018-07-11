@@ -132,7 +132,7 @@ NOTICE：回忆第4章深度/模板缓冲区(depth/stencil buffer)，这一阶�
 ~\\
 对于常量几何(不以每帧为基础改变的几何图形)，我们将顶点缓冲区(vertex buffer)放入默认堆(D3D12\_HEAP\_TYPE\_DEFAULT)中，以提升性能。通常，一个游戏中大多数几何图形都是常量集合，像树、建筑、地形、人物等。顶点缓冲区初始化之后，只有GPU需要从顶点缓冲区中读取并画几何图形，所以默认堆就变得有意义了。然而，如果CPU不能将顶点缓冲区写入到默认堆中，我们如何才能初始化顶点缓冲区呢？\\
 ~\\
-另外要新建实际的缓冲区资源，我们需要用D3D12\_HEAP\_TYPE\_UPLOAD新建一个中间上传缓冲资源。回忆4.3.8节，当我们需要从CPU到GPU复制数据时，我们将一个资源提交到上传队中。在创建上传缓冲区之后，从系统内存中复制顶点数据到上传缓冲区，然后从上唇缓冲区复制顶点数据到实际的顶点缓冲区中。\\
+另外要新建实际的缓冲区资源，我们需要用D3D12\_HEAP\_TYPE\_UPLOAD新建一个中间上传缓冲资源。回忆4.3.8节，当我们需要从CPU到GPU复制数据时，我们将一个资源提交到上传队中。在创建上传缓冲区之后，从系统内存中复制顶点数据到上传缓冲区，然后从上传缓冲区复制顶点数据到实际的顶点缓冲区中。\\
 ~\\
 因为一个中间上传缓冲区需要初始化数据后的默认缓冲区(D3D12\_HEAP\_TYPE\_DEFAULT)，所以为了代码重用性 d3dUtil.h/cpp 中建立了下面工具方法：
 \begin{lstlisting}
@@ -277,6 +277,7 @@ mCommandList->IASetVertexBuffers(0, 1, &mVBView2);
 /*...draw objects using vertex buffer 2...*/
 \end{lstlisting}
 给输入槽设置顶点缓冲区并不意味着绘制它们；这一步只是给管道提供顶点数据。最后一步才是绘制顶点，使用 ID3D12GraphicsCommandList::DrawInstanced 方法：\\
+
 \begin{lstlisting}
 void ID3D12GraphicsCommandList::DrawInstanced(
     UINT VertexCountPerInstance,
@@ -289,6 +290,7 @@ void ID3D12GraphicsCommandList::DrawInstanced(
 3. StartVertexLocation：指定开始绘制的顶点缓冲区中第一个顶点的索引（从零开始）。\\
 4. StartInstanceLocation：用于称为实例的高级技术; 现在，将其设置为0。\\
 VertexCountPerInstance和StartVertexLocation这两个参数定义要绘制的顶点缓冲区中的顶点的连续子集;见图\ref{fig:6-2}。\\
+
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{6-2}
     \centering
@@ -349,7 +351,8 @@ const UINT ibByteSize = 36 * sizeof(std::uint16_t);
 
 ComPtr<ID3D12Resource> IndexBufferGPU = nullptr;
 ComPtr<ID3D12Resource> IndexBufferUploader = nullptr;
-IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), mCommandList.Get(), indices, ibByteSize, IndexBufferUploader);
+IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(), 
+                       mCommandList.Get(), indices, ibByteSize, IndexBufferUploader);
 D3D12_INDEX_BUFFER_VIEW ibv;
 ibv.BufferLocation = IndexBufferGPU->GetGPUVirtualAddress();
 ibv.Format = DXGI_FORMAT_R16_UINT;
@@ -392,13 +395,15 @@ firstBoxVertexPos+numBoxVertices-1
 然后我们可以用以下三个调用一个接一个地绘制球体，盒子和圆柱体：\\
 \begin{lstlisting}
 mCmdList->DrawIndexedInstanced(numSphereIndices, 1, 0, 0, 0);
-mCmdList->DrawIndexedInstanced(numBoxIndices, 1, firstBoxIndex, firstBoxVertexPos, 0);
-mCmdList->DrawIndexedInstanced(numCylIndices, 1, firstCylIndex, firstCylVertexPos, 0);
+mCmdList->DrawIndexedInstanced(numBoxIndices, 1, 
+                               firstBoxIndex, firstBoxVertexPos, 0);
+mCmdList->DrawIndexedInstanced(numCylIndices, 1, 
+                               firstCylIndex, firstCylVertexPos, 0);
 \end{lstlisting}
 下一章(chapter)"Shapes"代码样例就使用了这样的技术。
 \end{flushleft}
 
-
+\clearpage
 \section{顶点着色器例子(Example Vertex Shader)}
 \begin{flushleft}
 下面是简单顶点着色器的实现（回忆5.6节）：
@@ -2064,7 +2069,6 @@ struct Vertex
     XMCOLOR  Color;
 };
 \end{lstlisting}
-\begin{flushleft}
 
 %---------- 2 ----------------
 \begin{flushleft}
