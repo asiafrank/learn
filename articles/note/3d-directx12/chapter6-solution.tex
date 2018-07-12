@@ -1,4 +1,4 @@
-\chapter*{6.13 习题}
+\chapter{6.13 习题}
 %---------- 1 ----------------
 \begin{flushleft}
 1. 写出下面顶点结构的 D3D12\_INPUT\_ELEMENT\_DESC 数组：
@@ -59,7 +59,7 @@ struct VColorData
 要点：\\
 \begin{itemize}
   \item 1. 调用 IASetVertexBuffers 指定输入槽用于提供数据
-  \item 2. D3D12_INPUT_LAYOUT_DESC的D3D12_INPUT_ELEMENT_DESC 结构中的 inputSlot 用于指定 hlsl 中对应的 SemanticName 输入参数来自于哪个槽。
+  \item 2. D3D12\_INPUT\_LAYOUT\_DESC的D3D12\_INPUT\_ELEMENT\_DESC 结构中的 inputSlot 用于指定 hlsl 中对应的 SemanticName 输入参数来自于哪个槽。
   \item 3. 1,2 提供了 Color 和 Pos 绑定在一起的依据。在顶点着色器阶段，能顺利将 Color 和 Pos 整合成 VertexIn。
 \end{itemize}
 需要修改的部分源码如下：\\
@@ -102,20 +102,26 @@ void BoxApp::Draw(const GameTimer& gt)
     
     // 重要修改在这里
 
-    mCommandList->IASetVertexBuffers(0, 1, &mGeoPos->VertexBufferView());   // Position slot 0
-    mCommandList->IASetVertexBuffers(1, 1, &mGeoColor->VertexBufferView()); // Color: slot 1
+    // Position slot 0
+    mCommandList->IASetVertexBuffers(0, 1, &mGeoPos->VertexBufferView());
+    // Color: slot 1
+    mCommandList->IASetVertexBuffers(1, 1, &mGeoColor->VertexBufferView());
     mCommandList->IASetIndexBuffer(&mGeoPos->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    mCommandList->IASetPrimitiveTopology(
+                      D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    mCommandList->SetGraphicsRootDescriptorTable(0, 
+                      mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
     SubmeshGeometry boxmesh = mGeoPos->DrawArgs["box"];
     mCommandList->DrawIndexedInstanced(boxmesh.IndexCount, 1,
-        boxmesh.StartIndexLocation, boxmesh.BaseVertexLocation, 0);
+                      boxmesh.StartIndexLocation, 
+                      boxmesh.BaseVertexLocation, 0);
 
     SubmeshGeometry trianglemesh = mGeoPos->DrawArgs["triangle"];
     mCommandList->DrawIndexedInstanced(trianglemesh.IndexCount, 1, 
-        trianglemesh.StartIndexLocation, trianglemesh.BaseVertexLocation, 0);
+                      trianglemesh.StartIndexLocation, 
+                      trianglemesh.BaseVertexLocation, 0);
 
     // ...code...
 }
@@ -126,8 +132,10 @@ void BoxApp::BuildShadersAndInputLayout()
 {
     HRESULT hr = S_OK;
 
-    mvsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
-    mpsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
+    mvsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", 
+                      nullptr, "VS", "vs_5_0");
+    mpsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", 
+                      nullptr, "PS", "ps_5_0");
 
     // 重要修改在这里: COLOR 的 InputSlot 为 1，AlignedByteOffset 为 0
     mInputLayout = {
@@ -208,9 +216,12 @@ void BoxApp::BuildBoxGeometry()
         0, 1, 2  // indexCount: 3
     };
 
-    const UINT vbPosByteSize = (UINT)posVertices.size() * sizeof(VPosData);
-    const UINT vbColorByteSize = (UINT)colorVertices.size() * sizeof(VColorData);
-    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+    const UINT vbPosByteSize = 
+              (UINT)posVertices.size() * sizeof(VPosData);
+    const UINT vbColorByteSize = 
+              (UINT)colorVertices.size() * sizeof(VColorData);
+    const UINT ibByteSize = 
+              (UINT)indices.size() * sizeof(std::uint16_t);
 
     mGeoPos = std::make_unique<MeshGeometry>();
     mGeoPos->Name = "GeoPos";
@@ -218,25 +229,37 @@ void BoxApp::BuildBoxGeometry()
     mGeoColor = std::make_unique<MeshGeometry>();
     mGeoColor->Name = "GeoColor";
 
-    ThrowIfFailed(D3DCreateBlob(vbPosByteSize, &mGeoPos->VertexBufferCPU));
-    CopyMemory(mGeoPos->VertexBufferCPU->GetBufferPointer(), posVertices.data(), vbPosByteSize);
+    ThrowIfFailed(D3DCreateBlob(vbPosByteSize, 
+                  &mGeoPos->VertexBufferCPU));
+    CopyMemory(mGeoPos->VertexBufferCPU->GetBufferPointer(), 
+               posVertices.data(), vbPosByteSize);
 
-    ThrowIfFailed(D3DCreateBlob(vbColorByteSize, &mGeoColor->VertexBufferCPU));
-    CopyMemory(mGeoColor->VertexBufferCPU->GetBufferPointer(), colorVertices.data(), vbColorByteSize);
+    ThrowIfFailed(D3DCreateBlob(vbColorByteSize, 
+                      &mGeoColor->VertexBufferCPU));
+    CopyMemory(mGeoColor->VertexBufferCPU->GetBufferPointer(), 
+               colorVertices.data(), vbColorByteSize);
 
-    ThrowIfFailed(D3DCreateBlob(ibByteSize, &mGeoPos->IndexBufferCPU));
-    CopyMemory(mGeoPos->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, 
+                     &mGeoPos->IndexBufferCPU));
+    CopyMemory(mGeoPos->IndexBufferCPU->GetBufferPointer(), 
+                   indices.data(), ibByteSize);
 
     // color 不用 indexBuffer
 
-    mGeoPos->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), posVertices.data(), vbPosByteSize, mGeoPos->VertexBufferUploader);
+    mGeoPos->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+        md3dDevice.Get(),
+        mCommandList.Get(), posVertices.data(), 
+        vbPosByteSize, mGeoPos->VertexBufferUploader);
 
-    mGeoPos->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), indices.data(), ibByteSize, mGeoPos->IndexBufferUploader);
+    mGeoPos->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+        md3dDevice.Get(),
+        mCommandList.Get(), indices.data(),
+        ibByteSize, mGeoPos->IndexBufferUploader);
 
-    mGeoColor->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), colorVertices.data(), vbColorByteSize, mGeoColor->VertexBufferUploader);
+    mGeoColor->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+        md3dDevice.Get(),
+        mCommandList.Get(), colorVertices.data(),
+        vbColorByteSize, mGeoColor->VertexBufferUploader);
 
     mGeoPos->VertexByteStride = sizeof(VPosData);
     mGeoPos->VertexBufferByteSize = vbPosByteSize;
@@ -281,8 +304,10 @@ void BoxApp::BuildBoxGeometry()
 \begin{itemize}
   \item 1. 修改 BoxApp::Draw 方法：\\
   \begin{lstlisting}
-  // D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST 改为 D3D11_PRIMITIVE_TOPOLOGY_POINTLIST
-  mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+  // D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST 改为 
+  // D3D11_PRIMITIVE_TOPOLOGY_POINTLIST
+  mCommandList->IASetPrimitiveTopology(
+      D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
   \end{lstlisting}
   \item 2. 同 1 改为 D3D11\_PRIMITIVE\_TOPOLOGY\_LINESTRIP 即可
   \item 3. 同 1 改为 D3D11\_PRIMITIVE\_TOPOLOGY\_LINELIST 即可
