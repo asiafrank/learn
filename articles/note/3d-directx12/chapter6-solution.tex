@@ -55,8 +55,217 @@ struct VColorData
 位置元素挂在输入槽0上，颜色元素挂在输入槽1上。此外还需注意 D3D12\_INPUT\_ELEMENT\_DESC::AlignedByteOffset 对于两个元素来说都是0；然后使用 ID3D12CommandList::IASetVertexBuffers 方法来将缓冲区绑定到槽0和槽1。然后，Direct3D将使用来自不同输入槽的元素来组合顶点。 这可以用作优化。 例如，在阴影映射算法中，我们需要每帧绘制两次场景：一次从光源的角度（阴影传递），一次从主摄像头的角度（主传递）。 阴影传递仅需要位置数据和纹理坐标（对于经过alpha测试的几何体）。 因此我们可以将顶点数据分成两个槽：一个槽包含位置和纹理坐标，另一个槽包含其他顶点属性（例如，法线和切线矢量）。 现在我们可以轻松地仅在阴影传递所需的顶点数据中流动（位置和纹理坐标），从而为阴影传递节省数据带宽。 主渲染过程将使用两个顶点输入槽来获取所需的所有顶点数据。 为了提高性能，建议最小化用于小于或等于3的小数字的输入槽数。\\
 \end{flushleft}
 \begin{flushleft}
-答：TODO，调用 IASetVertexBuffers 指定输入槽用于提供数据，D3D12_INPUT_LAYOUT_DESC的D3D12_INPUT_ELEMENT_DESC 结构中的 inputSlot 用于指定 hlsl 中对应的输入参数来自于哪个槽。
+解:\\
+要点：\\
+\begin{itemize}
+  \item 1. 调用 IASetVertexBuffers 指定输入槽用于提供数据
+  \item 2. D3D12_INPUT_LAYOUT_DESC的D3D12_INPUT_ELEMENT_DESC 结构中的 inputSlot 用于指定 hlsl 中对应的 SemanticName 输入参数来自于哪个槽。
+  \item 3. 1,2 提供了 Color 和 Pos 绑定在一起的依据。在顶点着色器阶段，能顺利将 Color 和 Pos 整合成 VertexIn。
+\end{itemize}
+需要修改的部分源码如下：\\
 \end{flushleft}
+\begin{lstlisting}
+// chapter 6: BoxApp.cpp 修改
+// 下面修改满足题目要求外，新增了一个三角形平面
+// ...code...
+struct VPosData
+{
+    XMFLOAT3 Pos;
+};
+
+struct VColorData
+{
+    XMFLOAT4 Color;
+};
+
+// ...code...
+
+class BoxApp : public D3DApp
+{
+    // ...code...
+
+    // 这里的 mTheta 和 mPhi 是初始时，摄像机对准的角度
+    float mTheta = 1.5f*XM_PI; // 左右角度
+    float mPhi = XM_PIDIV4;    // 上下角度
+    // 摄像机到目标原点的距离，也相当于屏幕横坐标的大小;
+    // 控制半径，能让立方体放大缩小，半径越大，立方体越小
+    float mRadius = 10.0f;
+
+    // ...code...
+};
+
+// ...code...
+
+void BoxApp::Draw(const GameTimer& gt)
+{
+    // ...code...
+    
+    // 重要修改在这里
+
+    mCommandList->IASetVertexBuffers(0, 1, &mGeoPos->VertexBufferView());   // Position slot 0
+    mCommandList->IASetVertexBuffers(1, 1, &mGeoColor->VertexBufferView()); // Color: slot 1
+    mCommandList->IASetIndexBuffer(&mGeoPos->IndexBufferView());
+    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+    SubmeshGeometry boxmesh = mGeoPos->DrawArgs["box"];
+    mCommandList->DrawIndexedInstanced(boxmesh.IndexCount, 1,
+        boxmesh.StartIndexLocation, boxmesh.BaseVertexLocation, 0);
+
+    SubmeshGeometry trianglemesh = mGeoPos->DrawArgs["triangle"];
+    mCommandList->DrawIndexedInstanced(trianglemesh.IndexCount, 1, 
+        trianglemesh.StartIndexLocation, trianglemesh.BaseVertexLocation, 0);
+
+    // ...code...
+}
+
+// ...code...
+
+void BoxApp::BuildShadersAndInputLayout()
+{
+    HRESULT hr = S_OK;
+
+    mvsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
+    mpsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
+
+    // 重要修改在这里: COLOR 的 InputSlot 为 1，AlignedByteOffset 为 0
+    mInputLayout = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, 
+                      D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, 
+                      D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+}
+
+// 重要修改在这里：新增了三角形，position 数据和 color 数据分开
+void BoxApp::BuildBoxGeometry()
+{
+    std::array<VPosData, 11> posVertices = {
+        // 正立方体 position
+        XMFLOAT3(-1.0f, -1.0f, -1.0f),  // 0
+        XMFLOAT3(-1.0f, +1.0f, -1.0f),  // 1
+        XMFLOAT3(+1.0f, +1.0f, -1.0f),  // 2
+        XMFLOAT3(+1.0f, -1.0f, -1.0f),  // 3
+        XMFLOAT3(-1.0f, -1.0f, +1.0f),  // 4
+        XMFLOAT3(-1.0f, +1.0f, +1.0f),  // 5
+        XMFLOAT3(+1.0f, +1.0f, +1.0f),  // 6
+        XMFLOAT3(+1.0f, -1.0f, +1.0f),  // 7
+        // 三角形 color
+        XMFLOAT3(2.0f, 1.0f, -2.0f),    // 0
+        XMFLOAT3(2.0f, +3.0f,-2.0f),    // 1
+        XMFLOAT3(+3.0f, +3.0f, -2.0f)   // 2
+    };
+
+    std::array<VColorData, 11> colorVertices = {
+        // 正立方体 color
+        XMFLOAT4(Colors::White),  // 0
+        XMFLOAT4(Colors::Black),  // 1
+        XMFLOAT4(Colors::Red),    // 2
+        XMFLOAT4(Colors::Green),  // 3
+        XMFLOAT4(Colors::Blue),   // 4
+        XMFLOAT4(Colors::Yellow), // 5
+        XMFLOAT4(Colors::Cyan),   // 6
+        XMFLOAT4(Colors::Magenta),// 7
+        // 三角形 color
+        XMFLOAT4(Colors::Magenta), // 0
+        XMFLOAT4(Colors::Blue),    // 1
+        XMFLOAT4(Colors::Yellow)   // 2
+    };
+
+    std::array<std::uint16_t, 39> indices = {
+        // 正立方体面
+        // front face
+        0, 1, 2,
+        0, 2, 3,
+
+        // back face
+        4, 6, 5,
+        4, 7, 6,
+
+        // left face
+        4, 5, 1,
+        4, 1, 0,
+
+        // right face
+        3, 2, 6,
+        3, 6, 7,
+
+        // top face
+        1, 5, 6,
+        1, 6, 2,
+
+        // bottom face
+        4, 0, 3,
+        4, 3, 7, // indexCount:36
+
+        /*
+        因为 DrawIndexedInstanced 里定义了 BaseVertexLocation,
+        trianglemesh.BaseVertexLocation = 8,
+        所以索引又从 0 开始来描绘三角形。即这里的 0,1,2 代表 vertices[8],[9],[10]
+        */
+        // 三角形
+        0, 1, 2  // indexCount: 3
+    };
+
+    const UINT vbPosByteSize = (UINT)posVertices.size() * sizeof(VPosData);
+    const UINT vbColorByteSize = (UINT)colorVertices.size() * sizeof(VColorData);
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    mGeoPos = std::make_unique<MeshGeometry>();
+    mGeoPos->Name = "GeoPos";
+
+    mGeoColor = std::make_unique<MeshGeometry>();
+    mGeoColor->Name = "GeoColor";
+
+    ThrowIfFailed(D3DCreateBlob(vbPosByteSize, &mGeoPos->VertexBufferCPU));
+    CopyMemory(mGeoPos->VertexBufferCPU->GetBufferPointer(), posVertices.data(), vbPosByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(vbColorByteSize, &mGeoColor->VertexBufferCPU));
+    CopyMemory(mGeoColor->VertexBufferCPU->GetBufferPointer(), colorVertices.data(), vbColorByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &mGeoPos->IndexBufferCPU));
+    CopyMemory(mGeoPos->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    // color 不用 indexBuffer
+
+    mGeoPos->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), posVertices.data(), vbPosByteSize, mGeoPos->VertexBufferUploader);
+
+    mGeoPos->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), indices.data(), ibByteSize, mGeoPos->IndexBufferUploader);
+
+    mGeoColor->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), colorVertices.data(), vbColorByteSize, mGeoColor->VertexBufferUploader);
+
+    mGeoPos->VertexByteStride = sizeof(VPosData);
+    mGeoPos->VertexBufferByteSize = vbPosByteSize;
+    mGeoPos->IndexFormat = DXGI_FORMAT_R16_UINT;
+    mGeoPos->IndexBufferByteSize = ibByteSize;
+
+    mGeoColor->VertexByteStride = sizeof(VColorData);
+    mGeoColor->VertexBufferByteSize = vbColorByteSize;
+    mGeoColor->IndexFormat = DXGI_FORMAT_R16_UINT;
+    mGeoColor->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry boxmesh;
+    boxmesh.IndexCount = (UINT)36;
+    boxmesh.StartIndexLocation = 0;
+    boxmesh.BaseVertexLocation = 0;
+
+    SubmeshGeometry trianglemesh;
+    trianglemesh.IndexCount = (UINT)3;
+    trianglemesh.StartIndexLocation = 36;
+    trianglemesh.BaseVertexLocation = 8;
+
+    mGeoPos->DrawArgs["box"] = boxmesh;
+    mGeoPos->DrawArgs["triangle"] = trianglemesh;
+
+    mGeoColor->DrawArgs["box"] = boxmesh;
+    mGeoColor->DrawArgs["triangle"] = trianglemesh;
+}
+// ...code...
+\end{lstlisting}
 
 %---------- 3 ----------------
 \begin{flushleft}
@@ -98,7 +307,6 @@ struct VColorData
 \begin{flushleft}
 5. 运行“Box” DEMO，并回想一下我们仅在顶点指定颜色。 解释如何为三角形上的每个像素获取像素颜色。
 \end{flushleft}
-
 
 %---------- 6 ----------------
 \begin{flushleft}
