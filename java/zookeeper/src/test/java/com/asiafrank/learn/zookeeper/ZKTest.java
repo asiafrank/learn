@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNotEquals;
  */
 public class ZKTest {
 
-    private static final String hostPort = "10.1.53.20:2181";
+    private static final String hostPort = "<host:port>";
 
     @Test
     public void writeLockTest() throws Exception {

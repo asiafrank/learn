@@ -162,7 +162,10 @@ find if we have been created earlier if not create our node
 lets try look up the current ID if we failed 
 in the middle of creating the znode
 ```
-也就是说分布式锁(不同zk session)情况下，调用 zookeeper.create 方法时失败，id 还是为 null，findPrefixInChildren 中的 id 赋值操作的目的是为了弥补这种 znode create 失败的情况。令人疑惑的是这里的 id 赋值是不包含 dir 的。而且这种不正常的赋值以 x 开头，在判断 lessThanMe 逻辑中，getChildren 方法返回的列表字符串都包含 dir，且 dir 必须以'/'开头，x 字符是比 '/' 大的，因此不管怎样，只要 getChildren 返回不为空，则这个不正常的 id 定会拿到一个 lessThanMe 节点，然后watch它，接着继续执行下去。但是这个不正常的 id 没有任何意义，所以我建议使用修正二的做法。
+也就是说分布式锁(不同zk session)情况下，调用 zookeeper.create 方法时失败，id 还是为 null，findPrefixInChildren 中的 id 赋值操作的目的是为了弥补这种 znode create 失败的情况。令人疑惑的是这里的 id 赋值是不包含 dir 的。而且这种不正常的赋值以 x 开头，在判断 lessThanMe 逻辑中，getChildren 方法返回的列表字符串都包含 dir，且 dir 必须以'/'开头，x 字符是比 '/' 大的，因此不管怎样，只要 getChildren 返回不为空，则这个不正常的 id 定会拿到一个 lessThanMe 节点，然后watch它，接着继续执行下去，直到接到 lessThanMe 节点删除的通知，再次调用 lock 方法，这时 getChildren 列表必定为空，然后重新 create 一个临时节点，将该节点的完整路径赋值给 id，原不正常的 id 被丢弃，继续执行。
+
+
+但是这个不正常的 id 没有意义，尤其是在 lessThanMe 判断中"混淆视听"，不易理解，所以我建议使用修正二的做法，清晰明白。
 
 相关测试代码见 [test](/java/zookeeper/src/test/java/com/asiafrank/learn/zookeeper/ZKTest.java)
 ##### 另，附官方的 WriteLock.java：

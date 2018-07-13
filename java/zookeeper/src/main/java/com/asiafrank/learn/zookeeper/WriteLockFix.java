@@ -176,16 +176,6 @@ public class WriteLockFix extends ProtocolSupport {
          */
         private void findPrefixInChildren(String prefix, ZooKeeper zookeeper, String dir) 
             throws KeeperException, InterruptedException {
-            List<String> names = zookeeper.getChildren(dir, false);
-            for (String name : names) {
-                if (name.startsWith(prefix)) {
-                    String _id = dir + "/" + name;
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Found id created last time: " + _id);
-                    }
-                    break;
-                }
-            }
             if (id == null) {
                 id = zookeeper.create(dir + "/" + prefix, data, 
                         getAcl(), EPHEMERAL_SEQUENTIAL);
@@ -194,7 +184,6 @@ public class WriteLockFix extends ProtocolSupport {
                     LOG.debug("Created id: " + id);
                 }
             }
-
         }
         
         /**
