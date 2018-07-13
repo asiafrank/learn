@@ -300,7 +300,7 @@ void BoxApp::BuildBoxGeometry()
   \item 4. 一个三角条(triangle strip)，如图5.13d。
   \item 5. 一个三角列表(triangle list)，如图5.14a。
 \end{itemize}
-答: \\
+解: \\
 \begin{itemize}
   \item 1. 修改 BoxApp::Draw 方法：\\
   \begin{lstlisting}
@@ -320,8 +320,88 @@ void BoxApp::BuildBoxGeometry()
 %---------- 4 ----------------
 \begin{flushleft}
 4. 构造金字塔的顶点和索引列表，如图\ref{fig:6-8}所示，并绘制它。 将基顶点设为绿色和顶上顶点设为红色。\\
-答：TODO
+解：修改 BoxApp.cpp 中金字塔的顶点和索引列表。代码如下
 \end{flushleft}
+\begin{lstlisting}
+void BoxApp::BuildBoxGeometry()
+{
+    // DirectX 是左手坐标系，z轴负在前，正在后
+    std::array<Vertex, 5> vertices = {
+        // 金字塔
+        Vertex({ XMFLOAT3(-1.0f, 0.0f, -1.0f), 
+                 XMFLOAT4(Colors::Green) }),  // 0: (-1,0,-1)
+        Vertex({ XMFLOAT3(+1.0f, 0.0f, -1.0f), 
+                 XMFLOAT4(Colors::Green) }),  // 1: (1,0,-1)
+        Vertex({ XMFLOAT3(+1.0f, 0.0f, +1.0f), 
+                 XMFLOAT4(Colors::Green) }),  // 2: (1,0,1)
+        Vertex({ XMFLOAT3(-1.0f, 0.0f, +1.0f), 
+                 XMFLOAT4(Colors::Green) }),  // 3: (-1,0,1)
+        Vertex({ XMFLOAT3(0.0f, +1.5f, 0.0f),  
+                 XMFLOAT4(Colors::Red) }),    // 4: (0,1.5,0)
+    };
+
+    std::array<std::uint16_t, 18> indices = {
+        // 底面
+        0, 1, 2,
+        0, 2, 3,
+
+        // 侧面1
+        0, 4, 1,
+
+        // 侧面2
+        1, 4, 2,
+
+        // 侧面3
+        2, 4, 3,
+
+        // 侧面4
+        3, 4, 0
+    };
+
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    mGeo = std::make_unique<MeshGeometry>();
+    mGeo->Name = "Geo";
+
+    ThrowIfFailed(D3DCreateBlob(vbByteSize, 
+                      &mGeo->VertexBufferCPU));
+    CopyMemory(mGeo->VertexBufferCPU->GetBufferPointer(), 
+               vertices.data(), vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, 
+                      &mGeo->IndexBufferCPU));
+    CopyMemory(mGeo->IndexBufferCPU->GetBufferPointer(), 
+               indices.data(), ibByteSize);
+
+    mGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+                                md3dDevice.Get(),
+                                mCommandList.Get(), 
+                                vertices.data(), 
+                                vbByteSize, 
+                                mGeo->VertexBufferUploader);
+
+    mGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+                               md3dDevice.Get(),
+                               mCommandList.Get(), 
+                               indices.data(), 
+                               ibByteSize, 
+                               mGeo->IndexBufferUploader);
+
+    mGeo->VertexByteStride = sizeof(Vertex);
+    mGeo->VertexBufferByteSize = vbByteSize;
+    mGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    mGeo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry pyramidmesh;
+    pyramidmesh.IndexCount = (UINT)indices.size();
+    pyramidmesh.StartIndexLocation = 0;
+    pyramidmesh.BaseVertexLocation = 0;
+
+    mGeo->DrawArgs["pyramid"] = pyramidmesh;
+}
+\end{lstlisting}
+
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{6-8}
     \centering
@@ -330,7 +410,8 @@ void BoxApp::BuildBoxGeometry()
 \end{figure}
 %---------- 5 ----------------
 \begin{flushleft}
-5. 运行“Box” DEMO，并回想一下我们仅在顶点指定颜色。 解释如何为三角形上的每个像素获取像素颜色。
+5. 运行“Box” DEMO，并回想一下我们仅在顶点指定颜色。 解释如何为三角形上的每个像素获取像素颜色。\\
+解：(猜测)在像素着色阶段时，使用了多采样技术(具体见 4.1.7节)，取像素平均值。由于 Box 所使用的颜色简单，多采样使用 1 倍采样做处理即可。(d3dApp.h中m4xMsaaState默认为false)
 \end{flushleft}
 
 %---------- 6 ----------------
@@ -338,16 +419,67 @@ void BoxApp::BuildBoxGeometry()
 6. 修改 Box Demo, 在转换为世界空间之前将以下变换应用于顶点着色器中的每个顶点。
 \end{flushleft}
 \begin{lstlisting}
-vin.PosL.xy += 0.5f*sin(vinL.Pos.x)*sin(3.0f*gTime);
+vin.PosL.xy += 0.5f*sin(vin.PosL.x)*sin(3.0f*gTime);
 vin.PosL.z *= 0.6f + 0.4f*sin(2.0f*gTime);
 \end{lstlisting}
 \begin{flushleft}
-您需要添加一个gTime常量缓冲区变量; 此变量对应于当前的 GameTimer::TotalTime() 值。 使用正弦函数周期性地扭曲顶点来将时间通过顶点动画来展现。
+您需要添加一个gTime常量缓冲区变量; 此变量对应于当前的 GameTimer::TotalTime() 值。 使用正弦函数周期性地扭曲顶点来将时间通过顶点动画来展现。\\
+解：根据要求作如下修改:
 \end{flushleft}
+\begin{lstlisting}
+// BoxApp.cpp 结构声明 ObjectConstants
+struct ObjectConstants
+{
+    XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
+    float gTime; // 新增一个 gTime 属性
+};
+
+// BoxApp.cpp BoxApp::Update 增加一行 gTime 赋值语句
+void BoxApp::Update(const GameTimer& gt)
+{
+    //...code...
+    objConstants.gTime = mTimer.TotalTime();
+    mObjectCB->CopyData(0, objConstants);
+}
+
+// BoxApp.cpp BoxApp::BuildConstantBuffers 
+// 将 UploadBuffer elementCount 参数改为 2
+void BoxApp::BuildConstantBuffers()
+{
+    mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
+                    md3dDevice.Get(), 2, true);
+
+    //...code...
+}
+
+// color.hlsl 修改 cbPerObject 结构
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorldViewProj;
+    float gTime;
+};
+
+// color.hlsl 修改 VS
+VertexOut VS(VertexIn vin)
+{
+    vin.PosL.xy += 0.5f*sin(vin.PosL.x)*sin(3.0f*gTime);
+    vin.PosL.z *= 0.6f + 0.4f*sin(2.0f*gTime);
+
+    VertexOut vout;
+
+    // Transform to homogeneous clip space.
+    vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+    
+    // Just pass vertex color into the pixel shader.
+    vout.Color = vin.Color;
+
+    return vout;
+}
+\end{lstlisting}
 
 %---------- 7 ----------------
 \begin{flushleft}
-7. 将箱(box)和金字塔的顶点（练习4）合并到一个大的顶点缓冲区中。 还将框和金字塔的索引合并到一个大索引缓冲区中（但不更新索引值）。 然后使用 ID3D12CommandList::DrawIndexedInstanced 的参数逐个绘制框和金字塔。 使用世界变换矩阵，使框和金字塔在世界空间中不相交。
+7. 将box和金字塔的顶点（练习4）合并到一个大的顶点缓冲区中。 还将框和金字塔的索引合并到一个大索引缓冲区中（但不更新索引值）。 然后使用 ID3D12CommandList::DrawIndexedInstanced 的参数逐个绘制框和金字塔。 使用世界变换矩阵，使框和金字塔在世界空间中不相交。
 \end{flushleft}
 
 %---------- 8 ----------------

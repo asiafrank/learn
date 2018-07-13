@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true" scanPeriod="5 minutes">
+
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <charset>UTF-8</charset>
+      <pattern>
+        %d{yy-MM-dd HH:mm:ss.SSS/zzz, GMT+8} %-5level %msg%n
+      </pattern>
+    </encoder>
+  </appender>
+
+  <root>
+    <level value="WARN"/>
+    <appender-ref ref="stdout"/>
+  </root>
+  <logger name="com.asiafrank.learn.zookeeper" level="INFO"/>
+</configuration>
