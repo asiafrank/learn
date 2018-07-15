@@ -479,7 +479,10 @@ VertexOut VS(VertexIn vin)
 
 %---------- 7 ----------------
 \begin{flushleft}
-7. 将box和金字塔的顶点（练习4）合并到一个大的顶点缓冲区中。 还将框和金字塔的索引合并到一个大索引缓冲区中（但不更新索引值）。 然后使用 ID3D12CommandList::DrawIndexedInstanced 的参数逐个绘制框和金字塔。 使用世界变换矩阵，使框和金字塔在世界空间中不相交。
+7. 将box和金字塔的顶点（练习4）合并到一个大的顶点缓冲区中。 还将框和金字塔的索引合并到一个大索引缓冲区中（但不更新索引值）。 然后使用 ID3D12CommandList::DrawIndexedInstanced 的参数逐个绘制框和金字塔。 使用世界变换矩阵，使box和金字塔在世界空间中不相交。//
+~\\
+解：重点在常量缓冲区的更新，设置两个常量缓冲区，构建好各自的 D3D12_CONSTANT_BUFFER_VIEW_DESC，分别代表box 和 pyramid 的 worldViewProj 再做渲染
+SetGraphicsRootDescriptorTable 绑定不同的根参数到
 \end{flushleft}
 
 %---------- 8 ----------------
