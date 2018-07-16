@@ -427,14 +427,14 @@ vin.PosL.z *= 0.6f + 0.4f*sin(2.0f*gTime);
 解：根据要求作如下修改:
 \end{flushleft}
 \begin{lstlisting}
-// BoxApp.cpp 结构声明 ObjectConstants
+//------ BoxApp.cpp 结构声明 ObjectConstants -------
 struct ObjectConstants
 {
     XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
     float gTime; // 新增一个 gTime 属性
 };
 
-// BoxApp.cpp BoxApp::Update 增加一行 gTime 赋值语句
+//------- BoxApp.cpp BoxApp::Update 增加一行 gTime 赋值语句 -----
 void BoxApp::Update(const GameTimer& gt)
 {
     //...code...
@@ -442,7 +442,7 @@ void BoxApp::Update(const GameTimer& gt)
     mObjectCB->CopyData(0, objConstants);
 }
 
-// BoxApp.cpp BoxApp::BuildConstantBuffers 
+//------ BoxApp.cpp BoxApp::BuildConstantBuffers ------ 
 // 将 UploadBuffer elementCount 参数改为 2
 void BoxApp::BuildConstantBuffers()
 {
@@ -452,14 +452,14 @@ void BoxApp::BuildConstantBuffers()
     //...code...
 }
 
-// color.hlsl 修改 cbPerObject 结构
+//------ color.hlsl 修改 cbPerObject 结构 ------
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorldViewProj;
     float gTime;
 };
 
-// color.hlsl 修改 VS
+//----- color.hlsl 修改 VS ------
 VertexOut VS(VertexIn vin)
 {
     vin.PosL.xy += 0.5f*sin(vin.PosL.x)*sin(3.0f*gTime);
@@ -481,19 +481,246 @@ VertexOut VS(VertexIn vin)
 \begin{flushleft}
 7. 将box和金字塔的顶点（练习4）合并到一个大的顶点缓冲区中。 还将框和金字塔的索引合并到一个大索引缓冲区中（但不更新索引值）。 然后使用 ID3D12CommandList::DrawIndexedInstanced 的参数逐个绘制框和金字塔。 使用世界变换矩阵，使box和金字塔在世界空间中不相交。//
 ~\\
-解：重点在常量缓冲区的更新，设置两个常量缓冲区，构建好各自的 D3D12_CONSTANT_BUFFER_VIEW_DESC，分别代表box 和 pyramid 的 worldViewProj 再做渲染
-SetGraphicsRootDescriptorTable 绑定不同的根参数到
+解：重点在常量缓冲区的更新，设置两个常量缓冲区，构建好各自的 D3D12\_CONSTANT\_BUFFER\_VIEW\_DESC，分别代表box 和 pyramid 的 worldViewProj 再做渲染
+SetGraphicsRootDescriptorTable 绑定不同的常量缓冲区视图。\\
+下面代码的修改的效果，切换视角时，图形间有相交的情况（待解决）。
 \end{flushleft}
+\begin{lstlisting}
+//------ 修改 BoxApp.cpp BoxApp::Update 方法------
+void BoxApp::Update(const GameTimer& gt)
+{
+    // Convert Spherical to Cartesian coordinates
+    float x = mRadius * sinf(mPhi) * cosf(mTheta);
+    float z = mRadius * sinf(mPhi) * sinf(mTheta);
+    float y = mRadius * cosf(mPhi);
+
+    XMVECTOR pos = XMVectorSet(x, y, z, 1.0f); // 摄像机位置
+    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+    XMMATRIX world = XMLoadFloat4x4(&mWorld);
+    XMMATRIX proj = XMLoadFloat4x4(&mProj);
+    
+    // 正面摄像机摆放时，box 坐标为 (-2,0,0)
+    XMVECTOR boxPos     = XMVectorSet(-2.0f, 0.0f, 0.0f, 0.0f); 
+    // 正面摄像机摆放时，pyramid 坐标为 (+2,0,0)
+    XMVECTOR pyramidPos = XMVectorSet(+2.0f, 0.0f, 0.0f, 0.0f); 
+
+    // Build the view matrix.
+    // Box 世界视图投影
+    XMMATRIX view = XMMatrixLookAtLH(pos, boxPos, up);
+    XMStoreFloat4x4(&mView, view);
+    XMMATRIX worldViewProj = world * view * proj;
+
+    // Update the constant buffer with 
+    // the latest worldViewProj matrix.
+    ObjectConstants objConstants;
+    XMStoreFloat4x4(&objConstants.WorldViewProj, 
+        XMMatrixTranspose(worldViewProj));
+    mObjectCB->CopyData(0, objConstants);
+
+    // pyramid 世界视图投影
+    view = XMMatrixLookAtLH(pos, pyramidPos, up);
+    XMStoreFloat4x4(&mView, view);
+
+    worldViewProj = world * view * proj;
+    XMStoreFloat4x4(&objConstants.WorldViewProj, 
+        XMMatrixTranspose(worldViewProj));
+    mObjectCB->CopyData(1, objConstants);
+}
+//------ 修改 BoxApp.cpp BoxApp::Draw 方法------
+void BoxApp::Draw(const GameTimer& gt)
+{
+    //...code...
+
+    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+        sizeof(ObjectConstants));
+    CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(
+        mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+    mCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+    SubmeshGeometry boxmesh = mGeo->DrawArgs["box"];
+    mCommandList->DrawIndexedInstanced(
+        boxmesh.IndexCount, 1,
+        boxmesh.StartIndexLocation,
+        boxmesh.BaseVertexLocation, 0);
+
+    cbvHandle.Offset(1, mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+    SubmeshGeometry pyramidmesh = mGeo->DrawArgs["pyramid"];
+    mCommandList->DrawIndexedInstanced(
+        pyramidmesh.IndexCount, 1,
+        pyramidmesh.StartIndexLocation, 
+        pyramidmesh.BaseVertexLocation, 0);
+
+    //...code...
+}
+//------ 修改 BoxApp.cpp BoxApp::BuildDescriptorHeaps 方法------
+void BoxApp::BuildDescriptorHeaps()
+{
+    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+    cbvHeapDesc.NumDescriptors = 2; // 1 改为 2
+    //...code...
+}
+//------ 修改 BoxApp.cpp BoxApp::BuildConstantBuffers 方法------
+void BoxApp::BuildConstantBuffers()
+{
+    mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
+        md3dDevice.Get(), 2, true); // 1 改为 2
+
+    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+    D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+    // Offset to the ith object constant buffer in the buffer.
+    int boxCBufIndex = 0;
+    cbAddress += boxCBufIndex * objCBByteSize;
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC boxCbvDesc;
+    boxCbvDesc.BufferLocation = cbAddress;
+    boxCbvDesc.SizeInBytes = objCBByteSize;
+
+    int pyramidCBufIndex = 1;
+    cbAddress += pyramidCBufIndex * objCBByteSize;
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC pyramidCbvDesc;
+    pyramidCbvDesc.BufferLocation = cbAddress;
+    pyramidCbvDesc.SizeInBytes = objCBByteSize;
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    md3dDevice->CreateConstantBufferView(&boxCbvDesc, cpuHandle);
+    cpuHandle.Offset(1, mCbvSrvUavDescriptorSize);
+    md3dDevice->CreateConstantBufferView(&pyramidCbvDesc, cpuHandle);
+}
+//------ 修改 BoxApp.cpp BoxApp::BuildBoxGeometry 方法------
+void BoxApp::BuildBoxGeometry()
+{
+    // DirectX 是左手坐标系，z轴负在前，正在后
+    std::array<Vertex, 13> vertices = {
+        // 立方体
+        Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),  // 0: (-1,-1,-1)
+        Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),  // 1: (-1, +1, -1)
+        Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),    // 2: (+1, +1, -1)
+        Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),  // 3: (+1, -1, -1)
+        Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),   // 4: (-1, -1, +1)
+        Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }), // 5: (-1, +1, +1)
+        Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),   // 6: (+1, +1, +1)
+        Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) }),// 7: (+1, -1, +1)
+
+        // 金字塔
+        Vertex({ XMFLOAT3(-1.0f, 0.0f, -1.0f), XMFLOAT4(Colors::Green) }),  // 0: (-1,0,-1)
+        Vertex({ XMFLOAT3(+1.0f, 0.0f, -1.0f), XMFLOAT4(Colors::Green) }),  // 1: (1,0,-1)
+        Vertex({ XMFLOAT3(+1.0f, 0.0f, +1.0f), XMFLOAT4(Colors::Green) }),  // 2: (1,0,1)
+        Vertex({ XMFLOAT3(-1.0f, 0.0f, +1.0f), XMFLOAT4(Colors::Green) }),  // 3: (-1,0,1)
+        Vertex({ XMFLOAT3(0.0f, +1.5f, 0.0f),  XMFLOAT4(Colors::Red) }),    // 4: (0,1.5,0)
+    };
+
+    std::array<std::uint16_t, 54> indices = {
+        // 立方体
+        // 前面
+        0, 1, 2,
+        0, 2, 3,
+
+        // 背面
+        4, 6, 5,
+        4, 7, 6,
+
+        // 左侧面
+        4, 5, 1,
+        4, 1, 0,
+
+        // 右侧面
+        3, 2, 6,
+        3, 6, 7,
+
+        // 上面
+        1, 5, 6,
+        1, 6, 2,
+
+        // 下面
+        4, 0, 3,
+        4, 3, 7, // indexCount: 36
+
+        // 金字塔
+        // 底面
+        0, 1, 2, 
+        0, 2, 3,
+
+        // 侧面1
+        0, 4, 1,
+
+        // 侧面2
+        1, 4, 2,
+
+        // 侧面3
+        2, 4, 3,
+
+        // 侧面4
+        3, 4, 0 // indexCount: 18
+    };
+
+    const UINT boxIndexCount = 36;
+    const UINT boxStartIndexLocation = 0;
+    const UINT boxBaseVertexLocation = 0;
+
+    const UINT pyramidIndexCount = 18;
+    const UINT pyramidStartIndexLocation = 36;
+    const UINT pyramidBaseVertexLocation = 8;
+
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    mGeo = std::make_unique<MeshGeometry>();
+    mGeo->Name = "Geo";
+
+    ThrowIfFailed(D3DCreateBlob(vbByteSize, &mGeo->VertexBufferCPU));
+    CopyMemory(mGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &mGeo->IndexBufferCPU));
+    CopyMemory(mGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+    mGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), vertices.data(), vbByteSize, mGeo->VertexBufferUploader);
+
+    mGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), indices.data(), ibByteSize, mGeo->IndexBufferUploader);
+
+    mGeo->VertexByteStride = sizeof(Vertex);
+    mGeo->VertexBufferByteSize = vbByteSize;
+    mGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    mGeo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry boxmesh;
+    boxmesh.IndexCount = boxIndexCount;
+    boxmesh.StartIndexLocation = boxStartIndexLocation;
+    boxmesh.BaseVertexLocation = boxBaseVertexLocation;
+
+    SubmeshGeometry pyramidmesh;
+    pyramidmesh.IndexCount = pyramidIndexCount;
+    pyramidmesh.StartIndexLocation = pyramidStartIndexLocation;
+    pyramidmesh.BaseVertexLocation = pyramidBaseVertexLocation;
+
+    mGeo->DrawArgs["box"] = boxmesh;
+    mGeo->DrawArgs["pyramid"] = pyramidmesh;
+}
+\end{lstlisting}
 
 %---------- 8 ----------------
 \begin{flushleft}
-8. 通过在线框(wireframe)模式下渲染多维数据集来修改Box演示。
+8. 通过在线框(wireframe)模式下渲染多维数据集来修改Box演示。\\
+解：题目意思没理解错的话，修改 BoxApp::BuildPSO() 中的 RasterizerState 的值
+FillMode 设为 D3D12\_FILL\_MODE\_WIREFRAME 即可。
 \end{flushleft}
 
 %---------- 9 ----------------
 \begin{flushleft}
-9. 修改Box演示, 禁用背面剔除(D3D12\_CULL\_NONE); 也尝试剔除正面而不是背面(D3D12\_CULL\_FRONT)。 以线框(wireframe)模式输出结果，以便您可以更轻松地查看差异。
+9. 修改Box演示, 禁用背面剔除(D3D12\_CULL\_NONE); 也尝试剔除正面而不是背面(D3D12\_CULL\_FRONT)。 以线框(wireframe)模式输出结果，以便您可以更轻松地查看差异。\\
+解：修改 BoxApp::BuildPSO() 中的 RasterizerState 的值即可。例如：
 \end{flushleft}
+\begin{lstlisting}
+CD3DX12_RASTERIZER_DESC rsDesc(D3D12_DEFAULT);
+rsDesc.CullMode = D3D12_CULL_MODE_NONE;
+
+psoDesc.RasterizerState = rsDesc;
+\end{lstlisting}
 
 %---------- 10 ----------------
 \begin{flushleft}
@@ -514,7 +741,8 @@ D3D12_INPUT_ELEMENT_DESC vertexDesc[] = {
 };
 \end{lstlisting}
 \begin{flushleft}
-我们使用 DXGI\_FORMAT\_B8G8R8A8\_UNORM 格式(8位红色，绿色，蓝色和alpha)。 此格式对应于常见的32位图形颜色格式ARGB，但 DXGI\_FORMAT 符号以小端表示法列出它们在内存中出现的字节。 在little-endian中，多字节(multi-byte)数据字(word)的字节从最低有效字节写入最高有效字节，这就是为什么 ARGB 在内存中出现为 BGRA，其中最小内存地址处的最低有效字节和最高有效字节为 最高的内存地址。
+我们使用 DXGI\_FORMAT\_B8G8R8A8\_UNORM 格式(8位红色，绿色，蓝色和alpha)。 此格式对应于常见的32位图形颜色格式ARGB，但 DXGI\_FORMAT 符号以小端表示法列出它们在内存中出现的字节。 在little-endian中，多字节(multi-byte)数据字(word)的字节从最低有效字节写入最高有效字节，这就是为什么 ARGB 在内存中出现为 BGRA，其中最小内存地址处的最低有效字节和最高有效字节为 最高的内存地址。\\
+解：略。
 \end{flushleft}
 
 %---------- 11 ----------------
@@ -548,20 +776,54 @@ struct Vertex
   };
   \end{lstlisting}
 \end{itemize}
+\begin{flushleft}
+解：1. 输入布局描述(inputLayoutDescriptor)不需要匹配定点结构顺序。D3D12\_INPUT\_ELEMENT\_DESC 的 SemanticName,SemanticIndex,AlignedByteOffset 已经给出了足够的信息去匹配对应的定点结构，与顺序无关也没有影响。\\
+2.同样没有影响，但同样的 semanticName 的参数需要顺序一致,因为SemanticIndex是按顺序匹配的
+\end{flushleft}
 
 %---------- 12 ----------------
 \begin{flushleft}
-12. 将视口(viewport)设置为后缓冲区(back buffer)的左半部分。
+12. 将视口(viewport)设置为后缓冲区(back buffer)的左半部分。\\
+解：
 \end{flushleft}
+\begin{lstlisting}
+// 修改 BoxApp::OnResize() 即可
+void BoxApp::OnResize()
+{
+    D3DApp::OnResize();
+    mScreenViewport.Width = mClientWidth / 2;
+
+    // The window resized, so update the aspect ratio and recompute the projection
+    // matrix.
+    XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+    XMStoreFloat4x4(&mProj, P);
+}
+\end{lstlisting}
 
 %---------- 13 ----------------
 \begin{flushleft}
-13. 使用剪刀测试来剔除以后缓冲区为中心的矩形外的所有像素，宽度为mClientWidth/2，高度为 mClientHeight/2。 请记住，您还需要使用光栅化器状态组启用剪刀测试。
+13. 使用剪刀测试来剔除以后缓冲区为中心的矩形外的所有像素，宽度为mClientWidth/2，高度为 mClientHeight/2。 请记住，您还需要使用光栅化器状态组启用剪刀测试。\\
+解:\\
+CD3DX12\_RASTERIZER\_DESC 里并没有 ScissorEnable 属性，应该是书里写错了。
 \end{flushleft}
+\begin{lstlisting}
+//----- 修改 BoxApp::OnResize 即可------
+void BoxApp::OnResize()
+{
+    D3DApp::OnResize();
+    mScissorRect = { 0, 0, mClientWidth / 2, mClientHeight / 2};
+
+    // The window resized, so update the aspect ratio and recompute the projection
+    // matrix.
+    XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+    XMStoreFloat4x4(&mProj, P);
+}
+\end{lstlisting}
 
 %---------- 14 ----------------
 \begin{flushleft}
-14. 像素着色器颜色色调。 使用常量缓冲区为颜色随时间变化。 使用平滑缓动功能。 在顶点着色器和像素着色器中执行此操作。
+14. 像素着色器颜色色调。 使用常量缓冲区为颜色随时间变化。 使用smooth easing方法。 在顶点着色器和像素着色器中执行此操作。\\
+解：参考第 6 题，将 gTime 放入常量缓冲区中，然后在 hlsl 使用 \href{https://docs.microsoft.com/en-us/windows/desktop/direct3dhlsl/dx-graphics-hlsl-lerp}{\textcolor{linkColor}{lerp}}方法（网上找了没有smooth easing方法, 应该是指lerp）做颜色计算
 \end{flushleft}
 
 %---------- 15 ----------------
@@ -576,12 +838,16 @@ float4 PS(VertexOut pin) : SV_Target
 }
 \end{lstlisting}
 \begin{flushleft}
-运行程序并猜测内置 clip 方法的作用。
+运行程序并猜测内置 clip 方法的作用。\\
+解: 现象，图被切成一块一块的。\\
+文档见\href{https://docs.microsoft.com/en-us/windows/desktop/direct3dhlsl/dx-graphics-hlsl-clip}{\textcolor{linkColor}{clip}}\\
+"如果x参数的每个分量表示与平面的距离，则使用剪辑HLSL内部函数来模拟剪裁平面。
+此外，使用剪辑功能测试alpha行为"
 \end{flushleft}
 
 %---------- 16 ----------------
 \begin{flushleft}
-修改 Box 演示中的像素着色器，以在插值顶点颜色和通过常量缓冲区指定的 gPulseColor 之间平滑脉冲。 您还需要更新应用程序端的常量缓冲区。 HLSL代码中的常量缓冲区和像素着色器应如下所示：
+16.修改 Box 演示中的像素着色器，以在插值顶点颜色和通过常量缓冲区指定的 gPulseColor 之间平滑脉冲。 您还需要更新应用程序端的常量缓冲区。 HLSL代码中的常量缓冲区和像素着色器应如下所示：
 \end{flushleft}
 \begin{lstlisting}
 cbuffer cbPerObject : register(b0)
@@ -605,5 +871,6 @@ float4 PS(VertexOut pin) : SV_Target
 }
 \end{lstlisting}
 \begin{flushleft}
-gTime 变量对应于 GameTimer::TotalTime() 的值。
+gTime 变量对应于 GameTimer::TotalTime() 的值。\\
+解：略。
 \end{flushleft}

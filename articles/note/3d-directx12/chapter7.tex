@@ -1,4 +1,204 @@
-\chapter{77777}
+\chapter{在Direct3D中绘制2(Drawing in Direct3D Part 2)}
 \begin{flushleft}
-	另一个文件引用
+本章介绍我们将在本书其余部分使用的一些绘图模式。 本章首先介绍一个绘图优化，我们将其称为“帧资源”。使用帧资源，我们修改渲染循环，这样我们就不必每帧刷新命令队列; 这提高了CPU和GPU的利用率。 接下来，我们介绍渲染项的概念，并解释我们如何根据更新频率划分常量数据。 此外，我们更详细地检查根签名，并了解其他根参数类型：根描述符和根常量。 最后，我们展示了如何绘制一些更复杂的对象; 到本章结束时，您将能够绘制类似丘陵和山谷，圆柱体，球体和动画波浪模拟的表面。\\
+~\\
+{\large Objectives:}
+\begin{itemize}
+    \item 了解对渲染过程的修改，不要求我们每帧刷新命令队列，从而提高性能。
+    \item 了解其他两种类型的根签名参数类型：根描述符和根常量。
+    \item 探索如何在程序上生成和绘制常见的几何形状，如网格，圆柱体和球体。
+    \item 了解我们如何在CPU上设置顶点动画并使用动态顶点缓冲区将新顶点位置上传到GPU。
+\end{itemize}
 \end{flushleft}
+
+\section{帧资源(Frame Resources)}
+\begin{flushleft}
+回忆 4.2 节，CPU和GPU并行工作。 CPU构建并提交命令列表（除了其他CPU工作之外），GPU处理命令队列中的命令。 目标是让CPU和GPU忙碌，以充分利用系统上可用的硬件资源。 到目前为止，在我们的演示中，我们已经每帧同步CPU和GPU一次。 两个例子解释这种同步的必要性：\\
+\begin{itemize}
+    \item 1.在GPU完成执行命令之前，不能重置命令分配器(command allocator)。 假设我们没有进行同步，以便CPU在GPU处理完当前帧n之前可以继续下一帧n + 1：如果CPU在帧n + 1中重置命令分配器，但GPU仍在处理命令 从第n帧开始，我们将清除GPU仍在使用的命令。
+    \item 2.在GPU完成执行引用常量缓冲区的绘图命令之前，CPU无法更新常量缓冲区。 此示例对应于4.2.2节和图4.7中描述的情况。 假设我们没有进行同步，以便CPU在GPU完成处理当前帧n之前可以继续下一帧n + 1：如果CPU在帧n + 1中覆盖常量缓冲区数据，但GPU还没有 执行引用帧n中的常量缓冲区的绘制调用，然后常量缓冲区包含当GPU执行帧n的绘制调用时的错误数据。
+\end{itemize}
+因此，我们一直在每帧结束时调用 D3DApp::FlushCommandQueue，以确保GPU已完成执行帧的所有命令。 此解决方案有效，但由于以下原因效率低下：\\
+\begin{itemize}
+    \item 1.在帧开始时，GPU将不会有任何要处理的命令，因为我们等待清空命令队列。 它必须等到CPU构建并提交一些命令才能执行。
+    \item 2.在帧结束时，CPU正在等待GPU完成处理命令。
+\end{itemize}
+所以每一帧，CPU和GPU都会在某些时候空闲。\\
+~\\
+该问题的一个解决方案是创建CPU修改每个帧所需的资源的循环数组。 我们称这种资源为帧资源，我们通常使用三个帧资源元素的循环数组。 对于帧n，CPU将循环通过帧资源队列以获得下一个可用（即，未被GPU使用）帧资源。 然后，CPU将执行任何资源更新，并在GPU处理先前帧时构建和提交帧n的命令列表。 然后CPU继续进行第n + 1帧并重复。 如果帧资源阵列有三个元素，这可以使CPU在GPU之前达到两帧，从而确保GPU保持忙碌状态。 下面是我们在本章中用于“Shapes”演示的帧资源类的示例。 由于CPU只需要在此演示中修改常量缓冲区，因此帧资源类仅包含常量缓冲区。\\
+\end{flushleft}
+\begin{lstlisting}
+// Stores the resources needed for the CPU to build
+// the command lists
+// for a frame. The contents here will vary from app
+// to app based on
+// the needed resources.
+struct FrameResource
+{
+public:
+    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount);
+    FrameResource(const FrameResource& rhs) = delete;
+    FrameResource& operator=(const FrameResource& rhs) = delete;
+    ~FrameResource();
+    // We cannot reset the allocator until the GPU is
+    // done processing the
+    // commands. So each frame needs their own
+    // allocator.
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CmdListAlloc;
+    
+    // We cannot update a cbuffer until the GPU is done
+    // processing the
+    // commands that reference it. So each frame needs
+    // their own cbuffers.
+    std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
+    std::unique_ptr<UploadBuffer<ObjectConstants>>
+    ObjectCB = nullptr;
+    // Fence value to mark commands up to this fence
+    // point. This lets us
+    // check if these frame resources are still in use
+    // by the GPU.
+    UINT64 Fence = 0;
+};
+
+FrameResource::FrameResource(ID3D12Device* device,
+                             UINT passCount, UINT
+                             objectCount)
+{
+    ThrowIfFailed(device->CreateCommandAllocator(
+        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        IID_PPV_ARGS(CmdListAlloc.GetAddressOf())));
+    PassCB = std::make_unique<UploadBuffer<PassConstants>>(
+        device,
+        passCount, 
+        true);
+    ObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(
+        device,
+        objectCount, true);
+}
+FrameResource::˜FrameResource() {}
+\end{lstlisting}
+\begin{flushleft}
+然后，我们的应用程序类将三个帧资源的向量实例化，并设置成员变量以跟踪当前帧资源：\\
+\end{flushleft}
+\begin{lstlisting}
+static const int NumFrameResources = 3;
+std::vector<std::unique_ptr<FrameResource>> mFrameResources;
+FrameResource* mCurrFrameResource = nullptr;
+int mCurrFrameResourceIndex = 0;
+void ShapesApp::BuildFrameResources()
+{
+    for(int i = 0; i < gNumFrameResources; ++i)
+    {
+        mFrameResources.push_back(std::make_unique<FrameResource>(
+                                      md3dDevice.Get(), 
+                                      1, 
+                                      (UINT)mAllRitems.size()));
+    }
+}
+\end{lstlisting}
+\begin{flushleft}
+现在，对于CPU帧n，算法的工作原理如下：\\
+\end{flushleft}
+\begin{lstlisting}
+void ShapesApp::Update(const GameTimer& gt)
+{
+    // Cycle through the circular frame resource array.
+    mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % NumFrameResources;
+    mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex];
+    // Has the GPU finished processing the commands of
+    // the current frame
+    // resource. If not, wait until the GPU has
+    // completed commands up to
+    // this fence point.
+    if(mCurrFrameResource->Fence != 0 &&
+       mCommandQueue->GetLastCompletedFence() < mCurrFrameResource->Fence)
+    {
+        HANDLE eventHandle = CreateEventEx(nullptr, false, 
+                                  false, EVENT_ALL_ACCESS);
+        ThrowIfFailed(mCommandQueue->SetEventOnFenceCompletion(
+             mCurrFrameResource->Fence, eventHandle));
+        WaitForSingleObject(eventHandle, INFINITE);
+        CloseHandle(eventHandle);
+    }
+    // […] Update resources in mCurrFrameResource (like cbuffers).
+}
+void ShapesApp::Draw(const GameTimer& gt)
+{
+    // […] Build and submit command lists for this frame.
+    // Advance the fence value to mark commands up to
+    // this fence point.
+    mCurrFrameResource->Fence = ++mCurrentFence;
+    // Add an instruction to the command queue to set a
+    // new fence point.
+    // Because we are on the GPU timeline, the new fence
+    // point won’t be
+    // set until the GPU finishes processing all the
+    // commands prior to
+    // this Signal().
+    mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+    // Note that GPU could still be working on commands
+    // from previous
+    // frames, but that is okay, because we are not
+    // touching any frame
+    // resources associated with those frames.
+}
+\end{lstlisting}
+\begin{flushleft}
+请注意，此解决方案不会阻止等待。 如果一个处理器处理帧的速度比另一个处理器快得多，那么一个处理器最终将不得不等待另一个处理器赶上，因为我们不能让一个处理器远远超过另一个处理器。 如果GPU处理命令的速度比CPU提交工作的速度快，那么GPU将处于空闲状态。 一般来说，如果我们试图推动图形限制，我们希望避免这种情况，因为我们没有充分利用GPU。 另一方面，如果CPU总是以比GPU更快的速度处理帧，那么CPU将不得不在某个时刻等待。 这是理想的情况，因为GPU正在被充分利用; 额外的CPU周期总是可以用于游戏的其他部分，如AI，物理和游戏逻辑。\\
+因此，如果多个帧资源不能阻止任何等待，它对我们有何帮助？ 它可以帮助我们保持GPU的供给。 当GPU正在处理来自帧n的命令时，它允许CPU继续构建和提交帧n + 1和n + 2的命令。 这有助于保持命令队列非空，以便GPU始终有工作要做。
+\end{flushleft}
+
+\section{渲染项(Render Items)}
+\begin{flushleft}
+绘制对象需要设置多个参数，例如绑定顶点和索引缓冲区，绑定对象常量，设置基本类型(primitive type)以及指定DrawIndexedInstanced参数。 当我们开始在场景中绘制更多对象时，创建一个存储绘制对象所需数据的轻量级结构会很有帮助。 这些数据因应用程序而异，因为我们添加了需要不同绘图数据的新功能。 我们将提交完整绘制所需的数据集称为渲染管道渲染项。 对于此演示，我们的RenderItem结构如下所示：\\
+\end{flushleft}
+\begin{lstlisting}
+// Lightweight structure stores parameters to draw a shape.  This will
+// vary from app-to-app.
+struct RenderItem
+{
+    RenderItem() = default;
+
+    // World matrix of the shape that describes the object's local space
+    // relative to the world space, which defines the position, orientation,
+    // and scale of the object in the world.
+    XMFLOAT4X4 World = MathHelper::Identity4x4();
+
+    // Dirty flag indicating the object data has changed 
+    // and we need to update the constant buffer.
+    // Because we have an object cbuffer for each FrameResource, 
+    // we have to apply the update to each FrameResource.  
+    // Thus, when we modify obect data we should set 
+    // NumFramesDirty = gNumFrameResources so that each 
+    // frame resource gets the update.
+    int NumFramesDirty = gNumFrameResources;
+
+    // Index into GPU constant buffer corresponding to 
+    // the ObjectCB for this render item.
+    UINT ObjCBIndex = -1;
+
+    MeshGeometry* Geo = nullptr;
+
+    // Primitive topology.
+    D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+    // DrawIndexedInstanced parameters.
+    UINT IndexCount = 0;
+    UINT StartIndexLocation = 0;
+    int BaseVertexLocation = 0;
+};
+\end{lstlisting}
+\begin{flushleft}
+我们的应用程序将根据需要绘制的方式维护渲染项目列表; 也就是说，需要不同PSO的渲染项目将保存在不同的列表中。\\
+\end{flushleft}
+\begin{lstlisting}
+// List of all the render items.
+std::vector<std::unique_ptr<RenderItem>> mAllRitems;
+// Render items divided by PSO.
+std::vector<RenderItem*> mOpaqueRitems;
+std::vector<RenderItem*> mTransparentRitems;
+\end{lstlisting}
+
+\section{传递常量(Pass Constants)}
+
+
