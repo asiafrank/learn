@@ -303,7 +303,7 @@ void Game::CreateDevice()
     resourceUpload.Begin();
 
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(m_d3dDevice.Get(), resourceUpload, L"cat.png",
+        CreateWICTextureFromFile(m_d3dDevice.Get(), resourceUpload, L"cat.DDS",
             m_texture.ReleaseAndGetAddressOf()));
     
     CreateShaderResourceView(m_d3dDevice.Get(), m_texture.Get(),
@@ -311,7 +311,7 @@ void Game::CreateDevice()
 
     RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
 
-    SpriteBatchPipelineStateDescription pd(rtState, &CommonStates::NonPremultiplied);
+    SpriteBatchPipelineStateDescription pd(rtState);
     m_spriteBatch = std::make_unique<SpriteBatch>(m_d3dDevice.Get(), resourceUpload, pd);
 
     XMUINT2 catSize = GetTextureSize(m_texture.Get());
