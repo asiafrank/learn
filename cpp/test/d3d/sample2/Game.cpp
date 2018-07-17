@@ -84,6 +84,10 @@ void Game::Render()
 
     m_spriteBatch->Begin(m_commandList.Get());
 
+    m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::Background),
+        GetTextureSize(m_background.Get()),
+        m_fullscreenRect);
+
     m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat),
         GetTextureSize(m_texture.Get()),
         m_screenPos, nullptr, Colors::White, 0.f, m_origin);
@@ -303,6 +307,13 @@ void Game::CreateDevice()
     resourceUpload.Begin();
 
     DX::ThrowIfFailed(
+        CreateWICTextureFromFile(m_d3dDevice.Get(), resourceUpload, L"sunset.jpg",
+            m_background.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(m_d3dDevice.Get(), m_background.Get(),
+        m_resourceDescriptors->GetCpuHandle(Descriptors::Background));
+
+    DX::ThrowIfFailed(
         CreateWICTextureFromFile(m_d3dDevice.Get(), resourceUpload, L"cat.DDS",
             m_texture.ReleaseAndGetAddressOf()));
     
@@ -311,7 +322,7 @@ void Game::CreateDevice()
 
     RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
 
-    SpriteBatchPipelineStateDescription pd(rtState);
+    SpriteBatchPipelineStateDescription pd(rtState, &CommonStates::NonPremultiplied);
     m_spriteBatch = std::make_unique<SpriteBatch>(m_d3dDevice.Get(), resourceUpload, pd);
 
     XMUINT2 catSize = GetTextureSize(m_texture.Get());
@@ -456,6 +467,11 @@ void Game::CreateResources()
 
     m_screenPos.x = backBufferWidth / 2.f;
     m_screenPos.y = backBufferHeight / 2.f;
+
+    m_fullscreenRect.left = 0;
+    m_fullscreenRect.top = 0;
+    m_fullscreenRect.right = backBufferWidth;
+    m_fullscreenRect.bottom = backBufferHeight;
 }
 
 void Game::WaitForGpu() noexcept
@@ -547,6 +563,7 @@ void Game::OnDeviceLost()
     m_graphicsMemory.reset();
     m_texture.Reset();
     m_resourceDescriptors.reset();
+    m_background.Reset();
 
     for (UINT n = 0; n < c_swapBufferCount; n++)
     {
