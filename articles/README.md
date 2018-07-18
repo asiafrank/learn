@@ -49,6 +49,11 @@
   - [ ] 深入理解JVM
   - [ ] Java 大型分布式应用
   - [ ] 大型分布式网站架构设计与实践
+  - [ ] Redis
+  - [ ] Kafka,ActiveMQ
+  - [ ] Paxos,Raft
+  - [ ] Google paper(bigtable, gfs, mapreduce)
+  - [ ] ElasticSearch
 - 数学
   - [ ] 高等数学
   - [ ] 线性代数
@@ -56,8 +61,6 @@
   - [ ] 概率论与数理统计
   - [ ] 离散数学及其应用
 - 其他
-  - [ ] Paxos，Raft
-  - [ ] Google paper(bigtable, gfs, mapreduce)
   - [ ] 重构
   - [ ] 汇编语言
 
@@ -84,6 +87,7 @@
 - b.抄改 Sample 代码
 - c.应用到自己的项目中
 - d.抄改源码
+- e.写笔记
 注：书读得越多，基础越扎实，学习新事物就越快！
 
 ## 学习上的常见问题
