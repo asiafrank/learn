@@ -1,6 +1,6 @@
 \chapter{在Direct3D中绘制2(Drawing in Direct3D Part 2)}
 \begin{flushleft}
-本章介绍我们将在本书其余部分使用的一些绘图模式。 本章首先介绍一个绘图优化，我们将其称为“帧资源”。使用帧资源，我们修改渲染循环，这样我们就不必每帧刷新命令队列; 这提高了CPU和GPU的利用率。 接下来，我们介绍渲染项的概念，并解释我们如何根据更新频率划分常量数据。 此外，我们更详细地检查根签名，并了解其他根参数类型：根描述符和根常量。 最后，我们展示了如何绘制一些更复杂的对象; 到本章结束时，您将能够绘制类似丘陵和山谷，圆柱体，球体和动画波浪模拟的表面。\\
+本章介绍我们将在本书其余部分使用的一些绘图模式。 本章首先介绍一种绘图优化的方法，我们将其称为“帧资源”。使用帧资源，我们修改渲染循环，这样我们就不必每帧刷新命令队列; 这提高了CPU和GPU的利用率。 接下来，我们介绍渲染项的概念，并解释我们如何根据更新频率划分常量数据。 此外，我们更详细地检查根签名，并了解其他根参数类型：根描述符和根常量。 最后，我们展示了如何绘制一些更复杂的对象; 到本章结束时，您将能够绘制类似丘陵和山谷，圆柱体，球体和动画波浪模拟的表面。\\
 ~\\
 {\large Objectives:}
 \begin{itemize}
@@ -11,6 +11,7 @@
 \end{itemize}
 \end{flushleft}
 
+%---- 7.1 ------
 \section{帧资源(Frame Resources)}
 \begin{flushleft}
 回忆 4.2 节，CPU和GPU并行工作。 CPU构建并提交命令列表（除了其他CPU工作之外），GPU处理命令队列中的命令。 目标是让CPU和GPU忙碌，以充分利用系统上可用的硬件资源。 到目前为止，在我们的演示中，我们已经每帧同步CPU和GPU一次。 两个例子解释这种同步的必要性：\\
@@ -148,6 +149,7 @@ void ShapesApp::Draw(const GameTimer& gt)
 因此，如果多个帧资源不能阻止任何等待，它对我们有何帮助？ 它可以帮助我们保持GPU的供给。 当GPU正在处理来自帧n的命令时，它允许CPU继续构建和提交帧n + 1和n + 2的命令。 这有助于保持命令队列非空，以便GPU始终有工作要做。
 \end{flushleft}
 
+%---- 7.2 ------
 \section{渲染项(Render Items)}
 \begin{flushleft}
 绘制对象需要设置多个参数，例如绑定顶点和索引缓冲区，绑定对象常量，设置基本类型(primitive type)以及指定DrawIndexedInstanced参数。 当我们开始在场景中绘制更多对象时，创建一个存储绘制对象所需数据的轻量级结构会很有帮助。 这些数据因应用程序而异，因为我们添加了需要不同绘图数据的新功能。 我们将提交完整绘制所需的数据集称为渲染管道渲染项。 对于此演示，我们的RenderItem结构如下所示：\\
@@ -199,6 +201,241 @@ std::vector<RenderItem*> mOpaqueRitems;
 std::vector<RenderItem*> mTransparentRitems;
 \end{lstlisting}
 
+%---- 7.3 ------
 \section{传递常量(Pass Constants)}
+\begin{flushleft}
+NOTICE: Pass Constants 这是一整个名词。该常量用于存储额外信息\\
+~\\
+从上一节中可以看出，我们在FrameResource类中引入了一个新的常量缓冲区：
+\end{flushleft}
+\begin{lstlisting}
+std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
+\end{lstlisting}
+\begin{flushleft}
+在演示中，此缓冲区存储在给定渲染过程中固定的常量数据，例如眼睛位置，视图和投影矩阵，以及有关屏幕（渲染目标）尺寸的信息; 它还包括游戏计时信息，这是在着色器程序中可以访问的有用数据。 请注意，我们的演示不一定会使用所有这些常量数据，我们可以方便地使用这些数据，并且提供额外数据的成本很低。 例如，虽然我们现在不需要渲染目标大小，但是当我们实现一些后期处理效果时，将需要具有该信息。
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPass : register(b1)
+{
+    float4x4 gView;
+    float4x4 gInvView;
+    float4x4 gProj;
+    float4x4 gInvProj;
+    float4x4 gViewProj;
+    float4x4 gInvViewProj;
+    float3   gEyePosW;
+    float    cbPerObjectPad1;
+    float2   gRenderTargetSize;
+    float2   gInvRenderTargetSize;
+    float    gNearZ;
+    float    gFarZ;
+    float    gTotalTime;
+    float    gDeltaTime;
+};
+\end{lstlisting}
+\begin{flushleft}
+我们还修改了每个对象常量缓冲区，仅存储与对象关联的常量。 到目前为止，我们与绘图对象关联的唯一常量数据是其世界矩阵：
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorld;
+};
+\end{lstlisting}
+\begin{flushleft}
+这些更改是根据更新频率对常量进行分组。 每次通过常量只需要在每次渲染过程中更新一次，并且对象常量只需要在对象的世界矩阵发生变化时进行更改。如果我们在场景中有一个静态对象，就像一棵树，我们只需要将其世界矩阵设置一次到一个常量缓冲区，然后再也不要更新常量缓冲区。 在我们的演示中，我们实现了以下方法来处理每次传递和每个对象常量缓冲区的更新。Update方法中每帧调用一次这些方法。
+\end{flushleft}
+\begin{lstlisting}
+void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
+{
+    auto currObjectCB = mCurrFrameResource->ObjectCB.get();
+    for(auto& e : mAllRitems)
+    {
+        // Only update the cbuffer data if the constants have changed.  
+        // This needs to be tracked per frame resource.
+        if(e->NumFramesDirty > 0)
+        {
+            XMMATRIX world = XMLoadFloat4x4(&e->World);
 
+            ObjectConstants objConstants;
+            XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 
+            currObjectCB->CopyData(e->ObjCBIndex, objConstants);
+
+            // Next FrameResource need to be updated too.
+            e->NumFramesDirty--;
+        }
+    }
+}
+
+void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
+{
+    XMMATRIX view = XMLoadFloat4x4(&mView);
+    XMMATRIX proj = XMLoadFloat4x4(&mProj);
+
+    XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
+    XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
+    XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+    XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
+    XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
+    XMStoreFloat4x4(&mMainPassCB.Proj, XMMatrixTranspose(proj));
+    XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
+    XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+    XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+    mMainPassCB.EyePosW = mEyePos;
+    mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)mClientHeight);
+    mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
+    mMainPassCB.NearZ = 1.0f;
+    mMainPassCB.FarZ = 1000.0f;
+    mMainPassCB.TotalTime = gt.TotalTime();
+    mMainPassCB.DeltaTime = gt.DeltaTime();
+
+    auto currPassCB = mCurrFrameResource->PassCB.get();
+    currPassCB->CopyData(0, mMainPassCB);
+}
+\end{lstlisting}
+\begin{flushleft}
+我们相应地更新顶点着色器以支持这些常量缓冲区更改：\\
+\end{flushleft}
+\begin{lstlisting}
+VertexOut VS(VertexIn vin)
+{
+    VertexOut vout;
+    // Transform to homogeneous clip space.
+    float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
+    vout.PosH = mul(posW, gViewProj);
+    // Just pass vertex color into the pixel shader.
+    vout.Color = vin.Color;
+    return vout;
+}
+\end{lstlisting}
+\begin{flushleft}
+这种调整每个顶点的额外矢量矩阵乘法在具有充足计算能力的现代GPU上可以忽略不计。\\
+~\\
+我们的着色器所期望的资源已经改变了; 因此，我们需要相应地更新根签名以获取两个描述符表（我们需要两个表，因为CBV将被设置为不同的频率 - 每次传递CBV仅需要在每个渲染过程中设置一次，而每个对象CBV需要 每个渲染项设置）：
+\end{flushleft}
+\begin{lstlisting}
+void ShapesApp::BuildRootSignature()
+{
+    CD3DX12_DESCRIPTOR_RANGE cbvTable0;
+    cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+
+    CD3DX12_DESCRIPTOR_RANGE cbvTable1;
+    cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+    // Root parameter can be a table, root descriptor or root constants.
+    CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+
+    // Create root CBVs.
+    slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable0);
+    slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
+
+    // A root signature is an array of root parameters.
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr, 
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+    // create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+    ComPtr<ID3DBlob> serializedRootSig = nullptr;
+    ComPtr<ID3DBlob> errorBlob = nullptr;
+    HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+        serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+    if(errorBlob != nullptr)
+    {
+        ::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+    }
+    ThrowIfFailed(hr);
+
+    ThrowIfFailed(md3dDevice->CreateRootSignature(
+        0,
+        serializedRootSig->GetBufferPointer(),
+        serializedRootSig->GetBufferSize(),
+        IID_PPV_ARGS(mRootSignature.GetAddressOf())));
+}
+\end{lstlisting}
+\begin{flushleft}
+NOTICE: 不要过多地使用着色器中的常量缓冲区数量。 [Thibieroz13]建议您将它们保持在5以下以保持性能。
+\end{flushleft}
+
+%---- 7.4 ------
+\section{图形集合(Shape Geometry)}
+\begin{flushleft}
+在本节中，我们将展示如何为椭圆体，球体，圆柱体和圆锥体创建几何体。 这些形状对于绘制天空圆顶，调试，可视化碰撞检测和延迟渲染非常有用。 例如，您可能希望将所有游戏角色渲染为调试测试的球体。\\
+~\\
+我们将过程几何生成代码放在GeometryGenerator类（GeometryGenerator.h / .cpp）中。 GeometryGenerator是一个实用程序类，用于生成简单的几何形状，如网格，球体，圆柱体和盒子，我们在本书中将它们用于演示程序。 这个类在系统内存中生成数据，然后我们必须将我们想要的数据复制到顶点和索引缓冲区。 GeometryGenerator会创建一些将在后面的章节中使用的顶点数据。 我们当前的演示中不需要这些数据，因此我们不会将此数据复制到顶点缓冲区中。 MeshData结构是嵌套在GeometryGenerator中的简单结构，它存储顶点和索引列表：\\
+\end{flushleft}
+\begin{lstlisting}
+class GeometryGenerator
+{
+public:
+    using uint16 = std::uint16_t;
+    using uint32 = std::uint32_t;
+
+    struct Vertex
+    {
+        Vertex(){}
+        Vertex(
+            const DirectX::XMFLOAT3& p, 
+            const DirectX::XMFLOAT3& n, 
+            const DirectX::XMFLOAT3& t, 
+            const DirectX::XMFLOAT2& uv) :
+            Position(p), 
+            Normal(n), 
+            TangentU(t), 
+            TexC(uv){}
+        Vertex(
+            float px, float py, float pz, 
+            float nx, float ny, float nz,
+            float tx, float ty, float tz,
+            float u, float v) : 
+            Position(px,py,pz), 
+            Normal(nx,ny,nz),
+            TangentU(tx, ty, tz), 
+            TexC(u,v){}
+
+        DirectX::XMFLOAT3 Position;
+        DirectX::XMFLOAT3 Normal;
+        DirectX::XMFLOAT3 TangentU;
+        DirectX::XMFLOAT2 TexC;
+    };
+
+    struct MeshData
+    {
+        std::vector<Vertex> Vertices;
+        std::vector<uint32> Indices32;
+
+        std::vector<uint16>& GetIndices16()
+        {
+            if(mIndices16.empty())
+            {
+                mIndices16.resize(Indices32.size());
+                for(size_t i = 0; i < Indices32.size(); ++i)
+                    mIndices16[i] = static_cast<uint16>(Indices32[i]);
+            }
+
+            return mIndices16;
+        }
+
+    private:
+        std::vector<uint16> mIndices16;
+    };
+......
+};
+\end{lstlisting}
+%---- 7.4.1 ----
+\subsection{创建圆柱体网格(Generating a Cylinder Mesh)}
+\begin{flushleft}
+我们通过指定圆柱体的底部和顶部半径，高度以及切片和堆叠数来定义圆柱体，如图7.1所示。 我们将圆柱体分成三个部分：1）侧面几何形状，2）顶盖几何形状，以及3）底盖几何形状。
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-1}
+    \centering
+    \caption{在此图中，左侧的圆柱体有八个切片和四个堆叠，右侧的圆柱体有十六个切片和八个堆叠。 切片和堆栈控制三角形密度。 请注意，顶部和底部半径可以不同，以便我们可以创建锥形对象，而不仅仅是“纯”圆柱体。}
+    \label{fig:7-1}
+\end{figure}
+
+%---- 7.4.1.1 ----
+\subsubsection{圆柱体边缘几何(Cylinder Side Geometry)}
+TODO
