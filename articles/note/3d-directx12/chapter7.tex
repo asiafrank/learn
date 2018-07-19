@@ -427,7 +427,7 @@ public:
 %---- 7.4.1 ----
 \subsection{创建圆柱体网格(Generating a Cylinder Mesh)}
 \begin{flushleft}
-我们通过指定圆柱体的底部和顶部半径，高度以及切片和堆叠数来定义圆柱体，如图7.1所示。 我们将圆柱体分成三个部分：1）侧面几何形状，2）顶盖几何形状，以及3）底盖几何形状。
+我们通过指定圆柱体的底部和顶部半径，高度以及切片和堆叠数来定义圆柱体，如图\ref{fig:7-1}所示。 我们将圆柱体分成三个部分：1）侧面几何形状，2）顶盖几何形状，以及3）底盖几何形状。
 \end{flushleft}
 \begin{figure}[h]
     \includegraphics[width=\textwidth]{7-1}
@@ -438,4 +438,194 @@ public:
 
 %---- 7.4.1.1 ----
 \subsubsection{圆柱体边缘几何(Cylinder Side Geometry)}
-TODO
+\begin{flushleft}
+我们生成以原点为中心的圆柱体，平行于$y$轴。 从图\ref{fig:7-1}中，所有顶点都位于圆柱体的“环”上，其中有stackCount + 1个环，每个环都有 sliceCount 个(唯一)顶点。 连续环之间的半径差异为$\Delta r=(topRadius - bottomRadius)/ stackCount$。 如果我们从索引为0的底环开始，那么第i个环的半径是$r_{i} = bottomRadius + i\Delta r$，第i个环的高度是 $h_{i}=-\frac{h}{2}+i\Delta h$其中$\Delta h$是堆栈高度，h是圆柱高度。 因此，基本思想是迭代每个环，并生成位于该环上的顶点。 这给出了以下实现：\\
+\end{flushleft}
+\begin{lstlisting}
+GeometryGenerator::MeshData 
+GeometryGenerator::CreateCylinder(
+    float bottomRadius, 
+    float topRadius, 
+    float height, 
+    uint32 sliceCount, 
+    uint32 stackCount)
+{
+    MeshData meshData;
+
+    //
+    // Build Stacks.
+    // 
+
+    float stackHeight = height / stackCount;
+
+    // Amount to increment radius as we move up 
+    // each stack level from bottom to top.
+    float radiusStep = (topRadius - bottomRadius) / stackCount;
+
+    uint32 ringCount = stackCount+1;
+
+    // Compute vertices for each stack ring 
+    // starting at the bottom and moving up.
+    for(uint32 i = 0; i < ringCount; ++i)
+    {
+        float y = -0.5f*height + i*stackHeight;
+        float r = bottomRadius + i*radiusStep;
+
+        // vertices of ring
+        float dTheta = 2.0f*XM_PI/sliceCount;
+        for(uint32 j = 0; j <= sliceCount; ++j)
+        {
+            Vertex vertex;
+
+            float c = cosf(j*dTheta);
+            float s = sinf(j*dTheta);
+
+            vertex.Position = XMFLOAT3(r*c, y, r*s);
+
+            vertex.TexC.x = (float)j/sliceCount;
+            vertex.TexC.y = 1.0f - (float)i/stackCount;
+
+            // Cylinder can be parameterized as follows, where we introduce v
+            // parameter that goes in the same direction as the v tex-coord
+            // so that the bitangent goes in the same direction 
+            // as the v tex-coord.
+            //   Let r0 be the bottom radius and let r1 be the top radius.
+            //   y(v) = h - hv for v in [0,1].
+            //   r(v) = r1 + (r0-r1)v
+            //
+            //   x(t, v) = r(v)*cos(t)
+            //   y(t, v) = h - hv
+            //   z(t, v) = r(v)*sin(t)
+            // 
+            //  dx/dt = -r(v)*sin(t)
+            //  dy/dt = 0
+            //  dz/dt = +r(v)*cos(t)
+            //
+            //  dx/dv = (r0-r1)*cos(t)
+            //  dy/dv = -h
+            //  dz/dv = (r0-r1)*sin(t)
+
+            // This is unit length.
+            vertex.TangentU = XMFLOAT3(-s, 0.0f, c);
+
+            float dr = bottomRadius-topRadius;
+            XMFLOAT3 bitangent(dr*c, -height, dr*s);
+
+            XMVECTOR T = XMLoadFloat3(&vertex.TangentU);
+            XMVECTOR B = XMLoadFloat3(&bitangent);
+            XMVECTOR N = XMVector3Normalize(XMVector3Cross(T, B));
+            XMStoreFloat3(&vertex.Normal, N);
+
+            meshData.Vertices.push_back(vertex);
+        }
+    }
+......
+\end{lstlisting}
+\begin{flushleft}
+NOTICE: 观察到每个环的第一个和最后一个顶点在位置上重复，但纹理坐标不重复。 我们必须这样做，以便我们可以正确地将纹理应用于圆柱体。\\
+~\\
+NOTICE: 实际上GeometryGenerator::CreateCylinder创建了额外的顶点数据，例如法线向量和纹理坐标，这些对未来的演示非常有用。 现在不要担心这些数量。\\
+~\\
+从图\ref{fig:7-2}可以看出，每个堆栈中的每个切片都有一个四边形（两个三角形）。 图\ref{fig:7-2}显示第$i$个堆栈和第$j$个切片的索引由下式给出：\\
+\end{flushleft}
+\begin{align*}
+\Delta ABC = (i\cdot n+j, (i+1)\cdot n+j,(i+1)\cdot n+j+1)\\
+\Delta ACD = (i\cdot n+j, (i+1)\cdot n+j+1,i\cdot n+j+1)
+\end{lstlisting}
+\begin{align*}
+其中n是每个环的顶点数。 所以关键的想法是遍历每个堆栈中的每个切片，并应用上面的公式。\\
+\end{flushleft}
+\begin{lstlisting}
+    // Add one because we duplicate the first and last vertex per ring
+    // since the texture coordinates are different.
+    uint32 ringVertexCount = sliceCount+1;
+
+    // Compute indices for each stack.
+    for(uint32 i = 0; i < stackCount; ++i)
+    {
+        for(uint32 j = 0; j < sliceCount; ++j)
+        {
+            meshData.Indices32.push_back(i*ringVertexCount + j);
+            meshData.Indices32.push_back((i+1)*ringVertexCount + j);
+            meshData.Indices32.push_back((i+1)*ringVertexCount + j+1);
+
+            meshData.Indices32.push_back(i*ringVertexCount + j);
+            meshData.Indices32.push_back((i+1)*ringVertexCount + j+1);
+            meshData.Indices32.push_back(i*ringVertexCount + j+1);
+        }
+    }
+
+    BuildCylinderTopCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
+    BuildCylinderBottomCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
+
+    return meshData;
+}
+\end{lstlisting}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-2}
+    \centering
+    \caption{包含在第$i$个和第$i + 1$个环中的顶点A，B，C，D和第$j$个切片。}
+    \label{fig:7-2}
+\end{figure}
+
+%---- 7.4.1.2 ----
+\subsubsection{顶面底面几何(Cap Geometry)}
+\begin{flushleft}
+生成顶面几何图形相当于生成顶部和底部环的切片三角形以近似圆形：\\
+\end{flushleft}
+\begin{lstlisting}
+void GeometryGenerator::BuildCylinderTopCap(
+    float bottomRadius, 
+    float topRadius, 
+    float height,
+    uint32 sliceCount, 
+    uint32 stackCount, 
+    MeshData& meshData)
+{
+    uint32 baseIndex = (uint32)meshData.Vertices.size();
+
+    float y = 0.5f*height;
+    float dTheta = 2.0f*XM_PI/sliceCount;
+
+    // Duplicate cap ring vertices because 
+    // the texture coordinates and normals differ.
+    for(uint32 i = 0; i <= sliceCount; ++i)
+    {
+        float x = topRadius*cosf(i*dTheta);
+        float z = topRadius*sinf(i*dTheta);
+
+        // Scale down by the height to try and 
+        // make top cap texture coord area
+        // proportional to base.
+        float u = x/height + 0.5f;
+        float v = z/height + 0.5f;
+
+        meshData.Vertices.push_back(
+            Vertex(x, y, z, 
+                0.0f, 1.0f, 0.0f, 
+                1.0f, 0.0f, 0.0f, 
+                u, v));
+    }
+
+    // Cap center vertex.
+    meshData.Vertices.push_back(
+        Vertex(0.0f, y, 0.0f, 
+            0.0f, 1.0f, 0.0f, 
+            1.0f, 0.0f, 0.0f, 
+            0.5f, 0.5f));
+
+    // Index of center vertex.
+    uint32 centerIndex = (uint32)meshData.Vertices.size()-1;
+
+    for(uint32 i = 0; i < sliceCount; ++i)
+    {
+        meshData.Indices32.push_back(centerIndex);
+        meshData.Indices32.push_back(baseIndex + i+1);
+        meshData.Indices32.push_back(baseIndex + i);
+    }
+}
+\end{lstlisting}
+\begin{flushleft}
+底面类似。\\
+\end{flushleft}
+

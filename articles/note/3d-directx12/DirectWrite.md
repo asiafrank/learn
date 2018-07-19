@@ -23,6 +23,12 @@
 - [IDWriteTextRenderer](https://msdn.microsoft.com/en-us/library/Dd371523(v=VS.85).aspx)：表示一组应用程序定义的回调，用于执行文本，内联对象和装饰（如下划线）的呈现。
 - [IDWriteTextRenderer::DrawGlyphRun](https://msdn.microsoft.com/en-us/library/Dd371526(v=VS.85).aspx)：该方法被 IDWriteTextLayout::Draw 调用，用于渲染文字。该方法有两种实现 [ID2DRenderTarget::DrawGlyphRun](https://msdn.microsoft.com/library/windows/desktop/dd371893) 使用 GPU 做渲染，[IDWriteBitmapRenderTarget::DrawGlyphRun](https://msdn.microsoft.com/en-us/library/Dd368167(v=VS.85).aspx) 使用位图做渲染
 
-## 重要文章
+## 如何在 Direct3D 12 中显示文字
+下面文章描述了 2D 与 Direct3D 相互整合的方案。
 - [Direct3D 12 interop](https://docs.microsoft.com/en-us/windows/desktop/direct3d12/direct3d-12-with-direct3d-11--direct-2d-and-gdi)
 - [D2D using D3D11on12](https://docs.microsoft.com/en-us/windows/desktop/direct3d12/d2d-using-d3d11on12)
+- [代码参考](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Samples/Desktop/D3D1211On12)
+
+## 如何在 Direct3D 12 中播放视频
+和显示文字一样，需要 Direct3D 11 和 Direct3D 12 整合
+- [Direct3D 11 Video APIs](https://docs.microsoft.com/en-us/windows/desktop/medfound/direct3d-11-video-apis)
