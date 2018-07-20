@@ -629,3 +629,1166 @@ void GeometryGenerator::BuildCylinderTopCap(
 底面类似。\\
 \end{flushleft}
 
+%---- 7.4.2 ----
+\subsection{创建球面网格(Generating a Sphere Mesh)}
+\begin{flushleft}
+我们通过指定半径，切片和堆栈计数来定义球体，如图\ref{fig:7-3}所示。 除了每个环的半径变化是基于三角函数的非线性方式之外，用于生成球体的算法非常类似于圆柱体的算法。 我们将留给读者研究 GeometryGenerator::CreateSphere 代码。 请注意，我们可以应用非均匀缩放世界变换将球体变换为椭圆体。
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-3}
+    \centering
+    \caption{切片和堆栈的思想也适用于球体来控制曲面细分的级别。}
+    \label{fig:7-3}
+\end{figure}
+
+%---- 7.4.3 ----
+\subsection{创建地圈网格(Generating a Geosphere Mesh)}
+\begin{flushleft}
+从图\ref{fig:7-3}可以看出，球体的三角形没有相等的面积。 在某些情况下这可能是不合需要的。 地圈使用具有几乎相等面积的三角形以及相等的边长来近似球体（参见图\ref{fig:7-4}）。
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-4}
+    \centering
+    \caption{通过重复细分和重投影到球体上来近似地圈。}
+    \label{fig:7-4}
+\end{figure}
+
+\begin{flushleft}
+为了生成地圈，我们从二十面体开始，细分三角形，然后将新顶点投影到具有给定半径的球体上。 我们可以重复此过程以改进曲面细分。\\
+图\ref{fig:7-5}显示了如何将三角形细分为四个相等大小的三角形。 只需沿原始三角形的边缘取中点即可找到新的顶点。 然后，通过将顶点投影到单位球上然后标量乘以$r: v^{'}=r \frac{v}{||v||}$，可以将新顶点投影到半径为$r$的球体上
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-5}
+    \centering
+    \caption{将三角形细分为四个相等面积的三角形。}
+    \label{fig:7-5}
+\end{figure}
+
+\begin{flushleft}
+代码如下：\\
+\end{flushleft}
+\begin{lstlisting}
+GeometryGenerator::MeshData 
+GeometryGenerator::CreateGeosphere(
+    float radius, 
+    uint32 numSubdivisions)
+{
+    MeshData meshData;
+
+    // Put a cap on the number of subdivisions.
+    numSubdivisions = std::min<uint32>(numSubdivisions, 6u);
+
+    // Approximate a sphere by tessellating an icosahedron.
+
+    const float X = 0.525731f; 
+    const float Z = 0.850651f;
+
+    XMFLOAT3 pos[12] = 
+    {
+        XMFLOAT3(-X, 0.0f, Z),  XMFLOAT3(X, 0.0f, Z),  
+        XMFLOAT3(-X, 0.0f, -Z), XMFLOAT3(X, 0.0f, -Z),    
+        XMFLOAT3(0.0f, Z, X),   XMFLOAT3(0.0f, Z, -X), 
+        XMFLOAT3(0.0f, -Z, X),  XMFLOAT3(0.0f, -Z, -X),    
+        XMFLOAT3(Z, X, 0.0f),   XMFLOAT3(-Z, X, 0.0f), 
+        XMFLOAT3(Z, -X, 0.0f),  XMFLOAT3(-Z, -X, 0.0f)
+    };
+
+    uint32 k[60] =
+    {
+        1,4,0,  4,9,0,  4,5,9,  8,5,4,  1,8,4,    
+        1,10,8, 10,3,8, 8,3,5,  3,2,5,  3,7,2,    
+        3,10,7, 10,6,7, 6,11,7, 6,0,11, 6,1,0, 
+        10,1,6, 11,0,9, 2,11,9, 5,2,9,  11,2,7 
+    };
+
+    meshData.Vertices.resize(12);
+    meshData.Indices32.assign(&k[0], &k[60]);
+
+    for(uint32 i = 0; i < 12; ++i)
+        meshData.Vertices[i].Position = pos[i];
+
+    for(uint32 i = 0; i < numSubdivisions; ++i)
+        Subdivide(meshData);
+
+    // Project vertices onto sphere and scale.
+    for(uint32 i = 0; i < meshData.Vertices.size(); ++i)
+    {
+        // Project onto unit sphere.
+        XMVECTOR n = XMVector3Normalize(XMLoadFloat3(&meshData.Vertices[i].Position));
+
+        // Project onto sphere.
+        XMVECTOR p = radius*n;
+
+        XMStoreFloat3(&meshData.Vertices[i].Position, p);
+        XMStoreFloat3(&meshData.Vertices[i].Normal, n);
+
+        // Derive texture coordinates from spherical coordinates.
+        float theta = atan2f(meshData.Vertices[i].Position.z, 
+                             meshData.Vertices[i].Position.x);
+
+        // Put in [0, 2pi].
+        if(theta < 0.0f)
+            theta += XM_2PI;
+
+        float phi = acosf(meshData.Vertices[i].Position.y / radius);
+
+        meshData.Vertices[i].TexC.x = theta/XM_2PI;
+        meshData.Vertices[i].TexC.y = phi/XM_PI;
+
+        // Partial derivative of P with respect to theta
+        meshData.Vertices[i].TangentU.x = -radius*sinf(phi)*sinf(theta);
+        meshData.Vertices[i].TangentU.y = 0.0f;
+        meshData.Vertices[i].TangentU.z = +radius*sinf(phi)*cosf(theta);
+
+        XMVECTOR T = XMLoadFloat3(&meshData.Vertices[i].TangentU);
+        XMStoreFloat3(&meshData.Vertices[i].TangentU, XMVector3Normalize(T));
+    }
+
+    return meshData;
+}
+\end{lstlisting}
+
+%---- 7.5 ----
+\section{Shapes Demo}
+\begin{flushleft}
+为了演示我们的球体和圆柱体生成代码，我们实现了如图\ref{fig:7-6}所示的 "Shapes" 演示。 此外，您还将获得在场景中定位和绘制多个对象的经验（即，创建多个世界变换矩阵）。 此外，我们将所有场景几何体放在一个大顶点和索引缓冲区中。 然后我们将使用 DrawIndexedInstanced 方法一次绘制一个对象（因为需要在对象之间更改世界矩阵）; 因此，您将看到使用 DrawIndexedInstanced 的 StartIndexLocation 和 BaseVertexLocation 参数的示例。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-6}
+    \centering
+    \caption{"Shapes"演示的截图}
+    \label{fig:7-6}
+\end{figure}
+
+%---- 7.5.1 ----
+\subsection{顶点和顶点缓冲区(Vertex and Index Buffers)}
+\begin{flushleft}
+如图\ref{fig:7-6}所示，在本演示中，我们绘制了一个框，网格(grid)，圆柱体和球体。 尽管我们在此演示中绘制了多个球体和圆柱体，但我们只需要一个球体和圆柱体几何体的副本。 我们只是多次重绘相同的球体和圆柱网格，但是使用不同的世界矩阵; 这是几何实例化的一个例子，它可以节省内存。\\
+我们将所有网格顶点和索引打包到一个顶点和索引缓冲区中。 这是通过连接顶点和索引数组来完成的。 这意味着当我们绘制一个对象时，我们只绘制顶点和索引缓冲区的子集。 为了使用 ID3D12CommandList::DrawIndexedInstanced 仅绘制几何的子集，我们需要知道三个量（回想一下图\ref{fig:6-3}以及第6章中关于它的讨论）。 我们需要知道连接索引缓冲区中对象的起始索引，它的索引计数，我们需要知道基本顶点位置 - 对象相对于连接顶点缓冲区的第一个顶点的索引。 回想一下，基本顶点位置是在提取顶点之前添加到绘制调用中的索引的整数值，以便索引引用连接顶点缓冲区中的正确子集。 （另见第5章的练习2）\\
+
+下面的代码显示了如何创建几何缓冲区，如何缓存必要的图纸数量以及如何绘制对象。
+\end{flushleft}
+
+\begin{lstlisting}
+void ShapesApp::BuildShapeGeometry()
+{
+    GeometryGenerator geoGen;
+    GeometryGenerator::MeshData box = 
+        geoGen.CreateBox(1.5f, 0.5f, 1.5f, 3);
+    GeometryGenerator::MeshData grid = 
+        geoGen.CreateGrid(20.0f, 30.0f, 60, 40);
+    GeometryGenerator::MeshData sphere = 
+        geoGen.CreateSphere(0.5f, 20, 20);
+    GeometryGenerator::MeshData cylinder = 
+        geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+
+    //
+    // We are concatenating all the geometry 
+    // into one big vertex/index buffer.  So
+    // define the regions in the buffer each submesh covers.
+    //
+
+    // Cache the vertex offsets to each object 
+    // in the concatenated vertex buffer.
+    UINT boxVertexOffset = 0;
+    UINT gridVertexOffset = (UINT)box.Vertices.size();
+    UINT sphereVertexOffset = gridVertexOffset + 
+                           (UINT)grid.Vertices.size();
+    UINT cylinderVertexOffset = sphereVertexOffset + 
+                           (UINT)sphere.Vertices.size();
+
+    // Cache the starting index for each object in the concatenated index buffer.
+    UINT boxIndexOffset = 0;
+    UINT gridIndexOffset = (UINT)box.Indices32.size();
+    UINT sphereIndexOffset = gridIndexOffset + 
+                           (UINT)grid.Indices32.size();
+    UINT cylinderIndexOffset = sphereIndexOffset + 
+                           (UINT)sphere.Indices32.size();
+
+    // Define the SubmeshGeometry that cover different 
+    // regions of the vertex/index buffers.
+
+    SubmeshGeometry boxSubmesh;
+    boxSubmesh.IndexCount = (UINT)box.Indices32.size();
+    boxSubmesh.StartIndexLocation = boxIndexOffset;
+    boxSubmesh.BaseVertexLocation = boxVertexOffset;
+
+    SubmeshGeometry gridSubmesh;
+    gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
+    gridSubmesh.StartIndexLocation = gridIndexOffset;
+    gridSubmesh.BaseVertexLocation = gridVertexOffset;
+
+    SubmeshGeometry sphereSubmesh;
+    sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
+    sphereSubmesh.StartIndexLocation = sphereIndexOffset;
+    sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
+
+    SubmeshGeometry cylinderSubmesh;
+    cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
+    cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
+    cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
+
+    //
+    // Extract the vertex elements we are 
+    // interested in and pack the
+    // vertices of all the meshes into 
+    // one vertex buffer.
+    //
+
+    auto totalVertexCount =
+        box.Vertices.size() +
+        grid.Vertices.size() +
+        sphere.Vertices.size() +
+        cylinder.Vertices.size();
+
+    std::vector<Vertex> vertices(totalVertexCount);
+
+    UINT k = 0;
+    for(size_t i = 0; i < box.Vertices.size(); ++i, ++k)
+    {
+        vertices[k].Pos = box.Vertices[i].Position;
+        vertices[k].Color = XMFLOAT4(DirectX::Colors::DarkGreen);
+    }
+
+    for(size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
+    {
+        vertices[k].Pos = grid.Vertices[i].Position;
+        vertices[k].Color = XMFLOAT4(DirectX::Colors::ForestGreen);
+    }
+
+    for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
+    {
+        vertices[k].Pos = sphere.Vertices[i].Position;
+        vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
+    }
+
+    for(size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
+    {
+        vertices[k].Pos = cylinder.Vertices[i].Position;
+        vertices[k].Color = XMFLOAT4(DirectX::Colors::SteelBlue);
+    }
+
+    std::vector<std::uint16_t> indices;
+    indices.insert(indices.end(), 
+                   std::begin(box.GetIndices16()), 
+                   std::end(box.GetIndices16()));
+    indices.insert(indices.end(), 
+                   std::begin(grid.GetIndices16()), 
+                   std::end(grid.GetIndices16()));
+    indices.insert(indices.end(), 
+                   std::begin(sphere.GetIndices16()), 
+                   std::end(sphere.GetIndices16()));
+    indices.insert(indices.end(), 
+                   std::begin(cylinder.GetIndices16()), 
+                   std::end(cylinder.GetIndices16()));
+
+    const UINT vbByteSize = (UINT)vertices.size() * 
+                            sizeof(Vertex);
+    const UINT ibByteSize = (UINT)indices.size() * 
+                            sizeof(std::uint16_t);
+
+    auto geo = std::make_unique<MeshGeometry>();
+    geo->Name = "shapeGeo";
+
+    ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+    CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), 
+                    vertices.data(), 
+                    vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), 
+                    indices.data(), 
+                    ibByteSize);
+
+    geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), vertices.data(), 
+        vbByteSize, geo->VertexBufferUploader);
+
+    geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), indices.data(), 
+        ibByteSize, geo->IndexBufferUploader);
+
+    geo->VertexByteStride = sizeof(Vertex);
+    geo->VertexBufferByteSize = vbByteSize;
+    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    geo->IndexBufferByteSize = ibByteSize;
+
+    geo->DrawArgs["box"] = boxSubmesh;
+    geo->DrawArgs["grid"] = gridSubmesh;
+    geo->DrawArgs["sphere"] = sphereSubmesh;
+    geo->DrawArgs["cylinder"] = cylinderSubmesh;
+
+    mGeometries[geo->Name] = std::move(geo);
+}
+\end{lstlisting}
+
+\begin{flushleft}
+在上面方法的最后一行中使用的 mGeometries 变量定义如下：\\
+\end{flushleft}
+
+\begin{lstlisting}
+std::unordered_map<std::string, 
+            std::unique_ptr<MeshGeometry>> mGeometries;
+\end{lstlisting}
+
+\begin{flushleft}
+这是我们在本书其余部分使用的常见模式。 为每个几何体，PSO，纹理，着色器等创建新的变量名称很麻烦，因此我们使用无序地图进行常量时间查找并按名称引用我们的对象。 以下是一些例子：\\
+\end{flushleft}
+
+\begin{lstlisting}
+std::unordered_map<std::string,
+    std::unique_ptr<MeshGeometry>> mGeometries;
+std::unordered_map<std::string, ComPtr<ID3DBlob>>
+    mShaders;
+std::unordered_map<std::string,
+    ComPtr<ID3D12PipelineState>> mPSOs;
+\end{lstlisting}
+
+%---- 7.5.2 ----
+\subsection{渲染项(Render Items)}
+\begin{flushleft}
+我们现在定义场景渲染项。 观察所有渲染项如何共享相同的 MeshGeometry，并使用 DrawArgs 获取 DrawIndexedInstanced 参数以绘制顶点/索引缓冲区的子区域。\\
+\end{flushleft}
+
+\begin{lstlisting}
+// ShapesApp member variable.
+std::vector<std::unique_ptr<RenderItem>> mAllRitems;
+std::vector<RenderItem*> mOpaqueRitems;
+
+void ShapesApp::BuildRenderItems()
+{
+    auto boxRitem = std::make_unique<RenderItem>();
+    XMStoreFloat4x4(&boxRitem->World, 
+         XMMatrixScaling(2.0f, 2.0f, 2.0f)*
+         XMMatrixTranslation(0.0f, 0.5f, 0.0f));
+
+    boxRitem->ObjCBIndex = 0;
+    boxRitem->Geo = mGeometries["shapeGeo"].get();
+    boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    boxRitem->IndexCount = boxRitem->Geo->
+        DrawArgs["box"].IndexCount;
+    boxRitem->StartIndexLocation = boxRitem->Geo->
+        DrawArgs["box"].StartIndexLocation;
+    boxRitem->BaseVertexLocation = boxRitem->Geo->
+        DrawArgs["box"].BaseVertexLocation;
+    mAllRitems.push_back(std::move(boxRitem));
+
+    auto gridRitem = std::make_unique<RenderItem>();
+    gridRitem->World = MathHelper::Identity4x4();
+    gridRitem->ObjCBIndex = 1;
+    gridRitem->Geo = mGeometries["shapeGeo"].get();
+    gridRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    gridRitem->IndexCount = gridRitem->Geo->
+        DrawArgs["grid"].IndexCount;
+    gridRitem->StartIndexLocation = gridRitem->Geo->
+        DrawArgs["grid"].StartIndexLocation;
+    gridRitem->BaseVertexLocation = gridRitem->Geo->
+        DrawArgs["grid"].BaseVertexLocation;
+    mAllRitems.push_back(std::move(gridRitem));
+
+    UINT objCBIndex = 2;
+    for(int i = 0; i < 5; ++i)
+    {
+        auto leftCylRitem = std::make_unique<RenderItem>();
+        auto rightCylRitem = std::make_unique<RenderItem>();
+        auto leftSphereRitem = std::make_unique<RenderItem>();
+        auto rightSphereRitem = std::make_unique<RenderItem>();
+
+        XMMATRIX leftCylWorld = XMMatrixTranslation(
+            -5.0f, 1.5f, -10.0f + i*5.0f);
+        XMMATRIX rightCylWorld = XMMatrixTranslation(
+            +5.0f, 1.5f, -10.0f + i*5.0f);
+
+        XMMATRIX leftSphereWorld = XMMatrixTranslation(
+            -5.0f, 3.5f, -10.0f + i*5.0f);
+        XMMATRIX rightSphereWorld = XMMatrixTranslation(
+            +5.0f, 3.5f, -10.0f + i*5.0f);
+
+        XMStoreFloat4x4(&leftCylRitem->World, 
+            rightCylWorld);
+        leftCylRitem->ObjCBIndex = objCBIndex++;
+        leftCylRitem->Geo = mGeometries["shapeGeo"].get();
+        leftCylRitem->PrimitiveType = 
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        leftCylRitem->IndexCount = leftCylRitem->Geo->
+            DrawArgs["cylinder"].IndexCount;
+        leftCylRitem->StartIndexLocation = leftCylRitem->Geo->
+            DrawArgs["cylinder"].StartIndexLocation;
+        leftCylRitem->BaseVertexLocation = leftCylRitem->Geo->
+            DrawArgs["cylinder"].BaseVertexLocation;
+
+        XMStoreFloat4x4(&rightCylRitem->World, leftCylWorld);
+        rightCylRitem->ObjCBIndex = objCBIndex++;
+        rightCylRitem->Geo = mGeometries["shapeGeo"].get();
+        rightCylRitem->PrimitiveType = 
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        rightCylRitem->IndexCount = rightCylRitem->Geo->
+            DrawArgs["cylinder"].IndexCount;
+        rightCylRitem->StartIndexLocation = rightCylRitem->Geo->
+            DrawArgs["cylinder"].StartIndexLocation;
+        rightCylRitem->BaseVertexLocation = rightCylRitem->Geo->
+            DrawArgs["cylinder"].BaseVertexLocation;
+
+        XMStoreFloat4x4(&leftSphereRitem->World, leftSphereWorld);
+        leftSphereRitem->ObjCBIndex = objCBIndex++;
+        leftSphereRitem->Geo = mGeometries["shapeGeo"].get();
+        leftSphereRitem->PrimitiveType = 
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        leftSphereRitem->IndexCount = leftSphereRitem->Geo->
+            DrawArgs["sphere"].IndexCount;
+        leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->
+            DrawArgs["sphere"].StartIndexLocation;
+        leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->
+            DrawArgs["sphere"].BaseVertexLocation;
+
+        XMStoreFloat4x4(&rightSphereRitem->World, rightSphereWorld);
+        rightSphereRitem->ObjCBIndex = objCBIndex++;
+        rightSphereRitem->Geo = mGeometries["shapeGeo"].get();
+        rightSphereRitem->PrimitiveType = 
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        rightSphereRitem->IndexCount = rightSphereRitem->Geo->
+            DrawArgs["sphere"].IndexCount;
+        rightSphereRitem->StartIndexLocation = rightSphereRitem->Geo->
+            DrawArgs["sphere"].StartIndexLocation;
+        rightSphereRitem->BaseVertexLocation = rightSphereRitem->Geo->
+            DrawArgs["sphere"].BaseVertexLocation;
+
+        mAllRitems.push_back(std::move(leftCylRitem));
+        mAllRitems.push_back(std::move(rightCylRitem));
+        mAllRitems.push_back(std::move(leftSphereRitem));
+        mAllRitems.push_back(std::move(rightSphereRitem));
+    }
+
+    // All the render items are opaque.
+    for(auto& e : mAllRitems)
+        mOpaqueRitems.push_back(e.get());
+}
+\end{lstlisting}
+
+%---- 7.5.3 ----
+\subsection{帧资源和常量缓冲视图(Frame Resources and Constant Buffer Views)}
+\begin{flushleft}
+回想一下，我们有一个 FrameResources 的向量，每个 FrameResource 都有一个上传缓冲区，用于存储场景中每个渲染项的传递常量和常量缓冲区。
+\end{flushleft}
+
+\begin{lstlisting}
+std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
+std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
+\end{lstlisting}
+
+\begin{flushleft}
+如果我们有3个帧资源和 $n$ 个渲染项，那么我们有 $3n$ 个对象\footnote{原文是："then we have three 3n object constant
+buffers"，是错误的}常量缓冲区和3个传递常量缓冲区。 因此，我们需要$3(n+1)$个常量缓冲区视图（CBV）。 所以，我们需要修改我们的CBV堆以包含其他描述符：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void ShapesApp::BuildDescriptorHeaps()
+{
+    UINT objCount = (UINT)mOpaqueRitems.size();
+
+    // Need a CBV descriptor for each object for each frame resource,
+    // +1 for the perPass CBV for each frame resource.
+    UINT numDescriptors = (objCount+1) * 3;
+
+    // Save an offset to the start of the pass CBVs.  
+    // These are the last 3 descriptors.
+    mPassCbvOffset = objCount * gNumFrameResources;
+
+    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+    cbvHeapDesc.NumDescriptors = numDescriptors;
+    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    cbvHeapDesc.NodeMask = 0;
+    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc,
+        IID_PPV_ARGS(&mCbvHeap)));
+}
+\end{lstlisting}
+
+\begin{flushleft}
+现在，我们可以使用以下代码填充CBV堆，其中描述符$0$到$n-1$包含第$0$帧资源的对象CBV，描述符$n$到$2n-1$包含第$1$帧资源的对象CBV，描述符$2n$到$3n-1$ 包含第二帧资源的对象CBV，描述符$3n$，$3n + 1$和$3n + 2$分别包含第$0$帧，第$1$帧和第$2$帧资源的传递CBV：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void ShapesApp::BuildConstantBufferViews()
+{
+    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+            sizeof(ObjectConstants));
+
+    UINT objCount = (UINT)mOpaqueRitems.size();
+
+    // Need a CBV descriptor for each object for each frame resource.
+    for(int frameIndex = 0; 
+        frameIndex < gNumFrameResources; 
+        ++frameIndex)
+    {
+        auto objectCB = mFrameResources[frameIndex]->
+            ObjectCB->Resource();
+        for(UINT i = 0; i < objCount; ++i)
+        {
+            D3D12_GPU_VIRTUAL_ADDRESS cbAddress = 
+                objectCB->GetGPUVirtualAddress();
+
+            // Offset to the ith object constant buffer in the buffer.
+            cbAddress += i*objCBByteSize;
+
+            // Offset to the object cbv in the descriptor heap.
+            int heapIndex = frameIndex*objCount + i;
+            auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->
+                GetCPUDescriptorHandleForHeapStart());
+            handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
+
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+            cbvDesc.BufferLocation = cbAddress;
+            cbvDesc.SizeInBytes = objCBByteSize;
+
+            md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+        }
+    }
+
+    UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+        sizeof(PassConstants));
+
+    // Last three descriptors are the pass CBVs for each frame resource.
+    for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+    {
+        auto passCB = mFrameResources[frameIndex]->PassCB->Resource();
+        D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
+
+        // Offset to the pass cbv in the descriptor heap.
+        int heapIndex = mPassCbvOffset + frameIndex;
+        auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->
+            GetCPUDescriptorHandleForHeapStart());
+        handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
+
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+        cbvDesc.BufferLocation = cbAddress;
+        cbvDesc.SizeInBytes = passCBByteSize;
+        
+        md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+    }
+}
+\end{lstlisting}
+
+\begin{flushleft}
+回想一下，我们可以使用 ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart 方法获取堆中第一个描述符的句柄。 但是，现在我们的堆有多个描述符，这个方法已不再适用。 我们需要能够偏移到堆中的其他描述符。 为此，我们需要知道要在堆中递增的大小以获取到下一个描述符。 这是特定于硬件的，因此我们必须从设备查询此信息，这取决于堆类型。 回想一下，我们的 D3DApp 类缓存了这些信息：\\
+\end{flushleft}
+
+\begin{lstlisting}
+mRtvDescriptorSize = md3dDevice->
+    GetDescriptorHandleIncrementSize(
+    D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+mDsvDescriptorSize = md3dDevice->
+    GetDescriptorHandleIncrementSize(
+    D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+mCbvSrvUavDescriptorSize = md3dDevice->
+    GetDescriptorHandleIncrementSize(
+    D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+\end{lstlisting}
+
+\begin{flushleft}
+一旦我们知道描述符增量大小，我们就可以使用两个 CD3DX12\_CPU\_DESCRIPTOR\_HANDLE::Offset 方法之一来通过 n 个描述符来偏移句柄：\\
+\end{flushleft}
+
+\begin{lstlisting}
+// Specify the number of descriptors to offset times 
+// the descriptor Offset by n descriptors:
+CD3DX12_CPU_DESCRIPTOR_HANDLE handle = mCbvHeap->
+    GetCPUDescriptorHandleForHeapStart();
+handle.Offset(n * mCbvSrvDescriptorSize);
+
+// Or equivalently, specify the number of 
+// descriptors to offset, followed by 
+// the descriptor increment size:
+CD3DX12_CPU_DESCRIPTOR_HANDLE handle = mCbvHeap->
+    GetCPUDescriptorHandleForHeapStart();
+handle.Offset(n, mCbvSrvDescriptorSize);
+\end{lstlisting}
+
+\begin{flushleft}
+NOTICE: CD3DX12\_GPU\_DESCRIPTOR\_HANDLE 有相同的 Offset 方法。
+\end{flushleft}
+
+
+%---- 7.5.4 ----
+\subsection{绘制场景(Draw the Scene)}
+\begin{flushleft}
+最后我们可以绘制渲染项。 也许唯一棘手的部分是通过程序偏移到堆中（我们想要绘制的对象的）正确CBV。 注意渲染项如何将索引存储到与渲染项关联的常量缓冲区的。\\
+\end{flushleft}
+
+\begin{lstlisting}
+void ShapesApp::DrawRenderItems(
+    ID3D12GraphicsCommandList* cmdList, 
+    const std::vector<RenderItem*>& ritems)
+{
+    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+        sizeof(ObjectConstants));
+ 
+    auto objectCB = mCurrFrameResource->ObjectCB->Resource();
+
+    // For each render item...
+    for(size_t i = 0; i < ritems.size(); ++i)
+    {
+        auto ri = ritems[i];
+
+        cmdList->IASetVertexBuffers(0, 1, 
+            &ri->Geo->VertexBufferView());
+        cmdList->IASetIndexBuffer(
+            &ri->Geo->IndexBufferView());
+        cmdList->IASetPrimitiveTopology(
+            ri->PrimitiveType);
+
+        // Offset to the CBV in the descriptor heap for 
+        // this object and for this frame resource.
+        UINT cbvIndex = mCurrFrameResourceIndex*
+            (UINT)mOpaqueRitems.size() + ri->ObjCBIndex;
+        auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->
+            GetGPUDescriptorHandleForHeapStart());
+        cbvHandle.Offset(cbvIndex, mCbvSrvUavDescriptorSize);
+
+        cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+
+        cmdList->DrawIndexedInstanced(ri->IndexCount, 1, 
+            ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+    }
+}
+\end{lstlisting}
+
+\begin{flushleft}
+DrawRenderItems 方法由 Draw 调用：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void ShapesApp::Draw(const GameTimer& gt)
+{
+    auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
+
+    // Reuse the memory associated with command recording.
+    // We can only reset when the associated command 
+    // lists have finished execution on the GPU.
+    ThrowIfFailed(cmdListAlloc->Reset());
+
+    // A command list can be reset after it has 
+    // been added to the command queue via ExecuteCommandList.
+    // Reusing the command list reuses memory.
+    if(mIsWireframe)
+    {
+        ThrowIfFailed(mCommandList->Reset(
+            cmdListAlloc.Get(), 
+            mPSOs["opaque_wireframe"].Get()));
+    }
+    else
+    {
+        ThrowIfFailed(mCommandList->Reset(
+            cmdListAlloc.Get(), 
+            mPSOs["opaque"].Get()));
+    }
+
+    mCommandList->RSSetViewports(1, &mScreenViewport);
+    mCommandList->RSSetScissorRects(1, &mScissorRect);
+
+    // Indicate a state transition on the resource usage.
+    mCommandList->ResourceBarrier(1, 
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_PRESENT, 
+            D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+    // Clear the back buffer and depth buffer.
+    mCommandList->ClearRenderTargetView(CurrentBackBufferView(), 
+        Colors::LightSteelBlue, 0, nullptr);
+    mCommandList->ClearDepthStencilView(DepthStencilView(), 
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 
+        1.0f, 0, 0, nullptr);
+
+    // Specify the buffers we are going to render to.
+    mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), 
+        true, &DepthStencilView());
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap.Get() };
+    mCommandList->SetDescriptorHeaps(
+        _countof(descriptorHeaps), 
+        descriptorHeaps);
+
+	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+
+    int passCbvIndex = mPassCbvOffset + mCurrFrameResourceIndex;
+    auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+
+    DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
+
+    // Indicate a state transition on the resource usage.
+    mCommandList->ResourceBarrier(1, 
+        &CD3DX12_RESOURCE_BARRIER::Transition(
+            CurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, 
+            D3D12_RESOURCE_STATE_PRESENT));
+
+    // Done recording commands.
+    ThrowIfFailed(mCommandList->Close());
+
+    // Add the command list to the queue for execution.
+    ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
+    mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+
+    // Swap the back and front buffers
+    ThrowIfFailed(mSwapChain->Present(0, 0));
+    mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
+
+    // Advance the fence value to mark commands 
+    // up to this fence point.
+    mCurrFrameResource->Fence = ++mCurrentFence;
+    
+    // Add an instruction to the command queue 
+    // to set a new fence point. 
+    // Because we are on the GPU timeline, 
+    // the new fence point won't be 
+    // set until the GPU finishes processing all
+    // the commands prior to this Signal().
+    mCommandQueue->Signal(mFence.Get(), mCurrentFence);
+}
+\end{lstlisting}
+
+%---- 7.6 ----
+\section{更多关于根签名(More on Root Signatures)}
+\begin{flushleft}
+我们在前一章的第6.6.5节中介绍了根签名。 根签名定义在发出绘制调用之前需要将哪些资源绑定到管道以及这些资源如何映射到着色器输入寄存器。 需要绑定哪些资源取决于当前着色器程序所期望的资源。 创建PSO时，将验证根签名和着色器程序组合。
+\end{flushleft}
+
+%---- 7.6.1 ----
+\subsection{根参数(Root Parameters)}
+\begin{flushleft}
+回想一下，根签名是由一组根参数定义的。 到目前为止，我们只创建了一个存储描述符表的根参数。 但是，root参数实际上可以是以下三种类型之一：\\
+\end{flushleft}
+
+\begin{itemize}
+  \item 描述符表(Descriptor Table): 期望描述符表引用堆中的连续范围，该范围标识要绑定的资源。
+  \item 根描述符(Root Descriptor | Inline Descriptor): 期望直接设置描述符以识别要绑定的资源; 描述符不需要在堆中。 只有 CBV 到常量缓冲区，SRV/UAV 到缓冲区可以绑定为根描述符。 特别是，这意味着 SRV 到纹理不能绑定为根描述符。
+  \item 根常量(Root constant): 期望直接绑定的32位常量值列表。
+\end{itemize}
+
+\begin{flushleft}
+出于性能考虑，可以将64个DWORD限制在根签名中。 这三种根参数具有以下内存消耗：\\
+\end{flushleft}
+
+\begin{itemize}
+  \item 描述符表(Descriptor Table): 1 DWORD
+  \item 根描述符(Root Descriptor): 2 DWORDs
+  \item 根常量(Root constant): 每 32-bit 常量 1 DWORD
+\end{itemize}
+
+\begin{flushleft}
+我们可以创建一个任意的根签名，只要我们不超过64个DWORD限制。 根常量非常方便，但它们的成本很快就会增加。 例如，如果我们需要的唯一常量数据是世界视图投影矩阵，我们可以使用16个根常量来存储它，这将使我们不需要涉及常量缓冲区和CBV堆。 但是，这会占我们根签名预算的四分之一。 使用根描述符只能是两个DWORD，描述符表只有一个DWORD。 随着我们的应用程序变得越来越复杂，我们的常量缓冲区数据将变得越来越大，并且我们不太可能只使用根常量。 在实际应用程序中，您可能会使用所有三种类型的根参数的组合。\\
+在代码中，通过填写 CD3DX12\_ROOT\_PARAMETER 结构来描述根参数。 正如我们在 CD3DX 代码中看到的那样，CD3DX12\_ROOT\_PARAMETER 扩展了 D3D12\_ROOT\_PARAMETER 并添加了一些辅助初始化函数。\\
+\end{flushleft}
+
+\begin{lstlisting}
+typedef struct D3D12_ROOT_PARAMETER
+{
+    D3D12_ROOT_PARAMETER_TYPE ParameterType;
+    union
+    {
+        D3D12_ROOT_DESCRIPTOR_TABLE DescriptorTable;
+        D3D12_ROOT_CONSTANTS Constants;
+        D3D12_ROOT_DESCRIPTOR Descriptor;
+    };
+    D3D12_SHADER_VISIBILITY ShaderVisibility;
+} D3D12_ROOT_PARAMETER;
+\end{lstlisting}
+
+\begin{itemize}
+  \item 1.ParameterType: 以下枚举类型的成员，指示根参数类型（描述符表，根常量，CBV根描述符，SRV根描述符，UAV根描述符）。
+  \begin{lstlisting}
+    enum D3D12_ROOT_PARAMETER_TYPE
+    {
+        D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE = 0,
+        D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS = 1,
+        D3D12_ROOT_PARAMETER_TYPE_CBV = 2,
+        D3D12_ROOT_PARAMETER_TYPE_SRV = 3 ,
+        D3D12_ROOT_PARAMETER_TYPE_UAV = 4
+    } D3D12_ROOT_PARAMETER_TYPE;
+  \end{lstlisting}
+  \item 2.DescriptorTable/Constants/Descriptor: 描述根参数的结构。您填写的联合成员取决于根参数类型。 7.6.2节，7.6.3节和7.6.4节讨论了这些结构。
+  \item 3.ShaderVisibility: 以下枚举的成员，指定哪个着色器程序可以看到此根参数。 通常在本书中我们指定 D3D12\_SHADER\_VISIBILITY\_ALL。 但是，如果我们知道资源仅用于像素着色器，那么我们可以指定 D3D12\_SHADER\_VISIBILITY\_PIXEL。 限制根参数的可见性可能会促使一些优化。\\
+  \begin{lstlisting}
+    enum D3D12_SHADER_VISIBILITY
+    {
+        D3D12_SHADER_VISIBILITY_ALL = 0,
+        D3D12_SHADER_VISIBILITY_VERTEX = 1,
+        D3D12_SHADER_VISIBILITY_HULL = 2,
+        D3D12_SHADER_VISIBILITY_DOMAIN = 3,
+        D3D12_SHADER_VISIBILITY_GEOMETRY = 4,
+        D3D12_SHADER_VISIBILITY_PIXEL = 5
+    } D3D12_SHADER_VISIBILITY;
+  \end{lstlisting}
+\end{itemize}
+
+%---- 7.6.2 ----
+\subsection{描述符表(Descriptor Tables)}
+\begin{flushleft}
+通过填写 D3D12\_ROOT\_PARAMETER 的 DescriptorTable 成员来进一步定义描述符表根参数。\\
+\end{flushleft}
+
+\begin{lstlisting}
+typedef struct D3D12_ROOT_DESCRIPTOR_TABLE
+{
+    UINT NumDescriptorRanges;
+    const D3D12_DESCRIPTOR_RANGE *pDescriptorRanges;
+} D3D12_ROOT_DESCRIPTOR_TABLE;
+\end{lstlisting}
+
+\begin{flushleft}
+这只是指定 D3D12\_DESCRIPTOR\_RANGE 的数组和数组中的范围数。\\
+D3D12\_DESCRIPTOR\_RANGE 结构定义如下：\\
+\end{flushleft}
+
+\begin{lstlisting}
+typedef struct D3D12_DESCRIPTOR_RANGE
+{
+    D3D12_DESCRIPTOR_RANGE_TYPE RangeType;
+    UINT NumDescriptors;
+    UINT BaseShaderRegister;
+    UINT RegisterSpace;
+    UINT OffsetInDescriptorsFromTableStart;
+} D3D12_DESCRIPTOR_RANGE;
+\end{lstlisting}
+
+\begin{itemize}
+  \item 1.RangeType: 以下枚举类型的成员，指示此范围中的描述符类型：\\
+  \begin{lstlisting}
+    enum D3D12_DESCRIPTOR_RANGE_TYPE
+    {
+    D3D12_DESCRIPTOR_RANGE_TYPE_SRV = 0,
+    D3D12_DESCRIPTOR_RANGE_TYPE_UAV = 1,
+    D3D12_DESCRIPTOR_RANGE_TYPE_CBV = 2 ,
+    D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER = 3
+    } D3D12_DESCRIPTOR_RANGE_TYPE;
+  \end{lstlisting}
+  NOTICE: 采样器描述符在纹理章节中讨论。
+  \item 2.NumDescriptors: 范围中的描述符个数
+  \item 3.BaseShaderRegister: 基本着色器寄存器参数绑定到。 例如，如果将 NumDescriptors 设置为3，将 BaseShaderRegister 设置为 1，范围类型为 CBV（对于常量缓冲区），那么您将绑定到 HLSL 寄存器\\
+  \begin{lstlisting}
+    cbuffer cbA : register(b1) {…};
+    cbuffer cbB : register(b2) {…};
+    cbuffer cbC : register(b3) {…};
+  \end{lstlisting}
+  \item 4.RegisterSpace: 此属性为您提供另一个指定着色器寄存器的维度。 例如，以下两个寄存器似乎与寄存器槽t0重叠，但它们是不同的寄存器，因为它们位于不同的空间中：\\
+  \begin{lstlisting}
+    Texture2D gDiffuseMap ：register(t0，space0);
+    Texture2D gNormalMap : register(t0, space1);
+  \end{lstlisting}
+  \item 5.OffsetInDescriptorsFromTableStart: 从表的开头偏移此范围的描述符。请参阅下面的示例。
+\end{itemize}
+
+\begin{flushleft}
+初始化为描述符表的槽参数采用 D3D12\_DESCRIPTOR\_RANGE 实例的数组，因为我们可以在一个表中混合各种类型的描述符。 假设我们按顺序通过以下三个范围定义了六个描述符的表：两个CBV，三个SRV和一个UAV。 这个表的定义如下：\\
+\end{flushleft}
+
+\begin{lstlisting}
+// Create a table with 2 CBVs, 3 SRVs and 1 UAV.
+CD3DX12_DESCRIPTOR_RANGE descRange[3];
+descRange[0].Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE_CBV, // descriptor type
+    2, // descriptor count
+    0, // base shader register arguments are bound to 
+       // for this root parameter
+    0, // register space
+    0);// offset from start of table
+
+descRange[1].Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE_SRV, // descriptor type
+    3, // descriptor count
+    0, // base shader register arguments are bound to 
+       // for this root parameter
+    0, // register space
+    2);// offset from start of table
+descRange[2].Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE_UAV, // descriptor type
+    1, // descriptor count
+    0, // base shader register arguments are bound to 
+       // for this root parameter
+    0, // register space
+    5);// offset from start of table
+slotRootParameter[0].InitAsDescriptorTable(
+    3, descRange, D3D12_SHADER_VISIBILITY_ALL);
+\end{lstlisting}
+
+\begin{flushleft}
+像往常一样，有一个继承自 D3D12\_DESCRIPTOR\_RANGE 的 CD3DX12\_DESCRIPTOR\_RANGE 变体，我们使用以下初始化函数：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void CD3DX12_DESCRIPTOR_RANGE::Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE rangeType,
+    UINT numDescriptors,
+    UINT baseShaderRegister,
+    UINT registerSpace = 0,
+    UINT offsetInDescriptorsFromTableStart =
+        D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND);
+\end{lstlisting}
+
+\begin{flushleft}
+该表涵盖六个描述符，并且应用程序期望在描述符堆中绑定连续范围的描述符，其包括两个CBV，随后是三个SRV，后跟一个UAV。 我们看到所有范围类型都从寄存器0开始，但没有"重叠"(overlap)冲突，因为CBV，SRV和UAV都绑定到不同的寄存器类型，每个寄存器类型从寄存器0开始。\\
+我们可以通过指定 D3D12\_DESCRIPTOR\_RANGE\_OFFSET\_APPEND 让 Direct3D 为我们计算 OffsetInDescriptorsFromTableStart 值; 这会让 Direct3D 使用表中先前的范围描述符计数来计算偏移量。 请注意，CD3DX12\_DESCRIPTOR\_RANGE::Init 方法默认为寄存器空间为0，OffsetInDescriptorsFromTableStart 默认为 D3D12\_DESCRIPTOR\_RANGE\_OFFSET\_APPEND。\\
+\end{flushleft}
+
+%---- 7.6.3 ----
+\subsection{根描述符(Root Descriptors)}
+\begin{flushleft}
+通过填写 D3D12\_ROOT\_PARAMETER 的描述符成员来进一步定义根描述符根参数。\\
+\end{flushleft}
+
+\begin{lstlisting}
+typedef struct D3D12_ROOT_DESCRIPTOR
+{
+    UINT ShaderRegister;
+    UINT RegisterSpace;
+} D3D12_ROOT_DESCRIPTOR;
+\end{lstlisting}
+
+\begin{flushleft}
+1.ShaderRegister: 着色器寄存器将绑定描述符。 例如，如果指定 2 并且此根参数是 CBV，则参数将映射到 register(b2) 中的常量缓冲区：\\
+\end{flushleft}
+\begin{lstlisting}
+cbuffer cbPass : register(b2) {…};
+\end{lstlisting}
+\begin{flushleft}
+2.RegisterSpace: 见 D3D12\_DESCRIPTOR\_RANGE::RegisterSpace\\
+~\\
+与需要我们在描述符堆中设置描述符句柄的描述符表不同，要设置根描述符，我们只需直接绑定资源的虚拟地址。\\
+\end{flushleft}
+\begin{lstlisting}
+UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+    sizeof(ObjectConstants));
+D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->
+    GetGPUVirtualAddress();
+
+// Offset to the constants for this object in the buffer.
+objCBAddress += ri->ObjCBIndex*objCBByteSize;
+cmdList->SetGraphicsRootConstantBufferView(
+    0, // root parameter index
+    objCBAddress);
+\end{lstlisting}
+
+%---- 7.6.4 ----
+\subsection{根常量(Root Constants)}
+\begin{flushleft}
+通过填写 D3D12\_ROOT\_PARAMETER 的常量成员来进一步定义描述符表根参数。\\
+\end{flushleft}
+\begin{lstlisting}
+typedef struct D3D12_ROOT_CONSTANTS
+{
+    UINT ShaderRegister;
+    UINT RegisterSpace;
+    UINT Num32BitValues;
+} D3D12_ROOT_CONSTANTS;
+\end{lstlisting}
+
+\begin{flushleft}
+1.ShaderRegister: 见 D3D12\_ROOT\_DESCRIPTOR::ShaderRegister。\\
+2.RegisterSpace: 见 D3D12\_DESCRIPTOR\_RANGE::RegisterSpace。\\
+3.Num32BitValues: 此根参数所需的32位常量数。\\
+~\\
+设置根常量仍然从着色器的角度将数据映射到常量缓冲区。 以下示例说明：\\
+\end{flushleft}
+
+\begin{lstlisting}
+// Application code: Root signature definition.
+CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+slotRootParameter[0].InitAsConstants(12, 0);
+// A root signature is an array of root parameters.
+CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1,
+    slotRootParameter,
+    0, nullptr,
+    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+// Application code: to set the constants to register b0.
+auto weights = CalcGaussWeights(2.5f);
+int blurRadius = (int)weights.size() / 2;
+cmdList->SetGraphicsRoot32BitConstants(0, 1,
+             &blurRadius, 0);
+cmdList->SetGraphicsRoot32BitConstants(0,
+            (UINT)weights.size(), 
+            weights.data(), 1);
+// HLSL code.
+cbuffer cbSettings : register(b0)
+{
+    // We cannot have an array entry in a 
+    // constant buffer that gets
+    // mapped onto root constants, so list each 
+    // element. 
+    int gBlurRadius;
+    // Support up to 11 blur weights.
+    float w0;
+    float w1;
+    float w2;
+    float w3;
+    float w4;
+    float w5;
+    float w6;
+    float w7;
+    float w8;
+    float w9;
+    float w10;
+};
+\end{lstlisting}
+
+\begin{flushleft}
+ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstants 方法有以下参数:\\
+\end{flushleft}
+
+\begin{lstlisting}
+void ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstants(
+    UINT RootParameterIndex,
+    UINT Num32BitValuesToSet,
+    const void *pSrcData,
+    UINT DestOffsetIn32BitValues);
+\end{lstlisting}
+
+\begin{flushleft}
+1.RootParameterIndex: 我们设置的根参数索引。\\
+2.Num32BitValuesToSet: 设置 32-bit 值个数。\\
+3.pSrcData: 指向32-bit值数组的指针。\\
+4.DestOffsetIn32BitValues: 在常量缓冲区的32-bit值的偏移量。\\
+~\\
+与根描述符一样，设置根常量可以绕过描述符堆的需要。\\
+\end{flushleft}
+
+%---- 7.6.5 ----
+\subsection{更复杂的根签名例子(A More Complicated Root Signature Example)}
+\begin{flushleft}
+考虑一个使用下面资源的着色器：\\
+\end{flushleft}
+\begin{lstlisting}
+Texture2D gDiffuseMap : register(t0);
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorld;
+    float4x4 gTexTransform;
+};
+cbuffer cbPass : register(b1)
+{
+    float4x4 gView;
+    float4x4 gInvView;
+    float4x4 gProj;
+    float4x4 gInvProj;
+    float4x4 gViewProj;
+    float4x4 gInvViewProj;
+    float3 gEyePosW;
+    float cbPerObjectPad1;
+    float2 gRenderTargetSize;
+    float2 gInvRenderTargetSize;
+    float gNearZ;
+    float gFarZ;
+    float gTotalTime;
+    float gDeltaTime;
+    float4 gAmbientLight;
+    Light gLights[MaxLights];
+};
+cbuffer cbMaterial : register(b2)
+{
+    float4 gDiffuseAlbedo;
+    float3 gFresnelR0;
+    float gRoughness;
+    float4x4 gMatTransform;
+};
+\end{lstlisting}
+\begin{flushleft}
+该着色器的根签名如下：\\
+\end{flushleft}
+\begin{lstlisting}
+CD3DX12_DESCRIPTOR_RANGE texTable;
+texTable.Init(
+    D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+    1, // number of descriptors
+    0); // register t0
+// Root parameter can be a table, root 
+// descriptor or root constants.
+CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+// Perfomance TIP: Order from most frequent 
+// to least frequent.
+slotRootParameter[0].InitAsDescriptorTable(1,
+    &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+
+// register b0
+slotRootParameter[1].InitAsConstantBufferView(0);
+// register b1
+slotRootParameter[2].InitAsConstantBufferView(1);
+// register b2
+slotRootParameter[3].InitAsConstantBufferView(2);
+
+// A root signature is an array of root parameters.
+CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4,
+    slotRootParameter,
+    0, nullptr,
+    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+\end{lstlisting}
+
+%---- 7.6.6 ----
+\subsection{根参数版本控制(Root Parameter Versioning)}
+\begin{flushleft}
+根参数值(Root arguments)指的是我们传递给根参数(Root parameter)的实际值。 考虑以下代码，我们在绘制调用之间更改根参数值（在本例中仅为描述符表）：\\
+\end{flushleft}
+
+\begin{lstlisting}
+for(size_t i = 0; i < mRitems.size(); ++i)
+{
+    const auto& ri = mRitems[i];
+    ...
+    // Offset to the CBV for this frame 
+    // and this render item.
+    int cbvOffset = mCurrFrameResourceIndex*
+                    (int)mRitems.size();
+    cbvOffset += ri.CbIndex;
+    cbvHandle.Offset(cbvOffset, mCbvSrvDescriptorSize);
+    // Identify descriptors to use for this draw call.
+    cmdList->SetGraphicsRootDescriptorTable(0,
+                cbvHandle);
+    cmdList->DrawIndexedInstanced(
+        ri.IndexCount, 1,
+        ri.StartIndexLocation,
+        ri.BaseVertexLocation, 0);
+}
+\end{lstlisting}
+
+\begin{flushleft}
+每次绘制调用都会使用当前设置的根参数值状态。 它起作用的原因是硬件会自动保存每个绘制调用的根参数值当前状态的快照。 换句话说，根参数值会自动为每个绘制调用进行版本控制。\\
+请注意，根签名可以提供比着色器更多的字段。 例如，如果根签名指定根参数中的根 CBV 为 2 ，但着色器不使用该常量缓冲区，则只要根签名确实指定了着色器使用的所有资源，此组合就有效。\\
+为了提高性能，我们应该限制根签名大小。 其中一个原因是每个绘制调用会自动版本化根参数。 根签名越大，根参数的这些快照就越大。 此外，SDK文档建议根签名中的根参数应从最常更改到最不频繁更改进行排序。 Direct3D 12文档还建议尽可能避免切换根签名，因此最好在您创建的许多PSO上共享相同的根签名。 特别是，具有与多个着色器程序一起工作的“超级”根签名可能是有益的，即使并非所有着色器都使用根签名定义的所有参数。 另一方面，它还取决于这个“超级”根签名有多大才能使其工作。 如果它太大，它可以抵消不切换根签名的收益。
+\end{flushleft}
+
+
+%---- 7.7 ----
+\section{Land And Waves Demo}
+\begin{flushleft}
+在本节中，我们将展示如何构建如图\ref{fig:7-7}所示的“Land and Waves”演示。 该演示在程序上构造三角形网格并偏移顶点高度以创建地形。 此外，它使用另一个三角形网格来表示水，并设置顶点高度的动画以创建波浪。 此演示还切换到使用根描述符作为常量缓冲区，这允许我们放弃对CBV的描述符堆的支持。
+\end{flushleft}
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-7}
+    \centering
+    \caption{“Lands and Waves”演示的屏幕截图。 因为我们还没有照明，所以很难看到波浪的形状。 按住“1”键可以在线框模式下查看场景，以更好地查看波形。}
+    \label{fig:7-7}
+\end{figure}
+
+\begin{flushleft}
+“漂亮”的实值(real-valued)函数$y=f(x,z)$的图是表面。 我们可以通过在$xz$平面中构建网格来近似表面，其中每个四边形由两个三角形构成，然后将函数应用于每个网格点; 见图\ref{fig:7-8}。
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-8}
+    \centering
+    \caption{（顶部）在xz平面中放置网格。（底部）对于每个网格点，应用函数f(x,z)以获得y坐标。 点(x,f(x,z),z)的图给出了曲面图。}
+    \label{fig:7-8}
+\end{figure}
+
+%---- 7.7.1 ----
+\subsection{创建网格顶点(Generating the Grid Vertices)}
+\begin{flushleft}
+
+\end{flushleft}
+
+
