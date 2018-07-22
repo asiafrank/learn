@@ -531,8 +531,8 @@ NOTICE: 实际上GeometryGenerator::CreateCylinder创建了额外的顶点数据
 \begin{align*}
 \Delta ABC = (i\cdot n+j, (i+1)\cdot n+j,(i+1)\cdot n+j+1)\\
 \Delta ACD = (i\cdot n+j, (i+1)\cdot n+j+1,i\cdot n+j+1)
-\end{lstlisting}
-\begin{align*}
+\end{align*}
+\begin{flushleft}
 其中n是每个环的顶点数。 所以关键的想法是遍历每个堆栈中的每个切片，并应用上面的公式。\\
 \end{flushleft}
 \begin{lstlisting}
@@ -1312,7 +1312,7 @@ void ShapesApp::Draw(const GameTimer& gt)
         _countof(descriptorHeaps), 
         descriptorHeaps);
 
-	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
+    mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
     int passCbvIndex = mPassCbvOffset + mCurrFrameResourceIndex;
     auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
@@ -1788,7 +1788,471 @@ for(size_t i = 0; i < mRitems.size(); ++i)
 %---- 7.7.1 ----
 \subsection{创建网格顶点(Generating the Grid Vertices)}
 \begin{flushleft}
-
+因此，主要任务是如何在$xz$平面中构建网格。 $m\times n$顶点的网格，也就是$(m-1)\times(n-1)$个四边形（或单元），如图\ref{fig:7-9}所示。 每个单元格将被两个三角形覆盖，因此总共有2个$(m-1)\times(n-1)$个三角形。 如果网格具有宽度$w$和深度$d$，则沿$x$轴的单元间隔是$dx=w/(n-1)$，并且沿z轴的单元间隔是$dz=d/(m-1)$。 为了生成顶点，我们从左上角开始逐行逐行计算顶点坐标。 $xz$平面中第$i$个网格顶点的坐标由下式给出：\\
 \end{flushleft}
+
+\begin{align*}
+v_{ij}=[-0.5w+j\cdot dx,0.0,0.5d-i\cdot dz]
+\end{align*}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-9}
+    \centering
+    \caption{网格构建}
+    \label{fig:7-9}
+\end{figure}
+
+\begin{flushleft}
+下面代码创建了这些个网格顶点：\\
+\end{flushleft}
+
+\begin{lstlisting}
+GeometryGenerator::MeshData 
+GeometryGenerator::CreateGrid(
+    float width, 
+    float depth, 
+    uint32 m, 
+    uint32 n)
+{
+    MeshData meshData;
+
+    uint32 vertexCount = m*n;
+    uint32 faceCount   = (m-1)*(n-1)*2;
+
+    //
+    // Create the vertices.
+    //
+
+    float halfWidth = 0.5f*width;
+    float halfDepth = 0.5f*depth;
+
+    float dx = width / (n-1);
+    float dz = depth / (m-1);
+
+    float du = 1.0f / (n-1);
+    float dv = 1.0f / (m-1);
+
+    meshData.Vertices.resize(vertexCount);
+    for(uint32 i = 0; i < m; ++i)
+    {
+        float z = halfDepth - i*dz;
+        for(uint32 j = 0; j < n; ++j)
+        {
+            float x = -halfWidth + j*dx;
+
+            meshData.Vertices[i*n+j].Position = 
+                XMFLOAT3(x, 0.0f, z);
+            meshData.Vertices[i*n+j].Normal   = 
+                XMFLOAT3(0.0f, 1.0f, 0.0f);
+            meshData.Vertices[i*n+j].TangentU = 
+                XMFLOAT3(1.0f, 0.0f, 0.0f);
+
+            // Stretch texture over grid.
+            meshData.Vertices[i*n+j].TexC.x = j*du;
+            meshData.Vertices[i*n+j].TexC.y = i*dv;
+        }
+    }
+......
+\end{lstlisting}
+
+%---- 7.7.2 ----
+\subsection{创建网格索引(Generating the Grid Indices)}
+\begin{flushleft}
+在我们计算了顶点之后，我们需要通过指定索引来定义网格三角形。 为此，我们迭代每个四边形，从左上角开始逐行，并计算索引以定义四边形的两个三角形; 参考图\ref{fig:7-10}，对于$m\times n$顶点网格，两个三角形的线性数组索引计算如下：\\
+\end{flushleft}
+
+\begin{align*}
+\Delta ABC&=(i\cdot n+j,i\cdot n+j+1,(i+1)\cdot n+j)\\
+\Delta CBD&=((i+1)\cdot n+j,i\cdot n+j+1,(i+1)\cdot n+j+1)
+\end{align*}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-10}
+    \centering
+    \caption{网格构建}
+    \label{fig:7-10}
+\end{figure}
+
+\begin{flushleft}
+对应的代码如下：\\
+\end{flushleft}
+
+\begin{lstlisting}
+//
+// Create the indices.
+//
+
+meshData.Indices32.resize(faceCount*3); // 3 indices per face
+
+// Iterate over each quad and compute indices.
+uint32 k = 0;
+for(uint32 i = 0; i < m-1; ++i)
+{
+    for(uint32 j = 0; j < n-1; ++j)
+    {
+        meshData.Indices32[k]   = i*n+j;
+        meshData.Indices32[k+1] = i*n+j+1;
+        meshData.Indices32[k+2] = (i+1)*n+j;
+
+        meshData.Indices32[k+3] = (i+1)*n+j;
+        meshData.Indices32[k+4] = i*n+j+1;
+        meshData.Indices32[k+5] = (i+1)*n+j+1;
+
+        k += 6; // next quad
+    }
+}
+\end{lstlisting}
+
+%---- 7.7.3 ----
+\subsection{应用高度函数(Applying the Height Function)}
+\begin{lstlisting}
+// Not to be confused with GeometryGenerator::Vertex.
+struct Vertex
+{
+    XMFLOAT3 Pos;
+    XMFLOAT4 Color;
+};
+void LandAndWavesApp::BuildLandGeometry()
+{
+    GeometryGenerator geoGen;
+    GeometryGenerator::MeshData grid = 
+        geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
+
+    //
+    // Extract the vertex elements we are 
+    // interested and apply the height function to
+    // each vertex.  In addition, color the vertices
+    // based on their height so we have
+    // sandy looking beaches, grassy low hills, 
+    // and snow mountain peaks.
+    //
+
+    std::vector<Vertex> vertices(grid.Vertices.size());
+    for(size_t i = 0; i < grid.Vertices.size(); ++i)
+    {
+        auto& p = grid.Vertices[i].Position;
+        vertices[i].Pos = p;
+        vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
+
+        // Color the vertex based on its height.
+        if(vertices[i].Pos.y < -10.0f)
+        {
+            // Sandy beach color.
+            vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
+        }
+        else if(vertices[i].Pos.y < 5.0f)
+        {
+            // Light yellow-green.
+            vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
+        }
+        else if(vertices[i].Pos.y < 12.0f)
+        {
+            // Dark yellow-green.
+            vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f);
+        }
+        else if(vertices[i].Pos.y < 20.0f)
+        {
+            // Dark brown.
+            vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f);
+        }
+        else
+        {
+            // White snow.
+            vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+    }
+    
+    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+
+    std::vector<std::uint16_t> indices = grid.GetIndices16();
+    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+    auto geo = std::make_unique<MeshGeometry>();
+    geo->Name = "landGeo";
+
+    ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+    CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), 
+        vertices.data(), vbByteSize);
+
+    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), 
+        indices.data(), ibByteSize);
+
+    geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), vertices.data(), vbByteSize, 
+        geo->VertexBufferUploader);
+
+    geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+        mCommandList.Get(), indices.data(), ibByteSize, 
+        geo->IndexBufferUploader);
+
+    geo->VertexByteStride = sizeof(Vertex);
+    geo->VertexBufferByteSize = vbByteSize;
+    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+    geo->IndexBufferByteSize = ibByteSize;
+
+    SubmeshGeometry submesh;
+    submesh.IndexCount = (UINT)indices.size();
+    submesh.StartIndexLocation = 0;
+    submesh.BaseVertexLocation = 0;
+
+    geo->DrawArgs["grid"] = submesh;
+
+    mGeometries["landGeo"] = std::move(geo);
+}
+\end{lstlisting}
+
+\begin{flushleft}
+(GetHillsHeight)函数 f(x,z) 如下：\\
+\end{flushleft}
+
+\begin{lstlisting}
+float LandAndWavesApp::GetHillsHeight(float x, float z)const
+{
+    return 0.3f*(z*sinf(0.1f*x) + x*cosf(0.1f*z));
+}
+\end{lstlisting}
+
+\begin{flushleft}
+它的图形看起来有点像山丘和山谷的地形（见图\ref{fig:7-7}）。
+\end{flushleft}
+
+%---- 7.7.4 ----
+\subsection{根常量缓冲区视图(Root CBVs)}
+\begin{flushleft}
+我们在“Land and Waves”演示所做的另一项更改(对比“Shape”演示)是我们使用根描述符，以便我们可以直接绑定CBV而无需使用描述符堆。 以下是需要进行的更改：\\
+\end{flushleft}
+
+\begin{itemize}
+  \item 1.需要更改根签名以获取两个根CBV而不是两个描述符表。
+  \item 2.不需要CBV堆也不需要使用描述符填充。
+  \item 3.绑定根描述符有新的语法。
+\end{itemize}
+
+\begin{flushleft}
+新的根签名是这样定义的:\\
+\end{flushleft}
+
+\begin{lstlisting}
+// Root parameter can be a table, root descriptor or root constants.
+CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+
+// Create root CBV.
+slotRootParameter[0].InitAsConstantBufferView(0);
+slotRootParameter[1].InitAsConstantBufferView(1);
+
+// A root signature is an array of root parameters.
+CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 
+    0, nullptr, 
+    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+\end{lstlisting}
+
+\begin{flushleft}
+注意我们使用 InitAsConstantBufferView 辅助方法来创建根CBV; 该参数指定此参数绑定的着色器寄存器（在上面的代码中，着色器常量缓冲寄存器“b0”和“b1”）。\\
+现在，我们使用以下方法将CBV作为参数绑定到根描述符：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void ID3D12GraphicsCommandList::
+    SetGraphicsRootConstantBufferView(
+        UINT RootParameterIndex,
+        D3D12_GPU_VIRTUAL_ADDRESS BufferLocation);
+\end{lstlisting}
+
+\begin{itemize}
+  \item 1.RootParameterIndex: 绑定CBV的根参数的索引。
+  \item 2.BufferLocation: 包含常量缓冲区数据的资源的虚拟地址。
+\end{itemize}
+
+\begin{flushleft}
+基于这些变化，绘制的代码现在变成这样：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void LandAndWavesApp::Draw(const GameTimer& gt)
+{
+    ......
+
+    // Bind per-pass constant buffer.  We only need to do this once per-pass.
+    auto passCB = mCurrFrameResource->PassCB->Resource();
+    mCommandList->SetGraphicsRootConstantBufferView(1, 
+        passCB->GetGPUVirtualAddress());
+
+    DrawRenderItems(mCommandList.Get(), 
+        mRitemLayer[(int)RenderLayer::Opaque]);
+
+    ......
+}
+
+void LandAndWavesApp::DrawRenderItems(
+    ID3D12GraphicsCommandList* cmdList, 
+    const std::vector<RenderItem*>& ritems)
+{
+    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(
+        sizeof(ObjectConstants));
+
+    auto objectCB = mCurrFrameResource->ObjectCB->Resource();
+
+    // For each render item...
+    for(size_t i = 0; i < ritems.size(); ++i)
+    {
+        auto ri = ritems[i];
+
+        cmdList->IASetVertexBuffers(0, 1, 
+            &ri->Geo->VertexBufferView());
+        cmdList->IASetIndexBuffer(
+            &ri->Geo->IndexBufferView());
+        cmdList->IASetPrimitiveTopology(
+            ri->PrimitiveType);
+
+        D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = 
+            objectCB->GetGPUVirtualAddress();
+        objCBAddress += ri->ObjCBIndex*objCBByteSize;
+
+        cmdList->SetGraphicsRootConstantBufferView(0, 
+            objCBAddress);
+
+        cmdList->DrawIndexedInstanced(ri->IndexCount, 
+            1, ri->StartIndexLocation, 
+            ri->BaseVertexLocation, 0);
+    }
+}
+\end{lstlisting}
+
+
+%---- 7.7.5 ----
+\subsection{动态顶点缓冲区(Dynamic Vertex Buffers)}
+\begin{flushleft}
+到目前为止，我们已将顶点存储在默认缓冲区资源中。当我们想要存储静态几何时，我们使用这种资源。也就是说，我们不改变的几何 - 设置数据，GPU读取和绘制数据。动态顶点缓冲区是我们频繁更改顶点数据的地方，比如每帧。例如，假设我们正在进行波浪模拟，我们求解解函数$f(x,z,t)$的波动方程。该函数表示在时间$t$的$xz$平面中每个点处的波高。如果我们使用这个函数来绘制波浪，我们将像使用峰和谷一样使用三角形网格网格，并将$f(x,z,t)$应用于每个网格点，以获得波高。网格点。因为此函数还取决于时间$t$（即，波面随时间变化），我们需要在短时间后（例如每1/30秒）将此函数重新应用于网格点以获得平滑动画。因此，我们需要一个动态顶点缓冲区，以便随着时间的推移更新三角形网格网格顶点的高度。导致动态顶点缓冲的另一种情况是具有复杂物理和碰撞检测的粒子系统。我们将在每个帧上对CPU进行物理和碰撞检测，以找到粒子的新位置。因为粒子位置正在改变每一帧，我们需要一个动态顶点缓冲区来更新粒子位置以绘制每一帧。\\
+
+我们已经看到了一个示例，当我们使用上传缓冲区来更新我们的常量缓冲区数据时，将数据从CPU上传到GPU。 我们可以应用相同的技术并使用我们的UploadBuffer类，但不是存储常量缓冲区数组，而是存储顶点数组：\\
+\end{flushleft}
+
+\begin{lstlisting}
+std::unique_ptr<UploadBuffer<Vertex>> WavesVB = nullptr;
+WavesVB = std::make_unique<UploadBuffer<Vertex>>(
+    device, waveVertCount, false);
+\end{lstlisting}
+
+\begin{flushleft}
+因为我们需要每帧将新内容从 CPU 上传到 wave 的动态顶点缓冲区，所以动态顶点缓冲区需要是帧资源。 否则，我们可以在 GPU 处理完最后一帧之前覆盖内存。\\
+每一帧，我们运行波浪模拟并更新顶点缓冲区，如下所示：\\
+\end{flushleft}
+
+\begin{lstlisting}
+void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
+{
+	// Every quarter second, generate a random wave.
+	static float t_base = 0.0f;
+	if((mTimer.TotalTime() - t_base) >= 0.25f)
+	{
+		t_base += 0.25f;
+
+		int i = MathHelper::Rand(4, 
+            mWaves->RowCount() - 5);
+		int j = MathHelper::Rand(4,
+            mWaves->ColumnCount() - 5);
+
+		float r = MathHelper::RandF(0.2f, 0.5f);
+
+		mWaves->Disturb(i, j, r);
+	}
+
+	// Update the wave simulation.
+	mWaves->Update(gt.DeltaTime());
+
+	// Update the wave vertex buffer with the new solution.
+	auto currWavesVB = mCurrFrameResource->WavesVB.get();
+	for(int i = 0; i < mWaves->VertexCount(); ++i)
+	{
+		Vertex v;
+
+		v.Pos = mWaves->Position(i);
+        v.Color = XMFLOAT4(DirectX::Colors::Blue);
+
+		currWavesVB->CopyData(i, v);
+	}
+
+	// Set the dynamic VB of the wave renderitem to the current frame VB.
+	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
+}
+\end{lstlisting}
+
+\begin{flushleft}
+NOTICE: 我们保存对波渲染项（mWavesRitem）的引用，以便我们可以动态设置其顶点缓冲区。 我们需要这样做，因为它的顶点缓冲区是一个动态缓冲区并且每帧都会改变。\\
+
+使用动态缓冲区时会有一些开销，因为必须将新数据从CPU内存传输回GPU内存。 因此，静态缓冲区应该优先于动态缓冲区，前提是静态缓冲区可以工作。 最新版本的Direct3D引入了新功能，以减少对动态缓冲区的需求。 例如：\\
+\end{flushleft}
+
+\begin{itemize}
+  \item 1.可以在顶点着色器中完成简单动画。
+  \item 2.通过渲染到纹理或计算着色器和顶点纹理获取功能，可以实现像上面描述的完全在GPU上运行的波模拟。
+  \item 3.几何着色器为GPU提供了创建或销毁基元的能力，这是一项通常需要在没有几何着色器的情况下在CPU上完成的任务。
+  \item 4.曲面细分阶段可以在GPU上添加细分几何体，这通常需要在没有硬件细分的情况下在CPU上完成。
+\end{itemize}
+
+\begin{flushleft}
+索引缓冲区也可以是动态的。 然而，在“Land and Waves”演示中，三角形拓扑保持不变，只有顶点高度发生变化; 因此，只有顶点缓冲区需要是动态的。\\
+本章的“Waves”演示使用动态顶点缓冲区来实现一个简单的波浪模拟，就像本节开头所描述的那样。 对于本书，我们不关心波模拟的实际算法细节（参见[Lengyel02]），但更多的是使用该过程来说明动态缓冲区：更新CPU上的模拟，然后使用更新顶点数据 上传缓冲区。\\
+~\\
+NOTICE: 我们再次提到，这个演示可以使用更高级的方法在GPU上实现，例如渲染到纹理功能或计算着色器，以及顶点纹理提取。 因为我们尚未涉及这些主题，所以我们在CPU上进行波浪模拟，并使用动态顶点缓冲区更新新顶点。
+\end{flushleft}
+
+
+
+%---- 7.8 ----
+\section{总结}
+\begin{flushleft}
+1.等待GPU每帧执行队列中的所有命令都是低效的，因为它会导致CPU和GPU在某个时刻空闲。 更有效的技术是创建帧资源 - CPU需要修改每个帧的资源的循环数组。 这样，CPU在进入下一帧之前不需要等待GPU完成; CPU将仅与下一个可用（即，未被GPU使用）帧资源一起工作。 如果CPU总是以比GPU更快的速度处理帧，那么最终CPU将不得不在某个时刻等待GPU赶上，但这是理想的情况，因为GPU正在被充分利用; 额外的CPU周期总是可以用于游戏的其他部分，如AI，物理和游戏逻辑。\\
+2.我们可以使用 ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart 方法获取堆中第一个描述符的句柄。我们可以使用 ID3D12Device::GetDescriptorHandleIncrementSize （DescriptorHeapType类型）方法获取描述符大小（取决于硬件和描述符类型）。 一旦我们知道描述符增量大小，我们就可以使用两个 CD3DX12\_CPU\_DESCRIPTOR\_HANDLE::Offset 方法之一来通过 n 个描述符来偏移句柄：\\
+\end{flushleft}
+
+\begin{lstlisting}
+// Specify the number of descriptors to 
+// offset times the descriptor
+// increment size:
+D3D12_CPU_DESCRIPTOR_HANDLE handle = mCbvHeap->
+    GetCPUDescriptorHandleForHeapStart();
+handle.Offset(n * mCbvSrvDescriptorSize);
+// Or equivalently, specify the number of 
+// descriptors to offset,
+// followed by the descriptor increment size:
+D3D12_CPU_DESCRIPTOR_HANDLE handle = mCbvHeap->
+    GetCPUDescriptorHandleForHeapStart();
+handle.Offset(n, mCbvSrvDescriptorSize);
+// The CD3DX12_GPU_DESCRIPTOR_HANDLE type has 
+// the same Offset methods.
+\end{lstlisting}
+
+\begin{flushleft}
+3.根签名定义了在发出绘制调用之前需要将哪些资源绑定到管道以及这些资源如何映射到着色器输入寄存器。需要绑定哪些资源取决于绑定着色器程序所期望的资源。创建PSO时，将验证根签名和着色器程序组合。根签名被指定为根参数数组。根参数可以是描述符表，根描述符或根常量。描述符表指定堆中的连续描述符范围。根描述符用于直接在根签名中绑定描述符（它不需要在堆中）。根常量用于直接在根签名中绑定常量值。为了提高性能，可以将64个DWORD限制在根签名中。描述符表每个花费一个DWORD，根描述符每个花费两个DWORD，根常量为每个32位常量花费一个DWORD。硬件会自动保存每个绘制调用的根参数的快照。因此，我们可以安全地更改每个绘制调用的根参数，但是，我们还应该尝试保持根签名较小，以便复制更少的内存。\\
+4.当需要在运行时频繁更新顶点缓冲区的内容时（例如，每帧或每1/30秒），使用动态顶点缓冲区。 我们可以使用UploadBuffer来实现动态顶点缓冲区，但是我们存储了一个顶点数组，而不是存储常量缓冲区数组。 因为我们需要每帧将新内容从 CPU 上传到 wave 的动态顶点缓冲区，所以动态顶点缓冲区需要是帧资源。 使用动态顶点缓冲区时会有一些开销，因为新数据必须从CPU内存传输回GPU内存。 因此，静态顶点缓冲区应该优先于动态顶点缓冲区，前提是静态顶点缓冲区可以工作。 最新版本的Direct3D引入了新功能，以减少对动态缓冲区的需求。\\
+\end{flushleft}
+
+%---- 7.9 ----
+\section{练习}
+\begin{flushleft}
+1.修改“Shapes”演示以使用 GeometryGenerator::CreateGeosphere 而不是 GeometryGenerator::CreateSphere。 尝试使用0,1,2和3细分级别。\\
+2.修改“Shapes”演示以使用十六个根常量来设置每个对象的世界矩阵而不是描述符表。\\
+3.在DVD上，有一个名为 Models/Skull.txt 的文件。 该文件包含图\ref{fig:7-11}中渲染头骨所需的顶点和索引列表。 使用文本编辑器（如记事本）研究文件，并修改“形状”演示以加载和渲染头骨网格。
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{7-11}
+    \centering
+    \caption{练习3的渲染输出}
+    \label{fig:7-11}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
 
 
