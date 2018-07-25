@@ -219,7 +219,7 @@ void D3DApp::OnResize()
     // Execute the resize commands.
     ThrowIfFailed(mCommandList->Close());
     ID3D12CommandList* cmdsLists[] = { mCommandList.Get() };
-    mCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
+    mCommandQueue->ExecuteCommandLists((UINT)std::size(cmdsLists), cmdsLists);
 
     // Wait until resize is complete.
     FlushCommandQueue();
@@ -595,7 +595,7 @@ void D3DApp::CalculateFrameStats()
         currSleepInterval = baseSleepInterval - deltaTime;
     }
 
-    Sleep(currSleepInterval);
+    Sleep((DWORD)currSleepInterval);
     //--------------------------
 
     frameCnt++;

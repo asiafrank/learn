@@ -567,6 +567,7 @@ NOTICE: 实际上GeometryGenerator::CreateCylinder创建了额外的顶点数据
     \caption{包含在第$i$个和第$i + 1$个环中的顶点A，B，C，D和第$j$个切片。}
     \label{fig:7-2}
 \end{figure}
+\clearpage
 
 %---- 7.4.1.2 ----
 \subsubsection{顶面底面几何(Cap Geometry)}
@@ -640,6 +641,7 @@ void GeometryGenerator::BuildCylinderTopCap(
     \caption{切片和堆栈的思想也适用于球体来控制曲面细分的级别。}
     \label{fig:7-3}
 \end{figure}
+\clearpage
 
 %---- 7.4.3 ----
 \subsection{创建地圈网格(Generating a Geosphere Mesh)}
@@ -653,6 +655,7 @@ void GeometryGenerator::BuildCylinderTopCap(
     \caption{通过重复细分和重投影到球体上来近似地圈。}
     \label{fig:7-4}
 \end{figure}
+\clearpage
 
 \begin{flushleft}
 为了生成地圈，我们从二十面体开始，细分三角形，然后将新顶点投影到具有给定半径的球体上。 我们可以重复此过程以改进曲面细分。\\
@@ -665,6 +668,7 @@ void GeometryGenerator::BuildCylinderTopCap(
     \caption{将三角形细分为四个相等面积的三角形。}
     \label{fig:7-5}
 \end{figure}
+\clearpage
 
 \begin{flushleft}
 代码如下：\\
@@ -762,6 +766,7 @@ GeometryGenerator::CreateGeosphere(
     \caption{"Shapes"演示的截图}
     \label{fig:7-6}
 \end{figure}
+\clearpage
 
 %---- 7.5.1 ----
 \subsection{顶点和顶点缓冲区(Vertex and Index Buffers)}
@@ -1773,6 +1778,7 @@ for(size_t i = 0; i < mRitems.size(); ++i)
     \caption{“Lands and Waves”演示的屏幕截图。 因为我们还没有照明，所以很难看到波浪的形状。 按住“1”键可以在线框模式下查看场景，以更好地查看波形。}
     \label{fig:7-7}
 \end{figure}
+\clearpage
 
 \begin{flushleft}
 “漂亮”的实值(real-valued)函数$y=f(x,z)$的图是表面。 我们可以通过在$xz$平面中构建网格来近似表面，其中每个四边形由两个三角形构成，然后将函数应用于每个网格点; 见图\ref{fig:7-8}。
@@ -1784,6 +1790,7 @@ for(size_t i = 0; i < mRitems.size(); ++i)
     \caption{（顶部）在xz平面中放置网格。（底部）对于每个网格点，应用函数f(x,z)以获得y坐标。 点(x,f(x,z),z)的图给出了曲面图。}
     \label{fig:7-8}
 \end{figure}
+\clearpage
 
 %---- 7.7.1 ----
 \subsection{创建网格顶点(Generating the Grid Vertices)}
@@ -1801,6 +1808,7 @@ v_{ij}=[-0.5w+j\cdot dx,0.0,0.5d-i\cdot dz]
     \caption{网格构建}
     \label{fig:7-9}
 \end{figure}
+\clearpage
 
 \begin{flushleft}
 下面代码创建了这些个网格顶点：\\
@@ -1872,6 +1880,7 @@ GeometryGenerator::CreateGrid(
     \caption{网格构建}
     \label{fig:7-10}
 \end{figure}
+\clearpage
 
 \begin{flushleft}
 对应的代码如下：\\

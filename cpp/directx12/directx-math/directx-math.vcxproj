@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{6FBF856B-4925-443D-AD83-CE1D703AEDB4}</ProjectGuid>
+    <ProjectGuid>{61807005-3FFA-48B9-A0E4-7B04FB8AC9DD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>directxmath</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
