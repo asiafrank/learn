@@ -34,6 +34,9 @@
   - [ ] Unix 网络编程
   - [ ] TCP/IP ilustrated volume 1: The Protocols
     - [TCP/IP详解 卷1：协议-在线阅读](http://www.52im.net/topic-tcpipvol1.html)
+    - Http 权威指南
+    - [Http2(RFC7540)](https://httpwg.org/specs/rfc7540.html)
+    - [HPack: Header Compression for Http/2(RFC7541)](https://httpwg.org/specs/rfc7541.html)
   - [ ] 操作系统概念
   - [ ] 深入理解操作系统(CSAPP)
   - [ ] The Linux Programming Interface
@@ -80,6 +83,7 @@
 - [ ] 制作简单小游戏
     - 俄罗斯方块
     - 游戏2D：黑暗中寻找对手，进行射击。
+- [ ] 统计电脑上各软件页面使用时间的软件，参考 Rescure Time。
 
 ## Tips
 ### 深入学习一个新工具/框架的步骤：

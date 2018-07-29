@@ -791,7 +791,7 @@ void LitWavesApp::DrawRenderItems(
 %------- 8.10 ---------------
 \section{平行光(Parallel Lights)}
 \begin{flushleft}
-平行光（或定向光）近似于非常远的光源。 因此，我们可以将所有入射光线近似相互平行（图\ref{fig:8-23}）。 此外，由于光源距离很远，我们可以忽略距离的影响，只需指定光线照射到场景的光强度。
+平行光（或定向光）近似于非常远的光源。 因此，我们可以将所有入射光线看作近似相互平行（图\ref{fig:8-23}）。 此外，由于光源距离很远，我们可以忽略距离的影响，只需指定光线照射到场景的光强度。
 \end{flushleft}
 
 \begin{figure}[h]
@@ -811,4 +811,546 @@ void LitWavesApp::DrawRenderItems(
     \centering
     \caption{该图未按比例绘制，但如果您在地球上选择一个小的表面区域，则撞击该区域的光线大致平行。}
 \end{figure}
+
+%------- 8.11 ---------------
+\section{点光(Point Lights)}
+\begin{flushleft}
+点光源的一个很好的物理实例是灯泡; 它向各个方向辐射（图\ref{fig:8-25}）。 特别地，对于任意点$P$，存在从光源$Q$到该点的光线。像往常一样，我们将光向量定义为相反的方向; 也就是说，从点$P$到点光源$Q$的方向：\\
+\end{flushleft}
+
+\begin{align*}
+L=\frac{Q-P}{||Q-P||}
+\end{align*}
+
+\begin{flushleft}
+基本上，点光源和平行光源之间的唯一区别在于如何计算光向量——点光源是点到点变化，但对于平行光源,g光向量保持不变。
+\end{flushleft}
+
+\begin{figure}[h]
+    \label{fig:8-25}
+    \includegraphics[width=\textwidth]{8-25}
+    \centering
+    \caption{点光源向各个方向辐射;特别地，对于任意点$P$，存在源自点光源$Q$朝向$P$的光线。}
+\end{figure}
+
+%------- 8.11.1 ---------------
+\subsection{衰减(Attenuation)}
+\begin{flushleft}
+在物理上，基于逆平方定律，光强度随距离的增加而减弱。也就是说，远离光源的距离$d$处的光强度由下式给出：\\
+\end{flushleft}
+
+\begin{align*}
+I(d)=\frac{I_{0}}{d^{2}}
+\end{align*}
+
+\begin{flushleft}
+其中$I_{0}$是距离光源$d=1$的光强度。 如果您设置基于物理的光源值并使用HDR（高动态范围）光照和色调映射，则该公式非常有效。 但是，这里还有一个更便利的线性衰减函数（在我们演示中使用）：\\
+\end{flushleft}
+
+\begin{align*}
+att(d)=saturate(\frac{falloffEnd-d}{falloffEnd-falloffStart})
+\end{align*}
+
+\begin{flushleft}
+该函数的图如\ref{fig:8-26}所示。饱和函数将参数限制到范围[0,1]：\\
+\end{flushleft}
+
+\begin{align*}
+saturate(x)=\left\{\begin{matrix}
+x,0\leq x\leq 1 \\
+0,x < 0\\
+1,x > 1
+\end{matrix}\right.
+\end{align*}
+
+\begin{figure}[h]
+    \label{fig:8-26}
+    \includegraphics[width=\textwidth]{8-26}
+    \centering
+    \caption{光的衰减系数保持在最高强度(1.0)，直到距离$d$达到 $falloffStart$ 点，然后当距离达到 $falloffEnd$ 线性衰减到0.0。}
+\end{figure}
+
+\begin{flushleft}
+计算点光源的公式与公式\ref{eq.8.4}相同，但我们必须通过衰减系数$att(d)$来缩放光源值$B_{L}$. 请注意，衰减不会影响环境条件，因为环境术语用于模拟已反弹的间接光。\\
+使用我们的衰减函数，与光源的距离大于或等于$falloffEnd$的点不接收光。 这提供了一个有用的照明优化：在我们的着色器程序中，如果一个点超出范围，那么我们可以提前返回并跳过具有动态分支的照明计算。
+\end{flushleft}
+
+%------- 8.12 ---------------
+\section{聚光灯(Spotlight)}
+\begin{flushleft}
+聚光灯的一个很好的物理例子是手电筒。 基本上，聚光灯的位置为$Q$，朝向$d$方向，并形成锥形辐射光（见图\ref{fig:8-27}）。
+\end{flushleft}
+
+\begin{figure}[h]
+    \label{fig:8-27}
+    \includegraphics[width=\textwidth]{8-27}
+    \centering
+    \caption{聚光灯是位置$Q$，瞄准方向$d$，并且辐射
+通过角度为$\varphi max$的锥形光}
+\end{figure}
+
+\begin{flushleft}
+为了实现聚光灯，我们从点光源开始：光向量由下式给出：\\
+\end{flushleft}
+
+\begin{align*}
+L=\frac{Q-P}{||Q-P||}
+\end{align*}
+
+\begin{flushleft}
+其中$P$是被照亮的位置，$Q$是聚光灯的位置。 从图\ref{fig:8-27}可以看出，当且仅当$-L$和$d$之间的角度$\Phi$小于锥角$\varphi max$时，$P$位于聚光灯的圆锥内（接收到光）。 此外，聚光灯锥体内的所有光线强度不应相同; 当锥体从0增加到$\varphi max$时，锥体中心的光应该是最强的，并且光强度应该渐变为零。\\
+那么$\Phi$的函数是如何控制强度衰减的，以及如何控制聚光灯锥体的大小？ 我们可以使用图\ref{fig:8-19}中相同图形的函数，但用$\Phi$替换$\Theta_{h}$，用$s$代替$m$：\\
+\end{flushleft}
+
+\begin{align*}
+k_{spot}(\Phi)=max(cos\Phi,0)^{s}=max(-L\cdot d,0)^{s}
+\end{align*}
+
+\begin{flushleft}
+这给了我们想要的东西：当$\Phi$增加时，强度平滑地消失; 另外，通过改变指数$s$，可以间接控制$\varphi max$（强度下降到0的角度）; 也就是说，我们可以通过改变$s$来缩小或扩展聚光锥。 例如，如果我们设置$s = 8$，则锥体大约是$45^{\circ}$的半角。\\
+聚光公式与公式\ref{eq.8.4}类似，不同之处在于我们将光源值$B_{L}$乘以衰减系数$att(d)$和聚光因子$k_{spot}$，以根据点相对于聚光灯锥的位置来缩放光强度。\\
+我们看到聚光灯的计算量比点光源更多，因为需要计算额外的$k_{spot}$因子并乘以它。 类似地，我们看到点光计算量比定向光更多，因为需要计算距离$d$（这实际上非常消耗资源，因为距离涉及平方根运算），我们需要计算并乘以衰减因子。 总而言之，定向灯是最便宜的光源，其次是点光源，其次是聚光灯是最昂贵的光源。
+\end{flushleft}
+
+%------- 8.13 ---------------
+\section{光的计算实现(Lighting Implementation)}
+\begin{flushleft}
+本章讨论实现定向光源，点光源，聚光灯光源的细节。
+\end{flushleft}
+
+%------- 8.13.1 ---------------
+\subsection{光的数据结构(Light Structure)}
+\begin{flushleft}
+在d3dUtil.h中，我们定义了以下结构来支持灯光。 该结构可以表示定向，点或聚光灯。 但是，根据光源的类型，不会使用某些值; 例如，点光源不使用Direction数据成员。\\
+\end{flushleft}
+
+\begin{lstlisting}
+struct Light
+{
+    DirectX::XMFLOAT3 Strength;  // Light color
+    float FalloffStart;          // point/spot light only
+    DirectX::XMFLOAT3 Direction; // directional/spot light only
+    float FalloffEnd;            // point/spot light only
+    DirectX::XMFLOAT3 Position;  // point/spot light only
+    float SpotPower;             // spot light only
+};
+\end{lstlisting}
+
+\begin{flushleft}
+LightingUtils.hlsl 文件定义了对应的数据结构：\\
+\end{flushleft}
+
+\begin{lstlisting}
+struct Light
+{
+    float3 Strength;
+    float FalloffStart; // point/spot light only
+    float3 Direction; // directional/spot light only
+    float FalloffEnd; // point/spot light only
+    float3 Position; // point light only
+    float SpotPower; // spot light only
+};
+\end{lstlisting}
+
+\begin{flushleft}
+Light 结构（以及 MaterialConstants 结构）中列出的数据成员的顺序不是任意的。它们是 HLSL 结构打包规则。 有关详细信息，请参阅附录B（“结构封装”），但主要思想是在 HLSL 中，发生结构填充，以便将元素打包到4D向量中，并限制单个元素不能跨两个4D向量进行拆分。 这意味着上面的结构可以很好地打包成三个4D向量，如下所示：\\
+\end{flushleft}
+
+\begin{lstlisting}
+vector 1: (Strength.x, Strength.y, Strength.z, FalloffStart)
+vector 2: (Direction.x, Direction.y, Direction.z, FalloffEnd)
+vector 3: (Position.x, Position.y, Position.z, SpotPower)
+\end{lstlisting}
+
+\begin{flushleft}
+另一方面，如果将 Light 结构写成这样：\\
+\end{flushleft}
+
+\begin{lstlisting}
+struct Light
+{
+    DirectX::XMFLOAT3 Strength; // Light color
+    DirectX::XMFLOAT3 Direction;// directional/spot light only
+    DirectX::XMFLOAT3 Position; // point/spot light only
+    float FalloffStart; // point/spot light only
+    float FalloffEnd; // point/spot light only
+    float SpotPower; // spot light only
+};
+
+struct Light
+{
+    float3 Strength;
+    float3 Direction; // directional/spot light only
+    float3 Position; // point light only
+    float FalloffStart; // point/spot light only
+    float FalloffEnd; // point/spot light only
+    float SpotPower; // spot light only
+};
+\end{lstlisting}
+
+\begin{flushleft}
+然后这样的数据结构会被封装这样的4D向量成：\\
+\end{flushleft}
+
+\begin{lstlisting}
+vector 1: (Strength.x, Strength.y, Strength.z, empty)
+vector 2: (Direction.x, Direction.y, Direction.z, empty)
+vector 3: (Position.x, Position.y, Position.z, empty)
+vector 4: (FalloffStart, FalloffEnd, SpotPower, empty)
+\end{lstlisting}
+
+\begin{flushleft}
+第二种方法占用更多数据，但这不是主要问题。更严重的问题是我们有一个镜像 HLSL 结构的 C++应用程序端结构，但C++结构不遵循相同的 HLSL 打包规则; 因此，C++ 和 HLSL 结构布局可能不会匹配，除非您小心使用HLSL打包规则并将它们写入。如果C++和HLSL结构布局不匹配，那么当我们使用memcpy将数据从CPU上传到GPU常量缓冲区时，将会渲染错误。
+\end{flushleft}
+
+%------- 8.13.2 ---------------
+\subsection{通用的工具函数(Common Helper Functions)}
+\begin{flushleft}
+LightingUtils.hlsl 中定义了以下三个函数以及包含多种类型的光共有的代码和一些辅助函数。\\
+\end{flushleft}
+
+\begin{itemize}
+  \item 1. CalcAttenuation: 实现线性衰减系数，适用于点光源和聚光灯。
+  \item 2. SchlickFresnel: Schlick 近似菲涅耳方程; 它基于由菲涅耳效应引起的光向量$L$和表面法线$n$之间的角度与法线$n$的表面反射的光的百分比近似
+  \item 3. BlinnPhong: 计算反射到眼睛的光量; 它是漫反射和镜面反射的总和。
+\end{itemize}
+
+\begin{lstlisting}
+float CalcAttenuation(float d, float falloffStart, float falloffEnd)
+{
+    // Linear falloff.
+    return saturate((falloffEnd-d) / (falloffEnd - falloffStart));
+}
+
+// Schlick gives an approximation to Fresnel reflectance 
+// (see pg. 233 "Real-Time Rendering 3rd Ed.").
+// R0 = ( (n-1)/(n+1) )^2, where n is the index of refraction.
+float3 SchlickFresnel(float3 R0, float3 normal, float3 lightVec)
+{
+    float cosIncidentAngle = saturate(dot(normal, lightVec));
+
+    float f0 = 1.0f - cosIncidentAngle;
+    float3 reflectPercent = R0 + (1.0f - R0)*(f0*f0*f0*f0*f0);
+
+    return reflectPercent;
+}
+
+float3 BlinnPhong(float3 lightStrength, float3 lightVec, 
+    float3 normal, float3 toEye, Material mat)
+{
+    const float m = mat.Shininess * 256.0f;
+    float3 halfVec = normalize(toEye + lightVec);
+
+    float roughnessFactor = (m + 8.0f)*pow(max(dot(halfVec, normal), 0.0f), m) / 8.0f;
+    float3 fresnelFactor = SchlickFresnel(mat.FresnelR0, halfVec, lightVec);
+
+    float3 specAlbedo = fresnelFactor*roughnessFactor;
+
+    // Our spec formula goes outside [0,1] range, but we are 
+    // doing LDR rendering.  So scale it down a bit.
+    specAlbedo = specAlbedo / (specAlbedo + 1.0f);
+
+    return (mat.DiffuseAlbedo.rgb + specAlbedo) * lightStrength;
+}
+\end{lstlisting}
+
+\begin{flushleft}
+使用以下 HLSL 函数：点，pow和max，它们分别是向量点积函数，幂函数和最大函数。 大多数HLSL内在函数的描述可以在附录B中找到，以及其他HLSL语法的快速入门。 然而，有一点需要注意的是，当两个向量与运算符*相乘时，乘法是按分量进行的。\\
+~//
+NOTICE: 我们计算镜面反照率的公式允许镜面反射值大于1，表示非常明亮的高光。 但是，我们的渲染目标要求颜色值处于[0,1]的低动态范围（LDR）。 超出此范围的值将简单地限制为1.0。 因此，为了在没有尖锐夹具的情况下获得更柔和的镜面高光，我们需要缩小镜面反照率：\\
+$$specAlbedo = specAlbedo / (specAlbedo + 1.0f)$$\\
+高动态范围（HDR）照明使用浮点渲染目标，允许光值超出范围[0,1]，然后执行色调映射步骤以将高动态范围重新映射回[0,1]用于显示，同时保留重要的细节。 HDR渲染和色调映射本身就是一个主题——请参阅[Reinhard10]的教科书。[Pettineo12]提供了一个很好的介绍和演示来进行实验。\\
+
+~\\
+NOTICE: 在PC上，HLSL函数始终内联; 因此，函数或参数传递没有性能开销。
+\end{flushleft}
+
+%------- 8.13.3 ---------------
+\subsection{实现定向光源(Implementing Directional Lights)}
+\begin{flushleft}
+给定眼睛位置$E$并且在表面法线$n$和材料属性的眼睛可见的表面上给出点$p$，以下HLSL函数输出从定向光源反射到眼睛方向的光量。 $v=normalize(E - p)$。 在我们的示例中，将在像素着色器中调用此函数，以根据光照确定像素的颜色。\\
+\end{flushleft}
+
+\begin{lstlisting}
+float3 ComputeDirectionalLight(Light L, Material mat,
+    float3 normal, float3 toEye)
+{
+    // The light vector aims opposite the direction the 
+    // light rays travel.
+    float3 lightVec = -L.Direction;
+    // Scale light down by Lambert’s cosine law.
+    float ndotl = max(dot(lightVec, normal), 0.0f);
+    float3 lightStrength = L.Strength * ndotl;
+    return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
+}
+\end{lstlisting}
+
+%------- 8.13.4 ---------------
+\subsection{实现点光源(Implementing Point Lights)}
+\begin{flushleft}
+给定眼睛位置$E$并且在表面法线$n$和材料属性的眼睛可见的表面上给出点$p$，以下HLSL函数输出从点光源反射到眼睛方向的光向量。 $v =normalize(E-p)$。 示例中，将在像素着色器中调用此函数，以根据光照确定像素的颜色。\\
+\end{flushleft}
+
+\begin{lstlisting}
+float3 ComputePointLight(Light L, Material mat, float3
+pos, float3 normal, float3 toEye)
+{
+    // The vector from the surface to the light.
+    float3 lightVec = L.Position - pos;
+    // The distance from surface to light.
+    float d = length(lightVec);
+    // Range test.
+    if(d > L.FalloffEnd)
+        return 0.0f;
+    // Normalize the light vector.
+    lightVec /= d;
+    // Scale light down by Lambert’s cosine law.
+    float ndotl = max(dot(lightVec, normal), 0.0f);
+    float3 lightStrength = L.Strength * ndotl;
+    // Attenuate light by distance.
+    float att = CalcAttenuation(d, L.FalloffStart, L.FalloffEnd);
+    lightStrength *= att;
+    return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
+}
+\end{lstlisting}
+
+%------- 8.13.5 ---------------
+\subsection{实现聚光灯光源(Implementing Spotlights)}
+\begin{flushleft}
+给定眼睛位置$E$并且在表面法线$n$和材料属性的眼睛可见的表面上给出点$p$，以下HLSL函数输出从聚光源反射到眼睛方向的光向量。 $v =normalize(E-p)$。 示例中，将在像素着色器中调用此函数，以根据光照确定像素的颜色。\\
+\end{flushleft}
+
+\begin{lstlisting}
+float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3 toEye)
+{
+    // The vector from the surface to the light.
+    float3 lightVec = L.Position - pos;
+
+    // The distance from surface to light.
+    float d = length(lightVec);
+
+    // Range test.
+    if(d > L.FalloffEnd)
+        return 0.0f;
+
+    // Normalize the light vector.
+    lightVec /= d;
+
+    // Scale light down by Lambert's cosine law.
+    float ndotl = max(dot(lightVec, normal), 0.0f);
+    float3 lightStrength = L.Strength * ndotl;
+
+    // Attenuate light by distance.
+    float att = CalcAttenuation(d, L.FalloffStart, L.FalloffEnd);
+    lightStrength *= att;
+
+    // Scale by spotlight
+    float spotFactor = pow(max(dot(-lightVec, L.Direction), 0.0f), L.SpotPower);
+    lightStrength *= spotFactor;
+
+    return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
+}
+\end{lstlisting}
+
+%------- 8.13.6 ---------------
+\subsection{整合多种光源(Accumulating Multiple Lights)}
+\begin{flushleft}
+照明是附加的，因此支持场景中的多个光源意味着我们需要迭代每个光源并汇总其对正在计算的点/像素的影响。示例框架最多可支持16个灯光。 我们可以使用方向灯，点光源或聚光灯的任意组合，但总数不得超过十六。 此外，我们的代码使用了这样的约定：定向光源必须首先出现在灯光阵列中，点光源放在第二位，而聚光灯光源最后才出现。以下代码计算点的光照方程\\
+\end{flushleft}
+
+\begin{lstlisting}
+#define MaxLights 16
+
+// Constant data that varies per material.
+cbuffer cbPass : register(b2)
+{
+    ...
+
+    // Indices [0, 
+    // NUM_DIR_LIGHTS) are directional lights;
+    // indices [NUM_DIR_LIGHTS, 
+    // NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
+    // indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, 
+    // NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
+    // are spot lights for a maximum of MaxLights per object.
+    Light gLights[MaxLights];
+};
+
+float4 ComputeLighting(Light gLights[MaxLights], Material mat,
+                       float3 pos, float3 normal, float3 toEye,
+                       float3 shadowFactor)
+{
+    float3 result = 0.0f;
+
+    int i = 0;
+
+#if (NUM_DIR_LIGHTS > 0)
+    for(i = 0; i < NUM_DIR_LIGHTS; ++i)
+    {
+        result += shadowFactor[i] * 
+               ComputeDirectionalLight(gLights[i], 
+                   mat, normal, toEye);
+    }
+#endif
+
+#if (NUM_POINT_LIGHTS > 0)
+    for(i = NUM_DIR_LIGHTS; 
+        i < NUM_DIR_LIGHTS+NUM_POINT_LIGHTS;
+        ++i)
+    {
+        result += ComputePointLight(gLights[i], 
+            mat, pos, normal, toEye);
+    }
+#endif
+
+#if (NUM_SPOT_LIGHTS > 0)
+    for(i = NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; 
+    i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS;
+    ++i)
+    {
+        result += ComputeSpotLight(gLights[i], 
+        mat, pos, normal, toEye);
+    }
+#endif 
+    return float4(result, 0.0f);
+}
+\end{lstlisting}
+
+\begin{flushleft}
+显然光源数量的控制靠的是 \#defines。着色器仅针对实际需要的光源数进行照明计算。 因此，如果应用程序只需要三个光源，则只需对三个光源进行计算。 如果应用程序需要在不同时间支持不同数量的光源，那么只需使用不同的 \#defines 生成不同的着色器即可。\\
+~\\
+NOTICE: 在学习有关阴影的章节之前，不会使用shadowFactor参数。 所以现在，我们只是将它设置为向量$(1,1,1)$，这使得阴影因子在等式中没有影响。
+\end{flushleft}
+
+%------- 8.13.7 ---------------
+\subsection{主HLSL文件(The Main HLSL File)}
+\begin{flushleft}
+下面的代码包含用于本章演示的顶点和像素着色器，并使用我们一直在讨论的LightingUtil.hlsl中的HLSL代码。
+\end{flushleft}
+
+\begin{lstlisting}
+//***************************************************************************************
+// Default.hlsl by Frank Luna (C) 2015 All Rights Reserved.
+//
+// Default shader, currently supports lighting.
+//***************************************************************************************
+
+// Defaults for number of lights.
+#ifndef NUM_DIR_LIGHTS
+    #define NUM_DIR_LIGHTS 1
+#endif
+
+#ifndef NUM_POINT_LIGHTS
+    #define NUM_POINT_LIGHTS 0
+#endif
+
+#ifndef NUM_SPOT_LIGHTS
+    #define NUM_SPOT_LIGHTS 0
+#endif
+
+// Include structures and functions for lighting.
+#include "LightingUtil.hlsl"
+
+// Constant data that varies per frame.
+
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorld;
+};
+
+cbuffer cbMaterial : register(b1)
+{
+	float4 gDiffuseAlbedo;
+    float3 gFresnelR0;
+    float  gRoughness;
+	float4x4 gMatTransform;
+};
+
+// Constant data that varies per material.
+cbuffer cbPass : register(b2)
+{
+    float4x4 gView;
+    float4x4 gInvView;
+    float4x4 gProj;
+    float4x4 gInvProj;
+    float4x4 gViewProj;
+    float4x4 gInvViewProj;
+    float3 gEyePosW;
+    float cbPerObjectPad1;
+    float2 gRenderTargetSize;
+    float2 gInvRenderTargetSize;
+    float gNearZ;
+    float gFarZ;
+    float gTotalTime;
+    float gDeltaTime;
+    float4 gAmbientLight;
+
+    // Indices [0, NUM_DIR_LIGHTS) are directional lights;
+    // indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
+    // indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
+    // are spot lights for a maximum of MaxLights per object.
+    Light gLights[MaxLights];
+};
+ 
+struct VertexIn
+{
+	float3 PosL    : POSITION;
+    float3 NormalL : NORMAL;
+};
+
+struct VertexOut
+{
+	float4 PosH    : SV_POSITION;
+    float3 PosW    : POSITION;
+    float3 NormalW : NORMAL;
+};
+
+VertexOut VS(VertexIn vin)
+{
+	VertexOut vout = (VertexOut)0.0f;
+	
+    // Transform to world space.
+    float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
+    vout.PosW = posW.xyz;
+
+    // Assumes nonuniform scaling; otherwise, 
+    // need to use inverse-transpose of world matrix.
+    vout.NormalW = mul(vin.NormalL, (float3x3)gWorld);
+
+    // Transform to homogeneous clip space.
+    vout.PosH = mul(posW, gViewProj);
+
+    return vout;
+}
+
+float4 PS(VertexOut pin) : SV_Target
+{
+    // Interpolating normal can unnormalize it, so renormalize it.
+    pin.NormalW = normalize(pin.NormalW);
+
+    // Vector from point being lit to eye. 
+    float3 toEyeW = normalize(gEyePosW - pin.PosW);
+
+    // Indirect lighting.
+    float4 ambient = gAmbientLight*gDiffuseAlbedo;
+
+    const float shininess = 1.0f - gRoughness;
+    Material mat = { gDiffuseAlbedo, gFresnelR0, shininess };
+    float3 shadowFactor = 1.0f;
+    float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
+        pin.NormalW, toEyeW, shadowFactor);
+
+    float4 litColor = ambient + directLight;
+
+    // Common convention to take alpha from diffuse material.
+    litColor.a = gDiffuseAlbedo.a;
+
+    return litColor;
+}
+\end{lstlisting}
+
+%------- 8.14 ---------------
+\section{光照演示(Lighting Demo)}
+
+
 
