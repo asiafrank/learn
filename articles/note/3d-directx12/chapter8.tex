@@ -1260,10 +1260,10 @@ cbuffer cbPerObject : register(b0)
 
 cbuffer cbMaterial : register(b1)
 {
-	float4 gDiffuseAlbedo;
+    float4 gDiffuseAlbedo;
     float3 gFresnelR0;
     float  gRoughness;
-	float4x4 gMatTransform;
+    float4x4 gMatTransform;
 };
 
 // Constant data that varies per material.
@@ -1294,21 +1294,21 @@ cbuffer cbPass : register(b2)
  
 struct VertexIn
 {
-	float3 PosL    : POSITION;
+    float3 PosL    : POSITION;
     float3 NormalL : NORMAL;
 };
 
 struct VertexOut
 {
-	float4 PosH    : SV_POSITION;
+    float4 PosH    : SV_POSITION;
     float3 PosW    : POSITION;
     float3 NormalW : NORMAL;
 };
 
 VertexOut VS(VertexIn vin)
 {
-	VertexOut vout = (VertexOut)0.0f;
-	
+    VertexOut vout = (VertexOut)0.0f;
+
     // Transform to world space.
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
     vout.PosW = posW.xyz;
@@ -1351,6 +1351,291 @@ float4 PS(VertexOut pin) : SV_Target
 
 %------- 8.14 ---------------
 \section{光照演示(Lighting Demo)}
+\begin{flushleft}
+照明演示是在前一章的“Waves”演示基础上做的修改。 它使用一个定向光源光来代表太阳。 用户可以使用左右上下键调整太阳位置。 虽然我们已经讨论了如何实现材料和灯光，但以下小节将讨论尚未讨论的实现细节。 图\ref{fig:8-28}显示了照明演示的屏幕截图。
+\end{flushleft}
 
+\begin{figure}[h]
+    \label{fig:8-28}
+    \includegraphics[width=\textwidth]{8-28}
+    \centering
+    \caption{光照演示截图}
+\end{figure}
+
+%------- 8.14.1 ---------------
+\subsection{顶点格式(Vertex Format)}
+\begin{flushleft}
+照明计算需要表面法线。 我们在顶点级别定义法线; 然后在三角形的像素上插入这些法线，以便我们可以对每个像素进行光照计算。 而且，我们不再指定顶点颜色。 相反，通过对每个像素应用照明方程来生成像素颜色。 为了支持顶点法线，修改顶点结构，如下所示：\\
+\end{flushleft}
+
+\begin{lstlisting}
+// C++ Vertex structure
+struct Vertex
+{
+    DirectX::XMFLOAT3 Pos;
+    DirectX::XMFLOAT3 Normal;
+};
+
+// Corresponding HLSL vertex structure
+struct VertexIn
+{
+    float3 PosL    : POSITION;
+    float3 NormalL : NORMAL;
+};
+\end{lstlisting}
+
+\begin{flushleft}
+当增加一个新的顶点格式时，需要在 input layout 中增加描述：\\
+\end{flushleft}
+
+\begin{lstlisting}
+mInputLayout =
+{
+    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+      D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,
+      D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+};
+\end{lstlisting}
+
+%------- 8.14.2 ---------------
+\subsection{法线计算(Normal Computation)}
+\begin{flushleft}
+GeometryGenerator中的形状(shape)函数已经创建了具有顶点法线的数据。 但是，在这个演示中修改网格的高度使其看起来像地形，我们需要自己为地形生成法线向量。\\
+因为地形表面由函数$y=f(x,z)$给出，可以使用微积分直接计算法向量，而不是8.2.1节中描述的常规平均技术。为此，对于曲面上的每个点，我们通过取偏导数在正x轴和正z轴方向上形成两个切向量：\\
+\end{flushleft}
+
+\begin{align*}
+T_{x}&=(1, \frac{\partial f}{\partial x},0)\\
+T_{z}&=(0,\frac{\partial f}{\partial z},1)
+\end{align*}
+
+\begin{flushleft}
+这两个向量位于表面点的切平面中。取叉乘然后给出法线向量：\\
+\end{flushleft}
+
+\begin{align*}
+n&=T_{z}\times T_{x}=
+\begin{vmatrix}
+i & j & k\\ 
+0 & \frac{\partial f}{\partial z} & 1\\ 
+1 & \frac{\partial f}{\partial x} & 0
+\end{vmatrix}\\
+&=\left (\begin{vmatrix}
+\frac{\partial f}{\partial z} & 1\\ 
+\frac{\partial f}{\partial x} & 0
+\end{vmatrix},-\begin{vmatrix}
+0 & 1\\ 
+1 & 0
+\end{vmatrix},\begin{vmatrix}
+0 & \frac{\partial f}{\partial z}\\ 
+1 & \frac{\partial f}{\partial x}
+\end{vmatrix}\right )\\
+&=\left (-\frac{\partial f}{\partial x},1, -\frac{\partial f}{\partial z}\right )
+\end{align*}
+
+\begin{flushleft}
+该函数用来生成地表网格：\\
+\end{flushleft}
+
+\begin{align*}
+f(x,z)=0.3z\cdot sin(0.1x)+0.3x\cdot cos(0.1z)
+\end{align*}
+
+\begin{flushleft}
+其偏导数是：\\
+\end{flushleft}
+
+\begin{align*}
+\frac{\partial f}{\partial x}&=0.03z\cdot cos(0.1x)+0.3cos(0.1z)\\
+\frac{\partial f}{\partial z}&=0.3sin(0.1x)-0.03x\cdot sin(0.1z)
+\end{align*}
+
+\begin{flushleft}
+表面点$(x,f(x,z),z)$的表面法线：\\
+\end{flushleft}
+
+\begin{align*}
+n(x,z)=\left (-\frac{\partial f}{\partial x},1,-\frac{\partial f}{\partial z}\right )
+=\begin{bmatrix}
+-0.03z\cdot cos(0.1x)-0.3cos(0.1z)\\ 
+1\\ 
+-0.3sin(0.1x)+0.03x\cdot sin(0.1z)
+\end{bmatrix}^{T}
+\end{align*}
+
+\begin{flushleft}
+注意这个曲面法线不是单位长度，因此需要在光照计算之前进行标准化。\\
+每个顶点处进行上述计算以获得顶点法线：\\
+\end{flushleft}
+
+\begin{lstlisting}
+XMFLOAT3 LitWavesApp::GetHillsNormal(float x, float z)const
+{
+    // n = (-df/dx, 1, -df/dz)
+    XMFLOAT3 n(
+        -0.03f*z*cosf(0.1f*x) - 0.3f*cosf(0.1f*z),
+        1.0f,
+        -0.3f*sinf(0.1f*x) + 0.03f*x*sinf(0.1f*z));
+
+    XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
+    XMStoreFloat3(&n, unitNormal);
+
+    return n;
+}
+\end{lstlisting}
+
+\begin{flushleft}
+除了我们没有水的公式外，水面的法向量以类似的方式完成。 然而，可以使用有限差分方案来近似每个顶点处的切向量（参见[Lengyel02]或任何数值分析书）。\\
+
+NOTICE: 如果你不擅长微积分，不要担心，因为它不会在本书中起主要作用。 现在它很有用，因为我们使用数学表面来生成几何体，以便我们可以绘制一些有趣的对象。最终，我们将从3D建模程序导出的文件中加载3D网格。
+\end{flushleft}
+
+%------- 8.14.3 ---------------
+\subsection{更新光源方向(Updating the Light Direction)}
+\begin{flushleft}
+如8.13.7节所示，我们的Lights数组被放入per-pass常量缓冲区。 该演示使用一个定向光源来表示太阳，并允许用户使用左右上下箭头键调整太阳位置。 因此，每一帧，我们都需要从太阳计算新的光方向，并将其设置为per-pass常量缓冲区。\\
+我们以球坐标$(\rho ,\theta ,\varphi)$跟踪太阳位置，但半径$\rho$无关紧要，因为我们假设太阳是无限远的。 特别是，我们只使用$\rho=1$使其位于单位球面上并将$(1 ,\theta ,\varphi)解释为朝向太阳的方向。 光的方向只是朝向太阳的方向的负面。 以下是更新太阳的相关代码。\\
+\end{flushleft}
+
+\begin{lstlisting}
+float mSunTheta = 1.25f*XM_PI;
+float mSunPhi = XM_PIDIV4;
+
+void LitWavesApp::OnKeyboardInput(const GameTimer& gt)
+{
+    const float dt = gt.DeltaTime();
+
+    if(GetAsyncKeyState(VK_LEFT) & 0x8000)
+        mSunTheta -= 1.0f*dt;
+
+    if(GetAsyncKeyState(VK_RIGHT) & 0x8000)
+        mSunTheta += 1.0f*dt;
+
+    if(GetAsyncKeyState(VK_UP) & 0x8000)
+        mSunPhi -= 1.0f*dt;
+
+    if(GetAsyncKeyState(VK_DOWN) & 0x8000)
+        mSunPhi += 1.0f*dt;
+
+    mSunPhi = MathHelper::Clamp(mSunPhi, 0.1f, XM_PIDIV2);
+}
+
+void LitWavesApp::UpdateMainPassCB(const GameTimer& gt)
+{
+    XMMATRIX view = XMLoadFloat4x4(&mView);
+    XMMATRIX proj = XMLoadFloat4x4(&mProj);
+
+    XMMATRIX viewProj = XMMatrixMultiply(view, proj);
+    XMMATRIX invView = XMMatrixInverse(
+        &XMMatrixDeterminant(view), view);
+    XMMATRIX invProj = XMMatrixInverse(
+        &XMMatrixDeterminant(proj), proj);
+    XMMATRIX invViewProj = XMMatrixInverse(
+        &XMMatrixDeterminant(viewProj), viewProj);
+
+    XMStoreFloat4x4(
+        &mMainPassCB.View, XMMatrixTranspose(view));
+    XMStoreFloat4x4(
+        &mMainPassCB.InvView, XMMatrixTranspose(invView));
+    XMStoreFloat4x4(
+        &mMainPassCB.Proj, XMMatrixTranspose(proj));
+    XMStoreFloat4x4(
+        &mMainPassCB.InvProj, XMMatrixTranspose(invProj));
+    XMStoreFloat4x4(
+        &mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+    XMStoreFloat4x4(
+        &mMainPassCB.InvViewProj, 
+        XMMatrixTranspose(invViewProj));
+    mMainPassCB.EyePosW = mEyePos;
+    mMainPassCB.RenderTargetSize = XMFLOAT2(
+        (float)mClientWidth, 
+        (float)mClientHeight);
+    mMainPassCB.InvRenderTargetSize = XMFLOAT2(
+        1.0f / mClientWidth, 
+        1.0f / mClientHeight);
+    mMainPassCB.NearZ = 1.0f;
+    mMainPassCB.FarZ = 1000.0f;
+    mMainPassCB.TotalTime = gt.TotalTime();
+    mMainPassCB.DeltaTime = gt.DeltaTime();
+    mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+
+    XMVECTOR lightDir = -MathHelper::SphericalToCartesian(
+        1.0f, mSunTheta, mSunPhi);
+
+    XMStoreFloat3(&mMainPassCB.Lights[0].Direction, lightDir);
+    mMainPassCB.Lights[0].Strength = { 1.0f, 1.0f, 0.9f };
+
+    auto currPassCB = mCurrFrameResource->PassCB.get();
+    currPassCB->CopyData(0, mMainPassCB);
+}lstlisting}
+
+\begin{flushleft}
+NOTICE: 将Light数组放入per-pass常量缓冲区意味着每个渲染通道不能超过16个（我们支持的最大光源数）光源。 这对于小型演示来说已经足够了。 然而，对于大型游戏世界来说，这还不够，因为你可以想象有数百个灯光的游戏关卡遍布整个关卡。 解决此问题的一种方法是将Light数组移动到每个对象的常量缓冲区。 然后，对于每个对象O，您搜索场景并找到影响对象O的灯光，并将这些灯光绑定到常量缓冲区。 影响O的灯光是其体积（点光源和聚光灯锥体）与其相交的灯光。 另一种流行的策略是使用延迟渲染或前向+渲染。\\
+\end{flushleft}
+
+%------- 8.14.4 ---------------
+\subsection{更新根签名(Updating to Root Signature)}
+\begin{flushleft}
+Lighting为我们的着色器程序引入了一个新的材质常量缓冲区。 为了支持这一点，我们需要更新我们的根签名以支持额外的常量缓冲区。 与每对象常量缓冲区一样，我们使用材质常量缓冲区的根描述符来支持直接绑定常量缓冲区，而不是通过描述符堆。
+\end{flushleft}
+
+%------- 8.15 ---------------
+\section{总结}
+\begin{itemize}
+  \item 1.对于光照，我们不再指定每顶点颜色，而是定义场景光和每顶点材质。 可以将材质视为确定光如何与对象表面相互作用的属性。 每个顶点材质在三角形的面上插值，以获得三角形网格的每个表面点处的材质值。 然后，照明方程基于光和表面材质之间的相互作用计算眼睛看到的表面颜色; 还涉及其他参数，例如表面法线和眼睛位置。
+  \item 2.曲面法线是与表面上的点的切平面正交的单位向量。 曲面法线确定曲面上的点的“朝向”。对于光照计算，我们需要三角形网格表面上每个点的曲面法线，以便我们可以确定光线照射到网格上的点的角度。 为了获得曲面法线，我们仅在顶点处指定曲面法线（所谓的顶点法线）。 然后，为了在三角形网格的表面上的每个点处获得近似的表面法线，这些顶点法线将在光栅化期间在三角形上插值。 对于任意三角形网格，顶点法线通常通过称为法线平均的技术来近似。 如果矩阵$A$用于变换点和向量（非法向量），则应使用$(A^{-1})^{T}$来变换表面法线。
+  \item 3.平行（定向）光近似于非常远的光源。 因此，我们可以将所有入射光线近似为彼此平行。 定向光的物理实例是太阳相对于地球。点光源向各个方向发光。 点光源的物理示例是灯泡。 聚光灯通过锥形发光。 聚光灯的物理实例是手电筒。
+  \item 4.由于菲涅耳效应，当光到达具有不同折射率的两种介质之间的界面时，一些光被反射并且剩余的光被折射到介质中。 反射的光量取决于介质（某些材料将比其他材料更具反射性）以及法向量$n$和光矢量$L$之间的角度$\Theta_{i}$。由于它们的复杂性，完整的菲涅耳方程通常不用于实时渲染; 因此，使用Schlick近似。
+  \item 5.现实世界中的反光物体往往不是完美的镜子。 即使物体的表面看起来是扁平的，在微观层面我们也可以认为它具有粗糙度。 我们可以认为一个完美的镜子没有粗糙度，它的微法线都与宏观法线的方向相同。 随着粗糙度增加，微法线的方向偏离宏观法线，导致反射光扩散到镜面波瓣中。
+  \item 6.环境光模拟间接光，它在场景周围散射和反射很多次，使其在各个方向均匀地照射物体，从而均匀地照亮它。 漫射光模拟光进入介质内部并在表面下散射，其中一些光被吸收并且剩余的光从表面散射回来。 因为很难对这种次表面散射进行建模，所以我们假设重新发射的光在光进入的点附近在表面上方的所有方向上均匀地散射出来。 由于菲涅耳效应和表面粗糙度，镜面光模拟从表面反射的光
+\end{itemize}
+
+%------- 8.16 ---------------
+\section{练习}
+\begin{flushleft}
+1.修改本章的光照演示，使定向光源仅发出大部分红光。 此外，使用正弦函数使光的强度作为时间的函数振荡，使得光看起来是脉冲的。 使用彩色和脉冲灯可以用于不同的游戏情绪; 例如，脉冲红灯可用于表示紧急情况。\\
+
+2.通过更改材料的粗糙度来修改本章的照明演示。\\
+3.通过添加材料和三点照明系统修改上一章中的“形状”演示。 三点照明系统通常用于胶片和摄影，以获得比一个光源所能提供的更好的照明; 它包括一个称为键灯的主光源，一个通常瞄准键灯侧面方向的辅助补光灯和一个背光灯。 我们使用三点照明来伪造间接照明，从而提供更好的物体定义，而不仅仅是使用环境组件进行间接照明。 三点照明系统使用三个方向灯。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \label{fig:8-29}
+    \includegraphics[width=\textwidth]{8-29}
+    \centering
+    \caption{练习3的截图}
+\end{figure}
+
+\begin{flushleft}
+4.修改练习3，删除三点光源并在列上方添加以每个球体为中心的点。\\
+5.修改练习3，移除三点照明并在列上方添加以每个球体为中心的聚光灯并瞄准。\\
+6.卡通风格照明的一个特征是从一种色调到下一种色调的突然过渡（与平滑过渡相反），如图\ref{fig:8-30}所示。 这可以通过以常规方式计算$k_{d}$ 和$k_{s}$来实现，然后在像素着色器中使用它们之前通过离散函数对它们进行转换，如下所示：\\
+\end{flushleft}
+
+\begin{align*}
+k'_{d}&=f(k_{d})=\left\{\begin{matrix}
+0.4 & if & -\infty < k_{d} \leq 0.0 \\ 
+0.6 & if & 0.0 < k_{d} \leq 0.5 \\
+1.0 & if & 0.5 < k_{d} \leq 1.0 
+\end{matrix}\right. \\
+
+k'_{s}&=g(k_{s})=\left\{\begin{matrix}
+0.0 & if & 0.0 \leq k_{s} \leq 0.1 \\ 
+0.5 & if & 0.1 < k_{s} \leq 0.8 \\
+0.8 & if & 0.8 < k_{s} \leq 1.0 
+\end{matrix}\right.
+\end{align*}
+
+\begin{flushleft}
+修改本章的光照演示，使用这种类型的卡通着色。 （注意：上面的函数$f$和$g$只是开始的示例函数，可以调整，直到得到你想要的结果。）
+\end{flushleft}
+
+\begin{figure}[h]
+    \label{fig:8-30}
+    \includegraphics[width=\textwidth]{8-30}
+    \centering
+    \caption{卡通光照截图}
+\end{figure}
 
 
