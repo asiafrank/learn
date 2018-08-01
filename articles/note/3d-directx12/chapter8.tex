@@ -4,10 +4,10 @@
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-1}
     \includegraphics[width=\textwidth]{8-1}
     \centering
     \caption{(a)未点亮的球体看起来是2D。(b)点亮的球体看起来是3D。}
+    \label{fig:8-1}
 \end{figure}
 
 \begin{flushleft}
@@ -35,10 +35,10 @@
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-2}
     \includegraphics[width=\textwidth]{8-2}
     \centering
     \caption{(a)入射白光的通量。(b)光线照射到圆柱体上，一些光线被吸收，其他光线散射到眼睛和球体上。(c)从圆筒向球体反射的光被再次吸收或反射并进入眼睛。(d)眼睛接收入射光，确定眼睛看到的是什么。}
+    \label{fig:8-2}
 \end{figure}
 
 \begin{flushleft}
@@ -49,10 +49,10 @@
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-3}
     \includegraphics[width=\textwidth]{8-3}
     \centering
     \caption{在物理上，墙壁阻挡了灯泡发出的光线，并且球体位于墙壁的阴影中。 然而，在局部照明模型中，球体被照亮，好像墙壁不存在一样。}
+    \label{fig:8-3}
 \end{figure}
 
 \begin{flushleft}
@@ -66,17 +66,17 @@
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-4}
     \includegraphics[width=\textwidth]{8-4}
     \centering
     \caption{(a)面部法线与面部上的所有点正交。 (b)表面法线是与表面上的点的切平面正交的矢量。}
+    \label{fig:8-4}
 \end{figure}
 
 \begin{figure}[h]
-    \label{fig:8-5}
     \includegraphics[width=\textwidth]{8-5}
     \centering
     \caption{顶点法线$n_{0}$和$n_{1}$在段顶点$p_{0}$和$p_{1}$处定义。 通过在顶点法线之间进行线性插值（加权平均），找到线段内部的点$p$的法向量$n$; 也就是说，$p=p_{0}+t(p_{1}-p_{0})$，其中$t$代表$p_{0}p$与$p_{0}p_{1}$的比例，则$p$的法线$n=n_{0} + t(n_{1}-n_{0})$。尽管为了简单起见我们在线段上表现了正常插值，但这个想法可以直观地应用在3D三角形上。}
+    \label{fig:8-5}
 \end{figure}
 
 \begin{flushleft}
@@ -118,10 +118,10 @@ XMVECTOR ComputeNormal(FXMVECTOR p0, FXMVECTOR p1, FXMVECTOR p2)
 \end{lstlisting}
 
 \begin{figure}[h]
-    \label{fig:8-6}
     \includegraphics[width=\textwidth]{8-6}
     \centering
     \caption{中间顶点由相邻的四个多边形共享，因此我们通过平均四个多边形面法线来近似中间顶点法线。}
+    \label{fig:8-6}
 \end{figure}
 
 \begin{flushleft}
@@ -180,7 +180,6 @@ for(UINT i = 0; i < mNumVertices; ++i)
 \end{flushleft}
 
 \begin{figure}
-\label{fig:8-7}
 \begin{subfigure}{1\textwidth}
   \centering
   \includegraphics[width=1\linewidth]{8-7-a}
@@ -194,6 +193,7 @@ for(UINT i = 0; i < mNumVertices; ++i)
   \includegraphics[width=1\linewidth]{8-7-c}
 \end{subfigure}
 \caption{(a)转变前的表面法线。(b)在x轴上缩放2个单位后，法线不再与表面正交。 (c)通过缩放变换的逆转置正确地变换的表面法线。}
+\label{fig:8-7}
 \end{figure}
 
 \begin{flushleft}
@@ -373,9 +373,9 @@ c_{d}=max(L\cdot n, 0)\cdot B_{L}\bigotimes m_{d}
 c_{a}=A_{L}\bigotimes m_{d}
 \end{align*}
 
-\begin{align*}
+\begin{flushleft}
 颜色$A_{L}$表示表面接收的间接（环境）光的总量，与从光源发出的光不同，这是由于当光从其他表面反弹时发生的吸收。 漫反射率$m_{d}$表示由于漫反射而表面反射的入射光量。 我们使用相同的值来指定表面反射的入射环境光量; 也就是说，对于环境照明，我们正在模拟间接（环境）光的漫反射。 所有环境光都会使物体均匀亮一点 - 根本没有真正的物理计算。 这个想法是，间接光在场景周围散射和反射很多次，以至于它在每个方向上均匀地撞击物体。
-\end{align*}
+\end{flushleft}
 
 %------- 8.7 ---------------
 \section{高光照明(Specular Lighting)}
@@ -1495,7 +1495,7 @@ NOTICE: 如果你不擅长微积分，不要担心，因为它不会在本书中
 \subsection{更新光源方向(Updating the Light Direction)}
 \begin{flushleft}
 如8.13.7节所示，我们的Lights数组被放入per-pass常量缓冲区。 该演示使用一个定向光源来表示太阳，并允许用户使用左右上下箭头键调整太阳位置。 因此，每一帧，我们都需要从太阳计算新的光方向，并将其设置为per-pass常量缓冲区。\\
-我们以球坐标$(\rho ,\theta ,\varphi)$跟踪太阳位置，但半径$\rho$无关紧要，因为我们假设太阳是无限远的。 特别是，我们只使用$\rho=1$使其位于单位球面上并将$(1 ,\theta ,\varphi)解释为朝向太阳的方向。 光的方向只是朝向太阳的方向的负面。 以下是更新太阳的相关代码。\\
+我们以球坐标$(\rho ,\theta ,\varphi)$跟踪太阳位置，但半径$\rho$无关紧要，因为我们假设太阳是无限远的。 特别是，我们只使用$\rho=1$使其位于单位球面上并将$(1 ,\theta ,\varphi)$解释为朝向太阳的方向。 光的方向只是朝向太阳的方向的负面。 以下是更新太阳的相关代码。\\
 \end{flushleft}
 
 \begin{lstlisting}
@@ -1568,7 +1568,8 @@ void LitWavesApp::UpdateMainPassCB(const GameTimer& gt)
 
     auto currPassCB = mCurrFrameResource->PassCB.get();
     currPassCB->CopyData(0, mMainPassCB);
-}lstlisting}
+}
+\end{lstlisting}
 
 \begin{flushleft}
 NOTICE: 将Light数组放入per-pass常量缓冲区意味着每个渲染通道不能超过16个（我们支持的最大光源数）光源。 这对于小型演示来说已经足够了。 然而，对于大型游戏世界来说，这还不够，因为你可以想象有数百个灯光的游戏关卡遍布整个关卡。 解决此问题的一种方法是将Light数组移动到每个对象的常量缓冲区。 然后，对于每个对象O，您搜索场景并找到影响对象O的灯光，并将这些灯光绑定到常量缓冲区。 影响O的灯光是其体积（点光源和聚光灯锥体）与其相交的灯光。 另一种流行的策略是使用延迟渲染或前向+渲染。\\
@@ -1614,13 +1615,12 @@ Lighting为我们的着色器程序引入了一个新的材质常量缓冲区。
 \end{flushleft}
 
 \begin{align*}
-k'_{d}&=f(k_{d})=\left\{\begin{matrix}
+k^{'}_{d}&=f(k_{d})=\left\{\begin{matrix}
 0.4 & if & -\infty < k_{d} \leq 0.0 \\ 
 0.6 & if & 0.0 < k_{d} \leq 0.5 \\
 1.0 & if & 0.5 < k_{d} \leq 1.0 
 \end{matrix}\right. \\
-
-k'_{s}&=g(k_{s})=\left\{\begin{matrix}
+k^{'}_{s}&=g(k_{s})=\left\{\begin{matrix}
 0.0 & if & 0.0 \leq k_{s} \leq 0.1 \\ 
 0.5 & if & 0.1 < k_{s} \leq 0.8 \\
 0.8 & if & 0.8 < k_{s} \leq 1.0 
