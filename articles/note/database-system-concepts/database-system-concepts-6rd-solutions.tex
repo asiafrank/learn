@@ -1,0 +1,81 @@
+\documentclass[11pt,a4paper,oldfontcommands]{memoir}
+\usepackage{ctex}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage[dvips]{graphicx}
+\usepackage{xcolor}
+\definecolor{linkColor}{RGB}{0, 153, 230}
+
+\usepackage{times}
+\usepackage{listings}
+\usepackage{courier}
+\lstset{
+    columns=fixed,       
+    %numbers=left,                                        % 在左侧显示行号
+    frame=none,                                          % 不显示背景边框
+    backgroundcolor=\color[RGB]{245,245,244},            % 设定背景颜色
+    keywordstyle=\color[RGB]{40,40,255},                 % 设定关键字颜色
+    %numberstyle=\footnotesize\color{darkgray},           % 设定行号格式
+    commentstyle=\color[RGB]{0,96,96},                   % 设置代码注释的格式
+    stringstyle=\rmfamily\slshape\color[RGB]{128,0,0},   % 设置字符串格式
+    showstringspaces=false,                              % 不显示字符串中的空格
+    language=c++,                                        % 设置语言
+    basicstyle=\small\ttfamily
+}
+
+\usepackage[
+breaklinks=true,colorlinks=true,
+%linkcolor=blue,urlcolor=blue,citecolor=blue,% PDF VIEW
+linkcolor=black,urlcolor=black,citecolor=black,% PRINT
+bookmarks=true,bookmarksopenlevel=2]{hyperref}
+
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\usepackage{geometry}
+% PDF VIEW
+\geometry{total={210mm,297mm},
+left=25mm,right=25mm,%
+bindingoffset=0mm, top=25mm,bottom=25mm}
+
+% PRINT
+%\geometry{total={210mm,297mm},
+%left=20mm,right=20mm,
+%bindingoffset=10mm, top=25mm,bottom=25mm}
+
+\OnehalfSpacing
+\chapterstyle{bianchi}
+\setsecheadstyle{\Large\bfseries\sffamily\raggedright}
+\setsubsecheadstyle{\large\bfseries\sffamily\raggedright}
+\setsubsubsecheadstyle{\bfseries\sffamily\raggedright}
+
+\pagestyle{plain}
+\makepagestyle{plain}
+\makeevenfoot{plain}{\thepage}{}{}
+\makeoddfoot{plain}{}{}{\thepage}
+\makeevenhead{plain}{}{}{}
+\makeoddhead{plain}{}{}{}
+\maxsecnumdepth{subsection} % chapters, sections, and subsections are numbered
+\maxtocdepth{subsection} % chapters, sections, and subsections are in the Table of Contents
+
+\graphicspath{ {./figure/} }
+
+\begin{document}
+\thispagestyle{empty}
+{
+\sffamily
+\centering
+{\LARGE
+Introduction To Algorithms - 习题解
+}
+
+\vspace{3.5cm}
+（草稿）\\
+\clearpage
+\tableofcontents*
+\clearpage
+
+\input{chapter1-solution.tex}
+
+\end{document}
