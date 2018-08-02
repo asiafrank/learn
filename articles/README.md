@@ -32,16 +32,17 @@
 - 操作系统
   - [ ] Unix 环境高级编程
   - [ ] Unix 网络编程
-  - [ ] TCP/IP ilustrated volume 1: The Protocols
-    - [TCP/IP详解 卷1：协议-在线阅读](http://www.52im.net/topic-tcpipvol1.html)
-    - Http 权威指南
-    - [Http2(RFC7540)](https://httpwg.org/specs/rfc7540.html)
-    - [HPack: Header Compression for Http/2(RFC7541)](https://httpwg.org/specs/rfc7541.html)
   - [ ] 操作系统概念
   - [ ] 深入理解操作系统(CSAPP)
   - [ ] The Linux Programming Interface
   - [ ] Understanding Linux Kernal
   - [ ] Windows核心编程
+- 网络通信
+  - [ ] TCP/IP ilustrated volume 1: The Protocols
+    - [TCP/IP详解 卷1：协议-在线阅读](http://www.52im.net/topic-tcpipvol1.html)
+    - Http 权威指南
+    - [Http2(RFC7540)](https://httpwg.org/specs/rfc7540.html)
+    - [HPack: Header Compression for Http/2(RFC7541)](https://httpwg.org/specs/rfc7541.html)
 - C++
   - [ ] STL源码剖析
   - [ ] 深度探索C++对象模型
@@ -92,6 +93,7 @@
 - c.应用到自己的项目中
 - d.抄改源码
 - e.写笔记
+
 注：书读得越多，基础越扎实，学习新事物就越快！
 
 ## 学习上的常见问题
