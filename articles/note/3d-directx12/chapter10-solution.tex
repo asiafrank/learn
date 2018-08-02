@@ -1,0 +1,15 @@
+\chapter{10.10 习题}
+\begin{flushleft}
+1.尝试不同的混合操作和混合因子组合。\\
+2.修改"混合"演示，从绘制水开始。解释结果。\\
+3.假设$fogStart=10$且$fogRange=200$。根据如下情况计算 $foggedColor$值。\\
+\begin{itemize}
+  \item a.$dist(\boldsymbol{p},\boldsymbol{E})$=160
+  \item b.$dist(\boldsymbol{p},\boldsymbol{E})$=110
+  \item c.$dist(\boldsymbol{p},\boldsymbol{E})$=60
+  \item d.$dist(\boldsymbol{p},\boldsymbol{E})$=30
+\end{itemize}
+4.查看生成的着色器程序汇编代码，验证未定义 ALPHA\_TEST 的编译像素着色器没有 discard 指令，然后再定义 ALPHA\_TEST 编译像素着色器，观察区别。discard 指令对应于 HLSL 的 clip 指令。\\
+
+5.修改"混合"演示，创建和应用混合渲染状态，使该状态禁用对红色和绿色通道的颜色写入。\\
+\end{flushleft}

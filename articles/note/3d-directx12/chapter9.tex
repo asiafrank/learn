@@ -4,10 +4,10 @@
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-1}
     \includegraphics[width=\textwidth]{9-1}
     \centering
     \caption{Crate演示创建一个带有条板纹理的立方体。}
+    \label{fig:9-1}
 \end{figure}
 
 \begin{flushleft}
@@ -76,17 +76,17 @@ Direct3D使用纹理坐标系，该坐标系包含一个水平延伸到图像的
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-2}
     \includegraphics[width=\textwidth]{9-2}
     \centering
     \caption{纹理坐标系，有时称为纹理空间。}
+    \label{fig:9-2}
 \end{figure}
 
 \begin{figure}[h]
-    \label{fig:9-3}
     \includegraphics[width=\textwidth]{9-3}
     \centering
     \caption{左边是三维空间中的三角形，右边是我们在纹理上定义一个2D三角形，它将被映射到3D三角形上。}
+    \label{fig:9-3}
 \end{figure}
 
 \begin{flushleft}
@@ -134,10 +134,10 @@ NOTICE: 您可以创建“奇数”纹理映射，其中2D纹理三角形与3D�
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-4}
     \includegraphics[width=\textwidth]{9-4}
     \centering
     \caption{在一个大纹理上存储四个子纹理的纹理图集。 设置每个顶点的纹理坐标，以便将纹理的所需部分映射到几何体上。}
+    \label{fig:9-4}
 \end{figure}
 
 %------- 9.3 ---------------
@@ -496,10 +496,10 @@ NOTICE: 纹理图集可以提高性能，因为它可以通过一次绘制调用
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-5}
     \includegraphics[width=\textwidth]{9-5}
     \centering
     \caption{(a)给定纹素点，我们构造一个分段常数函数来逼近纹素点之间的值; 这有时被称为最近邻点采样，因为使用了最近的纹素点的值。 (b)给定纹素点，我们构造一个分段线性函数来逼近纹素点之间的值。}
+    \label{fig:9-5}
 \end{figure}
 
 \begin{flushleft}
@@ -507,10 +507,10 @@ NOTICE: 纹理图集可以提高性能，因为它可以通过一次绘制调用
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-6}
     \includegraphics[width=\textwidth]{9-6}
     \centering
     \caption{这里我们有四个纹素点：$c_{ij}$，$c_{i,j+1}$，$c_{i+1,j}$和$c_{i+1,j+1}$。 我们想要使用插值来近似位于这四个纹素点之间的$c$的颜色; 在这个例子中，$c$位于$c_{ij}$右边$0.75$个单位和$c_{ij}$下面$0.38$个单位。 我们首先在前两种颜色之间进行一维线性插值以得到$c_{T}$. 同样，我们在底部两种颜色之间进行一维线性插值以获得$c_{B}$. 最后，我们在$c_{T}$和$c_{B}$之间进行一维线性插值得到$c$。}
+    \label{fig:9-6}
 \end{figure}
 
 \begin{flushleft}
@@ -518,10 +518,10 @@ NOTICE: 纹理图集可以提高性能，因为它可以通过一次绘制调用
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-7}
     \includegraphics[width=\textwidth]{9-7}
     \centering
     \caption{放大具有板条纹理的立方体。在左边我们使用常数插值，这会出现明显的马赛克; 因为插值函数具有不连续性（图\ref{fig:9-5}a），这使得变化突然而不平滑。 在右侧，我们使用线性过滤，由于插值函数的连续性，出现更平滑的图像效果。}
+    \label{fig:9-7}
 \end{figure}
 
 %------- 9.5.2 ---------------
@@ -540,10 +540,10 @@ NOTICE: 纹理图集可以提高性能，因为它可以通过一次绘制调用
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-8}
     \includegraphics[width=\textwidth]{9-8}
     \centering
     \caption{一个 mipmap 链; 每个连续的mipmap是每个维度的一半大小，前一个mipmap级别的详细信息低至$1\times 1$。}
+    \label{fig:9-8}
 \end{figure}
 
 \begin{flushleft}
@@ -559,10 +559,10 @@ NOTICE:如9.3.2节所述，可以使用Photoshop DDS导出插件或使用texconv
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-9}
     \includegraphics[width=\textwidth]{9-9}
     \centering
     \caption{板条箱的顶面几乎与观察窗口正交。 （左）使用线性过滤条件的顶部非常模糊。 （右）各向异性过滤在从这个角度渲染板条顶面时做得更好。}
+    \label{fig:9-9}
 \end{figure}
 
 %------- 9.6 ---------------
@@ -573,10 +573,10 @@ NOTICE:如9.3.2节所述，可以使用Photoshop DDS导出插件或使用texconv
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-10}
     \includegraphics[width=\textwidth]{9-10}
     \centering
     \caption{包裹地址模式。}
+    \label{fig:9-10}
 \end{figure}
 
 \begin{flushleft}
@@ -584,10 +584,10 @@ NOTICE:如9.3.2节所述，可以使用Photoshop DDS导出插件或使用texconv
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-11}
     \includegraphics[width=\textwidth]{9-11}
     \centering
     \caption{边框颜色地址模式。}
+    \label{fig:9-11}
 \end{figure}
 
 \begin{flushleft}
@@ -595,10 +595,10 @@ NOTICE:如9.3.2节所述，可以使用Photoshop DDS导出插件或使用texconv
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-12}
     \includegraphics[width=\textwidth]{9-12}
     \centering
     \caption{钳位地址模式。}
+    \label{fig:9-12}
 \end{figure}
 
 \begin{flushleft}
@@ -606,10 +606,10 @@ NOTICE:如9.3.2节所述，可以使用Photoshop DDS导出插件或使用texconv
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-13}
     \includegraphics[width=\textwidth]{9-13}
     \centering
     \caption{镜像地址模式。}
+    \label{fig:9-13}
 \end{figure}
 
 \begin{flushleft}
@@ -618,10 +618,10 @@ NOTICE:如9.3.2节所述，可以使用Photoshop DDS导出插件或使用texconv
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-14}
     \includegraphics[width=\textwidth]{9-14}
     \centering
     \caption{砖纹理平铺$2\times 3$次。 因为纹理是无缝的，所以重复模式更难以注意到。}
+    \label{fig:9-14}
 \end{figure}
 
 \clearpage
@@ -1276,10 +1276,10 @@ vout.TexC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform).xy;
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-15}
     \includegraphics[width=\textwidth]{9-15}
     \centering
     \caption{地面纹理演示截图}
+    \label{fig:9-15}
 \end{figure}
 
 %------- 9.11.1 ---------------
@@ -1295,10 +1295,10 @@ where \Delta u=\frac{1}{n-1} and \Delta v=\frac{1}{m-1}
 \end{align*}
 
 \begin{figure}[h]
-    \label{fig:9-16}
     \includegraphics[width=\textwidth]{9-16}
     \centering
     \caption{$xz$空间中的网格顶点$v_{ij}$的纹理坐标由$uv$空间中的第$i$个网格顶点$T_{ij}$给出。}
+    \label{fig:9-16}
 \end{figure}
 
 \begin{flushleft}
@@ -1419,20 +1419,20 @@ void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 2.使用DirectX纹理工具，我们可以手动指定每个mipmap级别（File->Open Onto This Surface）。 创建一个带有mipmap链的DDS文件，如图\ref{fig:9-17}所示，在每个级别上使用不同的文本描述或颜色，以便您可以轻松区分每个mipmap级别。 使用此纹理修改条箱演示并让相机放大和缩小，以便您可以明确地看到mipmap级别发生变化。 尝试点和线性mipmap过滤。\\
 \end{flushleft}
 \begin{figure}[h]
-    \label{fig:9-17}
     \includegraphics[width=\textwidth]{9-17}
     \centering
     \caption{手动构建的mipmap链，以便每个级别都可以轻松区分。}
+    \label{fig:9-17}
 \end{figure}
 
 \begin{flushleft}
 3.给定两个相同大小的纹理，我们可以通过不同的操作将它们组合起来以获得新的图像。 更一般地，这被称为多纹理，其中使用多个纹理来实现结果。 例如，我们可以添加，减去或（分量）乘以两个纹理的相应纹素。 图\ref{fig:9-18}显示了分量乘以两个纹理以获得类似火球的结果。 在本练习中，通过在图像着色器中组合图\ref{fig:9-18}中的两个源纹理来修改“条箱”演示，使在每个立方体面上生成火球纹理。 （本练习的图像文件可以从本书的网站下载。）请注意，您必须修改Default.hlsl以支持多个纹理。
 \end{flushleft}
 \begin{figure}[h]
-    \label{fig:9-18}
     \includegraphics[width=\textwidth]{9-18}
     \centering
     \caption{手动构建的mipmap链，以便每个级别都可以轻松区分。}
+    \label{fig:9-18}
 \end{figure}
 
 \begin{flushleft}
@@ -1455,10 +1455,10 @@ void TexWavesApp::AnimateMaterials(const GameTimer& gt)
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-19}
     \includegraphics[width=\textwidth]{9-19}
     \centering
     \caption{纹理列场景}
+    \label{fig:9-19}
 \end{figure}
 
 

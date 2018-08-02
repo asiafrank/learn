@@ -4,20 +4,20 @@
 2.使用DirectX纹理工具，我们可以手动指定每个mipmap级别（File->Open Onto This Surface）。 创建一个带有mipmap链的DDS文件，如图\ref{fig:9-17}所示，在每个级别上使用不同的文本描述或颜色，以便您可以轻松区分每个mipmap级别。 使用此纹理修改条箱演示并让相机放大和缩小，以便您可以明确地看到mipmap级别发生变化。 尝试点和线性mipmap过滤。\\
 \end{flushleft}
 \begin{figure}[h]
-    \label{fig:9-17}
     \includegraphics[width=\textwidth]{9-17}
     \centering
     \caption{手动构建的mipmap链，以便每个级别都可以轻松区分。}
+    \label{fig:9-17}
 \end{figure}
 
 \begin{flushleft}
 3.给定两个相同大小的纹理，我们可以通过不同的操作将它们组合起来以获得新的图像。 更一般地，这被称为多纹理，其中使用多个纹理来实现结果。 例如，我们可以添加，减去或（分量）乘以两个纹理的相应纹素。 图\ref{fig:9-18}显示了分量乘以两个纹理以获得类似火球的结果。 在本练习中，通过在图像着色器中组合图\ref{fig:9-18}中的两个源纹理来修改“条箱”演示，使在每个立方体面上生成火球纹理。 （本练习的图像文件可以从本书的网站下载。）请注意，您必须修改Default.hlsl以支持多个纹理。
 \end{flushleft}
 \begin{figure}[h]
-    \label{fig:9-18}
     \includegraphics[width=\textwidth]{9-18}
     \centering
     \caption{手动构建的mipmap链，以便每个级别都可以轻松区分。}
+    \label{fig:9-18}
 \end{figure}
 
 \begin{flushleft}
@@ -40,8 +40,8 @@
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:9-19}
     \includegraphics[width=\textwidth]{9-19}
     \centering
     \caption{纹理列场景}
+    \label{fig:9-19}
 \end{figure}

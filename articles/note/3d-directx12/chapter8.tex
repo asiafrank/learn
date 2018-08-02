@@ -180,17 +180,17 @@ for(UINT i = 0; i < mNumVertices; ++i)
 \end{flushleft}
 
 \begin{figure}
-\begin{subfigure}{1\textwidth}
+\begin{subfigure}{.8\textwidth}
   \centering
-  \includegraphics[width=1\linewidth]{8-7-a}
+  \includegraphics[width=.8\linewidth]{8-7-a}
 \end{subfigure}
-\begin{subfigure}{1\textwidth}
+\begin{subfigure}{.8\textwidth}
   \centering
-  \includegraphics[width=1\linewidth]{8-7-b}
+  \includegraphics[width=.8\linewidth]{8-7-b}
 \end{subfigure}
-\begin{subfigure}{1\textwidth}
+\begin{subfigure}{.8\textwidth}
   \centering
-  \includegraphics[width=1\linewidth]{8-7-c}
+  \includegraphics[width=.8\linewidth]{8-7-c}
 \end{subfigure}
 \caption{(a)转变前的表面法线。(b)在x轴上缩放2个单位后，法线不再与表面正交。 (c)通过缩放变换的逆转置正确地变换的表面法线。}
 \label{fig:8-7}
@@ -200,7 +200,7 @@ for(UINT i = 0; i < mNumVertices; ++i)
 所以我们的问题是：给定转换矩阵$A$转换点和向量（非正态），我们想找到一个转换矩阵$B$，使得转换的切线向量与转换的法向量正交（即 $uA\cdot nB = 0$）。 要做到这一点，首先从我们知道的东西开始：我们知道法向量$n$与切向量$u$正交：\\
 \end{flushleft}
 
-\begin{tabular}{|p{5em}|p{35em}|} 
+\begin{tabular}{|p{11em}|p{29em}|} 
 \hline
 $u\cdot n=0$ & 切线向量与法向量正交\\ 
 \hline
@@ -269,10 +269,10 @@ NOTICE: 即使使用逆转置变换，法向量也可能失去单位长度; 因�
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-8}
     \includegraphics[width=\textwidth]{8-8}
     \centering
     \caption{光照计算中涉及到的重要向量}
+    \label{fig:8-8}
 \end{figure}
 
 \begin{flushleft}
@@ -280,10 +280,10 @@ NOTICE: 即使使用逆转置变换，法向量也可能失去单位长度; 因�
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-9}
     \includegraphics[width=\textwidth]{8-9}
     \centering
     \caption{反射几何}
+    \label{fig:8-9}
 \end{figure}
 
 %------- 8.4 ---------------
@@ -307,10 +307,10 @@ E_{2}=\frac{P}{A_{2}}=\frac{P}{A_{1}}cos\Theta=E_{1}cos\Theta=E_{1}(n\cdot L)
 \end{align*}
 
 \begin{figure}[h]
-    \label{fig:8-10}
     \includegraphics[width=\textwidth]{8-10}
     \centering
     \caption{(a)横截面积为$A_{1}$的光束正面撞击表面。(b)具有横截面面积$A_{1}$的光束以一定角度撞击表面以覆盖表面上的较大区域$A_{2}$，从而将光能扩散到更大的区域上，从而使光看起来“更暗”。}
+    \label{fig:8-10}
 \end{figure}
 
 \begin{flushleft}
@@ -326,10 +326,10 @@ f(\Theta)=max(cos\Theta,0)=max(L\cdot n, 0)
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-11}
     \includegraphics[width=\textwidth]{8-11}
     \centering
     \caption{对于$-2\leq \Theta \leq 2$，函数$f(\Theta)=max(cos\Theta,0)=max(L\cdot n, 0)$的曲线图。注意$\pi /2 \approx 1.57$。}
+    \label{fig:8-11}
 \end{figure}
 
 %------- 8.5 ---------------
@@ -339,10 +339,10 @@ f(\Theta)=max(cos\Theta,0)=max(L\cdot n, 0)
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-12}
     \includegraphics[width=\textwidth]{8-12}
     \centering
     \caption{当撞击漫射表面时，入射光在每个方向上均匀地散射。 这个想法是光进入介质的内部并在表面下散射。 一些光将被吸收，剩余的光会从表面散射回来。 因为很难对这种次表面散射进行建模，所以我们假设重新发射的光在光进入的点附近在表面上方的所有方向上均匀地散射出来。}
+    \label{fig:8-12}
 \end{figure}
 
 \begin{flushleft}
@@ -384,10 +384,10 @@ c_{a}=A_{L}\bigotimes m_{d}
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-13}
     \includegraphics[width=\textwidth]{8-13}
     \centering
     \caption{(a)对于具有法向量$n$的完全平坦的镜子的菲涅耳效应(Frenel eefct)。 入射光$I$被分开，其中一些光在反射方向$r$上反射，并且剩余的光在折射方向$t$上折射到介质中。 所有这些向量都在同一平面上。 反射向量和法线之间的角度总是$θ_{i}$，这与光向量$L=-I$和法线$n$之间的角度相同。 折射向量和$-n$之间的角度$θ_{t}$取决于两种介质之间的折射率，并由斯涅尔定律(Snell's Law)表示。 (b)大多数物体不是完全平坦的镜子，但具有微观粗糙度。 这导致反射和折射的光在反射和折射矢量周围扩散。}
+    \label{fig:8-13}
 \end{figure}
 
 \begin{flushleft}
@@ -396,10 +396,10 @@ c_{a}=A_{L}\bigotimes m_{d}
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-14}
     \includegraphics[width=\textwidth]{8-14}
     \centering
     \caption{(a)粗糙表面的镜面光围绕反射向量$r$扩散。 (b)使其进入眼睛的反射光是镜面反射和漫反射的组合。}
+    \label{fig:8-14}
 \end{figure}
 
 %------- 8.7.1 ---------------
@@ -440,17 +440,17 @@ $R_{F}(0^{\circ})$是介质的特性; 以下是常见材料的一些值[Möller0
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-15}
     \includegraphics[width=\textwidth]{8-15}
     \centering
     \caption{针对不同材料绘制的Schlick近似值：水，红宝石和铁。}
+    \label{fig:8-15}
 \end{figure}
 
 \begin{figure}[h]
-    \label{fig:8-16}
     \includegraphics[width=\textwidth]{8-16}
     \centering
     \caption{(a)：俯视池塘，反射低，折射高，因为$L$和$n$之间的角度很小。 (b)看向地平线，反射高，折射低，因为$L$和$n$之间的角度接近$90^{\circ}$。}
+    \label{fig:8-16}
 \end{figure}
 
 \begin{flushleft}
@@ -465,10 +465,10 @@ $R_{F}(0^{\circ})$是介质的特性; 以下是常见材料的一些值[Möller0
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-17}
     \includegraphics[width=\textwidth]{8-17}
     \centering
     \caption{(a)黑色水平条表示小表面元素的放大。 在微观层面，该区域具有许多微观法线，由于微观水平的粗糙度而瞄准不同的方向。 表面越光滑，微法线与宏观法线的平均值越大; 表面越粗糙，微法线就越偏离宏观法线。(b)这种粗糙度导致镜面反射光扩散。 镜面反射的形状称为镜面反射。 通常，镜面凸角的形状可以根据被建模的表面材料的类型而变化。}
+    \label{fig:8-17}
 \end{figure}
 
 \begin{flushleft}
@@ -476,10 +476,10 @@ $R_{F}(0^{\circ})$是介质的特性; 以下是常见材料的一些值[Möller0
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-18}
     \includegraphics[width=\textwidth]{8-18}
     \centering
     \caption{具有法线$h$的微平面将$L$反射为$v$。}
+    \label{fig:8-18}
 \end{figure}
 
 \begin{flushleft}
@@ -498,10 +498,10 @@ $R_{F}(0^{\circ})$是介质的特性; 以下是常见材料的一些值[Möller0
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-19}
     \includegraphics[width=\textwidth]{8-19}
     \centering
     \caption{具有法线$h$的微平面将$L$反射为$v$。}
+    \label{fig:8-19}
 \end{figure}
 
 \begin{flushleft}
@@ -518,10 +518,10 @@ S(\Theta_{h})&=\frac{m+8}{8}cos^{m}(\Theta_{h})\\
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-20}
     \includegraphics[width=\textwidth]{8-20}
     \centering
     \caption{由粗糙度模拟光的镜面反射的函数。}
+    \label{fig:8-20}
 \end{figure}
 
 \begin{flushleft}
@@ -577,10 +577,10 @@ c_{s}=max(L\cdot n, 0)\cdot B_{L}\bigotimes R_{F}(\alpha_{h})\frac{m+8}{8}(n\cdo
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-21}
     \includegraphics[width=\textwidth]{8-21}
     \centering
     \caption{(a)仅用环境光着色的球体，均匀地照亮它。(b)环境光和漫射照明相结合。 由于朗伯余弦定律，现在从明亮到黑暗平稳过渡。(c)环境光，漫反射光和镜面光。 镜面反射照明产生镜面反射。}
+    \label{fig:8-21}
 \end{figure}
 
 \begin{flushleft}
@@ -637,10 +637,10 @@ struct Material
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-22}
     \includegraphics[width=\textwidth]{8-22}
     \centering
     \caption{汽车网格划分为五个材料属性组。}
+    \label{fig:8-22}
 \end{figure}
 
 \begin{flushleft}
@@ -795,10 +795,10 @@ void LitWavesApp::DrawRenderItems(
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-23}
     \includegraphics[width=\textwidth]{8-23}
     \centering
     \caption{平行光射入平面}
+    \label{fig:8-23}
 \end{figure}
 
 \begin{flushleft}
@@ -806,10 +806,10 @@ void LitWavesApp::DrawRenderItems(
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-24}
     \includegraphics[width=\textwidth]{8-24}
     \centering
     \caption{该图未按比例绘制，但如果您在地球上选择一个小的表面区域，则撞击该区域的光线大致平行。}
+    \label{fig:8-24}
 \end{figure}
 
 %------- 8.11 ---------------
@@ -827,10 +827,10 @@ L=\frac{Q-P}{||Q-P||}
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-25}
     \includegraphics[width=\textwidth]{8-25}
     \centering
     \caption{点光源向各个方向辐射;特别地，对于任意点$P$，存在源自点光源$Q$朝向$P$的光线。}
+    \label{fig:8-25}
 \end{figure}
 
 %------- 8.11.1 ---------------
@@ -864,10 +864,10 @@ x,0\leq x\leq 1 \\
 \end{align*}
 
 \begin{figure}[h]
-    \label{fig:8-26}
     \includegraphics[width=\textwidth]{8-26}
     \centering
     \caption{光的衰减系数保持在最高强度(1.0)，直到距离$d$达到 $falloffStart$ 点，然后当距离达到 $falloffEnd$ 线性衰减到0.0。}
+    \label{fig:8-26}
 \end{figure}
 
 \begin{flushleft}
@@ -882,11 +882,11 @@ x,0\leq x\leq 1 \\
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-27}
     \includegraphics[width=\textwidth]{8-27}
     \centering
     \caption{聚光灯是位置$Q$，瞄准方向$d$，并且辐射
 通过角度为$\varphi max$的锥形光}
+    \label{fig:8-27}
 \end{figure}
 
 \begin{flushleft}
@@ -1356,10 +1356,10 @@ float4 PS(VertexOut pin) : SV_Target
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-28}
     \includegraphics[width=\textwidth]{8-28}
     \centering
     \caption{光照演示截图}
+    \label{fig:8-28}
 \end{figure}
 
 %------- 8.14.1 ---------------
@@ -1602,10 +1602,10 @@ Lighting为我们的着色器程序引入了一个新的材质常量缓冲区。
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-29}
     \includegraphics[width=\textwidth]{8-29}
     \centering
     \caption{练习3的截图}
+    \label{fig:8-29}
 \end{figure}
 
 \begin{flushleft}
@@ -1632,10 +1632,10 @@ k^{'}_{s}&=g(k_{s})=\left\{\begin{matrix}
 \end{flushleft}
 
 \begin{figure}[h]
-    \label{fig:8-30}
     \includegraphics[width=\textwidth]{8-30}
     \centering
     \caption{卡通光照截图}
+    \label{fig:8-30}
 \end{figure}
 
 
