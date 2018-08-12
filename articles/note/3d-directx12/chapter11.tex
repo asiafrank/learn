@@ -73,7 +73,7 @@ void ID3D12GraphicsCommandList::ClearDepthStencilView(
 我们已经在演示的每个帧中调用了这个方法。：\\
 mCommandList->ClearDepthStencilView(
     DepthStencilView(),
-    D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+    D3D12\_CLEAR\_FLAG\_DEPTH | D3D12\_CLEAR\_FLAG\_STENCIL,
     1.0f, 0, 0, nullptr);
 \end{flushleft}
 
@@ -354,16 +354,16 @@ CD3DX12_BLEND_DESC mirrorBlendState(D3D12_DEFAULT);
 
 D3D12_DEPTH_STENCIL_DESC mirrorDSS;
 mirrorDSS.DepthEnable = true;
-^\textbf{mirrorDSS.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;}^
+^\textbf{mirrorDSS.DepthWriteMask = D3D12\_DEPTH\_WRITE\_MASK\_ZERO;}^
 mirrorDSS.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 mirrorDSS.StencilEnable = true;
 mirrorDSS.StencilReadMask = 0xff;
 mirrorDSS.StencilWriteMask = 0xff;
 
 mirrorDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-^\textbf{mirrorDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;}^
-^\textbf{mirrorDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_REPLACE;}^
-^\textbf{mirrorDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;}^
+^\textbf{mirrorDSS.FrontFace.StencilDepthFailOp = D3D12\_STENCIL\_OP\_KEEP;}^
+^\textbf{mirrorDSS.FrontFace.StencilPassOp = D3D12\_STENCIL\_OP\_REPLACE;}^
+^\textbf{mirrorDSS.FrontFace.StencilFunc = D3D12\_COMPARISON\_FUNC\_ALWAYS;}^
 
 // We are not rendering backfacing polygons, 
 // so these settings do not matter.
@@ -394,7 +394,7 @@ reflectionsDSS.StencilWriteMask = 0xff;
 reflectionsDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 reflectionsDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
 reflectionsDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-^\textbf{reflectionsDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;}^
+^\textbf{reflectionsDSS.FrontFace.StencilFunc = D3D12\_COMPARISON\_FUNC\_EQUAL;}^
 
 // We are not rendering backfacing polygons, 
 // so these settings do not matter.
@@ -534,7 +534,7 @@ NOTICE: 本节的部分内容出现在Frank D. Luna的书中，DirectX 9.0c的3D
 %-------- 11.5.1 --------
 \subsection{平行光源阴影(Parallel Light Shadows)}
 \begin{flushleft}
-图\ref{fig:11-7}显示了一个物体相对于平行光源投射的阴影。 给定方向$L$的平行光源，穿过顶点$p$的光线由$r(t)=\boldsymbol{p}+t\boldsymbol{L}$给出。 光线$r(t)$与阴影平面$(\boldsymbol{n},d)的交点给出$\boldsymbol{s}$。 （读者可以在附录C中阅读有关光线和平面的更多信息。）通过使用平面拍摄穿过每个物体顶点的光线而得到的交叉点集定义了阴影的投影几何形状。 对于顶点$\boldsymbol{p}$，其阴影投影由下式给出\\
+图\ref{fig:11-7}显示了一个物体相对于平行光源投射的阴影。 给定方向$L$的平行光源，穿过顶点$p$的光线由$r(t)=\boldsymbol{p}+t\boldsymbol{L}$给出。 光线$r(t)$与阴影平面$(\boldsymbol{n},d)$的交点给出$\boldsymbol{s}$。 （读者可以在附录C中阅读有关光线和平面的更多信息。）通过使用平面拍摄穿过每个物体顶点的光线而得到的交叉点集定义了阴影的投影几何形状。 对于顶点$\boldsymbol{p}$，其阴影投影由下式给出\\
 \end{flushleft}
 
 \begin{align*}\tag{eq.11.1}\label{eq.11.1}
@@ -724,8 +724,8 @@ shadowDSS.StencilWriteMask = 0xff;
 
 shadowDSS.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
 shadowDSS.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-^\textbf{shadowDSS.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR;}^
-^\textbf{shadowDSS.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_EQUAL;}^
+^\textbf{shadowDSS.FrontFace.StencilPassOp = D3D12\_STENCIL\_OP\_INCR;}^
+^\textbf{shadowDSS.FrontFace.StencilFunc = D3D12\_COMPARISON\_FUNC\_EQUAL;}^
 
 // We are not rendering backfacing polygons, 
 // so these settings do not matter.
@@ -780,14 +780,14 @@ XMStoreFloat4x4(
 2.防止特定像素被写入由模板测试决定，模板测试由以下内容给出：\\
 \end{flushleft}
 
-\begin{align*}
+\begin{lstlisting}
 if(StencilRef 
    & StencilReadMask Value 
    & StencilReadMask )
     accept pixel
 else
     reject pixel
-\end{align*}
+\end{lstlisting}
 
 \begin{flushleft}
 3.其中$\unlhd$运算符是 D3D12\_COMPARISON\_FUNC 枚举类型中定义的任何一个函数。 StencilRef，StencilReadMask，StencilReadMask 和比较运算符$\unlhd$都是使用Direct3D深度/模板API设置的应用程序定义的数量集合。其值数量是模板缓冲区中的当前值。\\

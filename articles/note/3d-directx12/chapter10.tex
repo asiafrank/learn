@@ -473,14 +473,14 @@ float4 PS(VertexOut pin) : SV_Target
         gsamAnisotropicWrap, 
         pin.TexC) * gDiffuseAlbedo;
 
-    ^\textbf{#ifdef ALPHA_TEST}^
+    ^\textbf{\#ifdef ALPHA\_TEST}^
     ^\textbf{// Discard pixel if texture alpha < 0.1. }^
     ^\textbf{// We do this test as soon }^
     ^\textbf{// as possible in the shader so that we can}^
     ^\textbf{// potentially exit the shader early, }^
     ^\textbf{// thereby skipping the rest of the shader code. }^
     ^\textbf{clip(diffuseAlbedo.a - 0.1f);}^
-    ^\textbf{#endif}^
+    ^\textbf{\#endif}^
     ...
     // Common convention to take alpha from diffuse albedo.
     litColor.a = diffuseAlbedo.a;
@@ -749,10 +749,10 @@ float4 PS(VertexOut pin) : SV_Target
 
     float4 litColor = ambient + directLight;
 
-^\textbf{#ifdef FOG}^
+^\textbf{\#ifdef FOG}^
     ^\textbf{float fogAmount = saturate((distToEye - gFogStart) / gFogRange);}^
     ^\textbf{litColor = lerp(litColor, gFogColor, fogAmount);}^
-^\textbf{#endif
+^\textbf{\#endif}^
 
     // Common convention to take alpha from diffuse albedo.
     litColor.a = diffuseAlbedo.a;
