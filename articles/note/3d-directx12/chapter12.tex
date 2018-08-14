@@ -278,8 +278,371 @@ NOTICE: 如果没有输出足够的顶点来完成几何着色器中的基元，
 %-------- 12.2 --------
 \section{树广告牌演示(Tree Billboards demo)}
 %-------- 12.2.1 --------
-\subsection{概览}
+\subsection{概览(Overview)}
+\begin{flushleft}
+当树木很远时，使用广告牌技术来提高效率。 也就是说，不是渲染完全3D树的几何图形，而是在其上绘制带有3D树图片的四边形（参见图\ref{fig:12-2}）。 从远处看，您无法分辨出正在使用的广告牌。 然而，诀窍是确保广告牌始终面向相机（否则达不到欺骗人眼的目的）。
+\end{flushleft}
 
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-2}
+    \centering
+    \caption{一个alpha通道的树广告牌纹理}
+    \label{fig:12-2}
+\end{figure}
+
+\begin{flushleft}
+假设$y$轴向上并且$xz$平面是地平面，则树广告牌通常将与$y$轴对齐并且恰好面向$xz$平面中的相机。 图\ref{fig:12-3}显示了鸟瞰图中几个广告牌的局部坐标系,请注意广告牌正在"看"相机。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-3}
+    \centering
+    \caption{树广告牌朝向相机}
+    \label{fig:12-3}
+\end{figure}
+
+\begin{flushleft}
+因此，假设世界空间中广告牌的中心位置$C=(C_{x},C_{y},C_{z})$和世界空间中相机$E=(E_{x},E_{y},E_{z})$的位置，我们有足够的信息描述广告牌相对于世界空间的局部坐标系：\\
+\end{flushleft}
+
+\begin{align*}
+W&=\frac{(E_{x}-C_{x},0,E_{z}-C_{z})}{||(E_{x}-C_{x},0,E_{z}-C_{z})||}\\
+v&=(0,1,0)\\
+u&=v\times w
+\end{align*}
+
+\begin{flushleft}
+给定广告牌相对于世界空间的局部坐标系，以及广告牌的世界尺寸，广告牌四边形顶点可以如下获得（见图\ref{fig:12-4}）：\\
+\end{flushleft}
+
+\begin{lstlisting}
+v[0] = float4(gin[0].CenterW + halfWidth*right - halfHeight*up, 1.0f);
+v[1] = float4(gin[0].CenterW + halfWidth*right + halfHeight*up, 1.0f);
+v[2] = float4(gin[0].CenterW - halfWidth*right - halfHeight*up, 1.0f);
+v[3] = float4(gin[0].CenterW - halfWidth*right + halfHeight*up, 1.0f);
+\end{lstlisting}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-4}
+    \centering
+    \caption{从本地坐标系统和广告牌的世界大小计算广告牌四边形顶点。}
+    \label{fig:12-4}
+\end{figure}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-5}
+    \centering
+    \caption{树广告牌演示截图}
+    \label{fig:12-5}
+\end{figure}
+
+\begin{flushleft}
+请注意，广告牌的局部坐标系对于每个广告牌都不同，因此必须为每个广告牌计算。\\
+
+对于本演示，我们将构建一个点基元列表（PSO的PrimitiveTopologyType的D3D12\_PRIMITIVE\_TOPOLOGY\_TYPE\_POINT和作为ID3D12GraphicsCommandList::IASetPrimitiveTopology的参数的D3D\_PRIMITIVE\_TOPOLOGY\_POINTLIST）略高于陆地平面(land mass)。 这些点代表我们想要绘制的广告牌的中心。 在几何着色器中，我们将这些点扩展为广告牌四边形。 此外，我们将在几何着色器中计算广告牌的世界矩阵。 图\ref{fig:12-5}显示了演示的屏幕截图。\\
+
+如图\ref{fig:12-5}所示，此示例构建了第10章的“Blend”演示。\\
+
+~\\
+NOTICE: 广告牌的常见CPU实现是在动态顶点缓冲区（即上载堆）中每个广告牌使用四个顶点。 然后每次相机移动时，顶点都会在CPU上更新并存储到GPU缓冲区，以便广告牌面向相机。 此方法必须将每个广告牌的四个顶点提交到IA阶段，并且需要更新具有开销的动态顶点缓冲区。 使用几何着色器方法，可以利用静态顶点缓冲区，几何着色器执行广告牌扩展并使广告牌面向相机。 此外，广告牌的内存占用量非常小，只需要将每个广告牌的一个顶点提交到IA阶段即可。
+~\\
+\end{flushleft}
+
+%-------- 12.2.2 --------
+\subsection{顶点结构(Vertex Structure)}
+\begin{lstlisting}
+struct TreeSpriteVertex
+{
+    XMFLOAT3 Pos;
+    XMFLOAT2 Size;
+};
+
+mTreeSpriteInputLayout =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+    {"SIZE",     0, DXGI_FORMAT_R32G32_FLOAT, 0, 12,
+                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+};
+\end{lstlisting}
+
+\begin{flushleft}
+顶点(vertex)存储一个点(point)，该点表示广告牌在世界空间中的中心位置。它还包括一个尺寸分量，它存储广告牌的宽度/高度（按比例缩放到世界空间单位）;也就是几何着色器知道扩展后广告牌应该有多大（图\ref{fig:12-6}）。通过使每个顶点的尺寸不同，我们可以轻松地容纳不同尺寸的广告牌。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-6}
+    \centering
+    \caption{将一个点扩展为四边形。}
+    \label{fig:12-6}
+\end{figure}
+
+\begin{flushleft}
+除了纹理数组（第12.2.4节）之外，"Tree Billboard"演示中的其他C++代码现在应该是常规的Direct3D代码（创建顶点缓冲区，效果，调用绘制方法等）。因此，我们现在将注意力转向TreeSprite.hlsl文件。
+\end{flushleft}
+
+%-------- 12.2.3 --------
+\subsection{对应的HLSL文件(The HLSL File)}
+\begin{flushleft}
+由于这是我们的第一个带有几何着色器的演示，我们将在此处显示整个HLSL文件，以便您可以看到它如何与顶点和像素着色器组合在一起。这个效果还引入了一些我们尚未讨论过的新对象（SV_PrimitiveID和Texture2DArray）;这些项目将在下面讨论。目前，主要关注几何着色器程序GS;此着色器将一个点扩展为与面向摄像机的世界y轴对齐的四边形，如12.2.1中所述。\\
+\end{flushleft}
+
+\begin{lstlisting}
+//************************************************************
+// TreeSprite.hlsl by Frank Luna (C) 2015 All Rights Reserved.
+//************************************************************
+
+// Defaults for number of lights.
+#ifndef NUM_DIR_LIGHTS
+    #define NUM_DIR_LIGHTS 3
+#endif
+
+#ifndef NUM_POINT_LIGHTS
+    #define NUM_POINT_LIGHTS 0
+#endif
+
+#ifndef NUM_SPOT_LIGHTS
+    #define NUM_SPOT_LIGHTS 0
+#endif
+
+// Include structures and functions for lighting.
+#include "LightingUtil.hlsl"
+
+Texture2DArray gTreeMapArray : register(t0);
+
+
+SamplerState gsamPointWrap        : register(s0);
+SamplerState gsamPointClamp       : register(s1);
+SamplerState gsamLinearWrap       : register(s2);
+SamplerState gsamLinearClamp      : register(s3);
+SamplerState gsamAnisotropicWrap  : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
+
+// Constant data that varies per frame.
+cbuffer cbPerObject : register(b0)
+{
+    float4x4 gWorld;
+    float4x4 gTexTransform;
+};
+
+// Constant data that varies per material.
+cbuffer cbPass : register(b1)
+{
+    float4x4 gView;
+    float4x4 gInvView;
+    float4x4 gProj;
+    float4x4 gInvProj;
+    float4x4 gViewProj;
+    float4x4 gInvViewProj;
+    float3 gEyePosW;
+    float cbPerObjectPad1;
+    float2 gRenderTargetSize;
+    float2 gInvRenderTargetSize;
+    float gNearZ;
+    float gFarZ;
+    float gTotalTime;
+    float gDeltaTime;
+    float4 gAmbientLight;
+
+    float4 gFogColor;
+    float gFogStart;
+    float gFogRange;
+    float2 cbPerObjectPad2;
+
+    // Indices [0, NUM_DIR_LIGHTS) are directional lights;
+    // indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
+    // indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
+    // are spot lights for a maximum of MaxLights per object.
+    Light gLights[MaxLights];
+};
+
+cbuffer cbMaterial : register(b2)
+{
+    float4   gDiffuseAlbedo;
+    float3   gFresnelR0;
+    float    gRoughness;
+    float4x4 gMatTransform;
+};
+ 
+struct VertexIn
+{
+    float3 PosW  : POSITION;
+    float2 SizeW : SIZE;
+};
+
+struct VertexOut
+{
+    float3 CenterW : POSITION;
+    float2 SizeW   : SIZE;
+};
+
+struct GeoOut
+{
+    float4 PosH    : SV_POSITION;
+    float3 PosW    : POSITION;
+    float3 NormalW : NORMAL;
+    float2 TexC    : TEXCOORD;
+    uint   PrimID  : SV_PrimitiveID;
+};
+
+VertexOut VS(VertexIn vin)
+{
+    VertexOut vout;
+
+    // Just pass data over to geometry shader.
+    vout.CenterW = vin.PosW;
+    vout.SizeW   = vin.SizeW;
+
+    return vout;
+}
+ 
+ // We expand each point into a quad (4 vertices), so the maximum number of vertices
+ // we output per geometry shader invocation is 4.
+[maxvertexcount(4)]
+void GS(point VertexOut gin[1], 
+        uint primID : SV_PrimitiveID, 
+        inout TriangleStream<GeoOut> triStream)
+{   
+    //
+    // Compute the local coordinate system of the sprite relative to the world
+    // space such that the billboard is aligned with the y-axis and faces the eye.
+    //
+
+    float3 up = float3(0.0f, 1.0f, 0.0f);
+    float3 look = gEyePosW - gin[0].CenterW;
+    look.y = 0.0f; // y-axis aligned, so project to xz-plane
+    look = normalize(look);
+    float3 right = cross(up, look);
+
+    //
+    // Compute triangle strip vertices (quad) in world space.
+    //
+    float halfWidth  = 0.5f*gin[0].SizeW.x;
+    float halfHeight = 0.5f*gin[0].SizeW.y;
+    
+    float4 v[4];
+    v[0] = float4(gin[0].CenterW + halfWidth*right - halfHeight*up, 1.0f);
+    v[1] = float4(gin[0].CenterW + halfWidth*right + halfHeight*up, 1.0f);
+    v[2] = float4(gin[0].CenterW - halfWidth*right - halfHeight*up, 1.0f);
+    v[3] = float4(gin[0].CenterW - halfWidth*right + halfHeight*up, 1.0f);
+
+    //
+    // Transform quad vertices to world space and output 
+    // them as a triangle strip.
+    //
+    
+    float2 texC[4] = 
+    {
+        float2(0.0f, 1.0f),
+        float2(0.0f, 0.0f),
+        float2(1.0f, 1.0f),
+        float2(1.0f, 0.0f)
+    };
+    
+    GeoOut gout;
+    [unroll]
+    for(int i = 0; i < 4; ++i)
+    {
+        gout.PosH     = mul(v[i], gViewProj);
+        gout.PosW     = v[i].xyz;
+        gout.NormalW  = look;
+        gout.TexC     = texC[i];
+        gout.PrimID   = primID;
+        
+        triStream.Append(gout);
+    }
+}
+
+float4 PS(GeoOut pin) : SV_Target
+{
+    float3 uvw = float3(pin.TexC, pin.PrimID%3);
+    float4 diffuseAlbedo = gTreeMapArray.Sample(gsamAnisotropicWrap, uvw) * gDiffuseAlbedo;
+
+#ifdef ALPHA_TEST
+    // Discard pixel if texture alpha < 0.1.  We do this test as soon 
+    // as possible in the shader so that we can potentially exit the
+    // shader early, thereby skipping the rest of the shader code.
+    clip(diffuseAlbedo.a - 0.1f);
+#endif
+
+    // Interpolating normal can unnormalize it, so renormalize it.
+    pin.NormalW = normalize(pin.NormalW);
+
+    // Vector from point being lit to eye. 
+    float3 toEyeW = gEyePosW - pin.PosW;
+    float distToEye = length(toEyeW);
+    toEyeW /= distToEye; // normalize
+
+    // Light terms.
+    float4 ambient = gAmbientLight*diffuseAlbedo;
+
+    const float shininess = 1.0f - gRoughness;
+    Material mat = { diffuseAlbedo, gFresnelR0, shininess };
+    float3 shadowFactor = 1.0f;
+    float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
+        pin.NormalW, toEyeW, shadowFactor);
+
+    float4 litColor = ambient + directLight;
+
+#ifdef FOG
+    float fogAmount = saturate((distToEye - gFogStart) / gFogRange);
+    litColor = lerp(litColor, gFogColor, fogAmount);
+#endif
+
+    // Common convention to take alpha from diffuse albedo.
+    litColor.a = diffuseAlbedo.a;
+
+    return litColor;
+}
+\end{lstlisting}
+
+%-------- 12.2.4 --------
+\subsection{SV_PrimitiveID}
+\begin{flushleft}
+此示例中的几何着色器采用带有语义 SV_PrimitiveID 的特殊无符号整数参数。
+\end{flushleft}
+
+\begin{lstlisting}[escapechar=^]
+[maxvertexcount(4)]
+void GS(point VertexOut gin[1],
+    ^\textbf{uint primID : SV_PrimitiveID,}^
+    inout TriangleStream<GeoOut> triStream)
+\end{lstlisting}
+
+\begin{flushleft}
+指定此语义时，它会告诉输入汇编程序阶段为每个基元自动生成基元 ID。当执行绘制调用以绘制$n$个基元时，第一个基元标记为$0$;第二个基元标记为$1$;依此类推，直到绘制调用中的最后一个原语标记为$n-1$。原始ID仅对于单个绘制调用是唯一的。在我们的广告牌示例中，几何着色器不使用此ID（尽管几何着色器可以）;相反，几何着色器将基元ID写入传出顶点，从而将其传递到像素着色器阶段。像素着色器使用基元ID索引到纹理数组，这在下一章节说明。\\
+
+~\\
+NOTICE: 如果不存在几何着色器，则可以将原始ID参数添加到像素着色器的参数列表中：\\
+\end{flushleft}
+
+\begin{lstlisting}
+float4 PS(VertexOut pin, 
+    uint primID : SV_PrimitiveID) : SV_Target
+{
+    // Pixel shader body...
+}
+\end{lstlisting}
+
+\begin{flushleft}
+但是，如果存在几何着色器，则基元ID参数必须出现在几何着色器签名中。然后，几何着色器可以使用基元ID或将其传递给像素着色器阶段（或两者）。\\
+
+输入汇编程序也可以生成顶点ID。为此，请使用语义SV\_VertexID 向顶点着色器签名添加类型为 uint 的参数:\\
+\end{flushleft}
+
+\begin{lstlisting}
+VertexOut VS(VertexIn vin, uint vertID : SV_VertexID)
+{
+    // vertex shader body...
+}
+\end{lstlisting}
+
+\begin{flushleft}
+对于Draw调用，draw 调用中的顶点将使用$0,1,...,n-1$中的ID进行标记，其中$n$是绘制调用中的顶点数。对于DrawIndexed调用，顶点ID对应于顶点索引值。\\
+\end{flushleft}
+
+%-------- 12.3 --------
+\section{纹理数组(Texture Arrays)}
 
 
 

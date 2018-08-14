@@ -6,7 +6,6 @@ import java.io.File;
 import java.util.Objects;
 
 /**
- * TODO
  * @author zhangxf created at 8/6/2018.
  */
 public class ClazzCheckEntry implements Cloneable {

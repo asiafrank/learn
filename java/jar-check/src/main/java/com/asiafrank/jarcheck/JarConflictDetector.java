@@ -102,7 +102,7 @@ public class JarConflictDetector {
      * 开始检测：
      * 1.遍历并找到文件夹下的所有 .jar 文件
      * 2.遍历过程中收集 MANIFEST.MF 信息，判断 jar 文件本身信息是否冲突
-     * 3.jar 本身信息不冲突的文件继续检测，判断类是否有冲突
+     * 3.检测类是否有冲突
      * 4.将所有冲突封装到 conflictJars 和 conflictClazzes 属性中作为检测报告。
      */
     public void start() {
