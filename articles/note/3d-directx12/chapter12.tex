@@ -643,6 +643,167 @@ VertexOut VS(VertexIn vin, uint vertID : SV_VertexID)
 
 %-------- 12.3 --------
 \section{纹理数组(Texture Arrays)}
+%-------- 12.3.1 -------
+\subsection{概览(Overview)}
+\begin{flushleft}
+纹理数组存储纹理数组。 在C++代码中，纹理数组由 ID3D12Resource 接口表示，就像所有资源（纹理和缓冲区）一样。 在创建 ID3D12Resource 对象时，实际上有一个名为 DepthOrArraySize 的属性可以设置为指定纹理需要存储的纹理元素的数量（或3D纹理的深度）。 当我们在d3dApp.cpp中创建深度/模板纹理时，我们总是将其设置为1.如果查看Common/DDSTextureLoader.cpp 中的 CreateD3DResources12 函数，您将看到代码如何支持创建纹理数组和体积纹理。 在HLSL文件中，纹理数组由 Texture2DArray 类型表示：\\
+\end{flushleft}
+
+\begin{lstlisting}
+Texture2DArray gTreeMapArray;
+\end{lstlisting}
+
+\begin{flushleft}
+现在，你可能会疑惑为什么我们需要纹理数组的数据结构。为什么不直接这样做：\\
+\end{flushleft}
+
+\begin{lstlisting}
+Texture2D TexArray[4];
+...
+float4 PS(GeoOut pin) : SV_Target
+{
+    float4 c = TexArray[pin.PrimID%4].Sample(samLinear, pin.Tex);
+\end{lstlisting}
+
+\begin{flushleft}
+在着色器模型5.1（Direct3D 12的新功能）中，我们实际上可以做到这一点。 但是，以前的Direct3D版本不允许这样做。 此外，这样的索引纹理可能会有一些开销，具体取决于硬件，因此在本章中我们将坚持使用纹理数组数据结构。\\
+\end{flushleft}
+
+%-------- 12.3.2 -------
+\subsection{采样纹理数组(Sampling a Texture Array)}
+\begin{flushleft}
+在Billboards演示中，我们使用以下代码对纹理数组进行采样：\\
+\end{flushleft}
+
+\begin{lstlisting}
+float3 uvw = float3(pin.Tex, pin.PrimID%4);
+float4 diffuseAlbedo = gTreeMapArray.Sample(
+    gsamAnisotropicWrap, uvw) * gDiffuseAlbedo;
+\end{lstlisting}
+
+\begin{flushleft}
+使用纹理数组时，需要三个纹理坐标。 前两个纹理坐标是通常的2D纹理坐标; 第三个纹理坐标是纹理数组的索引。 例如，0是数组中第一个纹理的索引，1是数组中第二个纹理的索引，2是数组中第三个纹理的索引，依此类推。\\
+在Billboards演示中，使用带有四个纹理元素的纹理数组，每个纹理元素都有不同的树纹理（图\ref{fig:12-7}）。 但是，因为我们每次绘制调用绘制的树数超过四棵，所以原始ID将大于三。 因此，采用原始ID与4取模（pin.PrimID％4）将原始ID映射到0,1,2或3，它们是具有四个元素的数组的有效数组索引。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-7}
+    \centering
+    \caption{树广告牌图像}
+    \label{fig:12-7}
+\end{figure}
+
+\begin{flushleft}
+纹理数组的一个优点是我们能够在一次绘制调用中绘制具有不同纹理的基元集合。 通常，我们必须为每个具有不同纹理的网格物体设置单独的渲染项：\\
+\end{flushleft}
+
+\begin{lstlisting}
+SetTextureA();
+DrawPrimitivesWithTextureA();
+SetTextureB();
+DrawPrimitivesWithTextureB();
+...
+SetTextureZ();
+DrawPrimitivesWithTextureZ();
+\end{lstlisting}
+
+\begin{flushleft}
+每个set和draw调用都有一些与之相关的开销。 使用纹理数组，我们可以将其减少为一组和一个绘制调用：\\
+\end{flushleft}
+
+\begin{lstlisting}
+SetTextureArray();
+DrawPrimitivesWithTextureArray();
+\end{lstlisting}
+
+%-------- 12.3.3 -------
+\subsection{加载纹理数组(Loading Texture Array)}
+\begin{flushleft}
+在Common/DDSTextureLoader.h/.cpp 中的DDS加载代码支持加载存储纹理数组的DDS文件。 所以关键是要创建一个包含纹理数组的DDS文件。 为此，我们使用Microsoft提供的texassemble工具，网址为 https://directxtex.codeplex.com/wikipage?title=Texassemble&referringTitle=Texconv。 以下语法展示如何从4个图像t0.dds，t1.dds，t2.dds和t3.dds创建名为treeArray.dds的纹理数组：\\
+\end{flushleft}
+
+\begin{lstlisting}
+texassemble -array -o treeArray.dds t0.dds t1.dds t2.dds t2.dds
+\end{lstlisting}
+
+\begin{flushleft}
+请注意，使用texassemble构建纹理数组时，输入图像应该只有一个mipmap级别。 在调用texassemble构建纹理数组之后，可以使用texconv（https://directxtex.codeplex.com/wikipage?title=Texconv）生成mipmap并根据需要更改像素格式：\\
+\end{flushleft}
+
+\begin{lstlisting}
+texconv -m 10 -f BC3_UNORM treeArray.dds
+\end{lstlisting}
+
+%-------- 12.3.4 -------
+\subsection{纹理子资源(Texture Subresources)}
+\begin{flushleft}
+现在我们已经讨论了纹理数组，接下来可以讨论子资源了。 图\ref{fig:12-8}显示了具有多个纹理的纹理数组的示例。 反过来，每个纹理都有自己的mipmap链。 Direct3D API使用术语数组切片来引用纹理中的元素及其完整的mipmap链。 Direct3D API使用术语mip slice来指代纹理数组中特定级别的所有mipmap。子资源是指纹理数组元素中的单个mipmap级别。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-8}
+    \centering
+    \caption{带有四个纹理的纹理数组。 每个纹理都有三个mipmap级别。}
+    \label{fig:12-8}
+\end{figure}
+
+\begin{flushleft}
+给定纹理数组索引和mipmap级别，我们可以访问纹理数组中的子资源。 子资源也可以用线性索引标记; Direct3D使用一个有序的线性索引，如图\ref{fig:12-9}所示。\\
+\end{flushleft}
+
+\begin{figure}[h]
+    \includegraphics[width=\textwidth]{12-9}
+    \centering
+    \caption{用线性索引标记的纹理数组中的子资源。}
+    \label{fig:12-9}
+\end{figure}
+
+\begin{flushleft}
+以下工具方法用于计算mip级别，数组索引和mipmap级别数量的线性子资源索引:\\
+\end{flushleft}
+
+\begin{lstlisting}
+inline UINT D3D12CalcSubresource(
+    UINT MipSlice, 
+    UINT ArraySlice,
+    UINT PlaneSlice, 
+    UINT MipLevels, 
+    UINT ArraySize)
+{
+    return MipSlice + ArraySlice * MipLevels + 
+           PlaneSlice * MipLevels * ArraySize;
+}
+\end{lstlisting}
+
+%-------- 12.4 -------
+\section{Alpha-to-Coverage}
+\begin{flushleft}
+当运行“树广告牌”演示时，请注意在某些距离处，树广告牌剪裁的边缘看起来是块状的。 这是由剪辑功能引起的，我们用它来掩盖不属于树的纹理像素; 剪辑功能要么保留一个像素，要么拒绝它——没有平滑的过渡。 从眼睛到广告牌的距离会因为短距离导致放大，这使得块变得更大，并且短距离导致使用更低分辨率的mipmap级别。\\
+
+解决此问题的一种方法是使用透明度混合而不是alpha测试。 由于线性纹理过滤，边缘像素将略微模糊，从白色（不透明像素）到黑色（屏蔽像素）平滑过渡。因此，透明度混合将导致沿着边缘从不透明像素到遮罩像素的平滑淡出。 不幸的是，透明度混合需要按照从前到后的顺序进行排序和渲染。 排序少量树状广告牌的开销并不高，但如果我们渲染森林或草原草地，排序操作可能很昂贵，因为必须在每一帧完成; 更糟糕的是，按照从前到后的顺序渲染会导致大量透支（参见第11章中的练习8），这可能会造成性能下降。\\
+
+有人可能会建议 MSAA（多重采样抗锯齿——参见4.1.7）提供帮助，因为 MSAA 用于平滑多边形的块状边缘。 确实，它应该有些用处 ，但存在问题。MSAA 在像素中心每像素执行一次像素着色器，然后根据可见性（每个子像素评估深度/模板测试）和覆盖范围（子像素中心位于多边形内部或外部）（与其子像素共享该颜色信息？）。这里的关键是覆盖是在多边形级别确定的。 因此，MSAA不会检测由alpha通道定义的树状广告牌切口的边缘——它只会查看纹理映射到的四边形的边缘。 那么有没有办法告诉Direct3D在计算覆盖范围时考虑alpha通道？ 答案是肯定的，我们采用称为alpha-to-coverage的技术即可。\\
+
+启用 MSAA 并启用 alpha-to-coverage（D3D12\_BLEND\_DESC::AlphaToCoverageEnable=true 的成员）时，硬件将查看像素着色器返回的alpha值，并使用它来确定coverage [NVIDIA05]。 例如，对于4X MSAA，如果像素着色器alpha为0.5，那么我们可以假设四个子像素中的两个被覆盖，这将会创建平滑的边缘。\\
+
+一般的建议是，你总是希望使用 alpha-to-coverage 来覆盖 alpha 遮罩的剪切纹理，如树叶和栅栏。 它需要启用 MSAA。 请注意，在我们的演示应用程序的构造函数中，设置：\\
+\end{flushleft}
+
+\begin{lstlisting}
+mEnable4xMsaa = true;
+\end{lstlisting}
+
+\begin{flushleft}
+这使我们的示例框架创建了支持4X MSAA的 back 和 depth 缓冲区。
+\end{flushleft}
+
+%-------- 12.5 -------
+\section{总结}
+\begin{flushleft}
+1.假设我们没有使用曲面细分阶段，几何着色器阶段是位于顶点和像素着色器阶段之间的可选阶段。 为通过输入汇编器发送的每个基元调用几何着色器。 几何着色器可以输出零个，一个或多个基元。 输出基元类型可以与输入基元类型不同。 在离开几何着色器之前，应将输出基元的顶点转换为齐次空间。 从几何着色器输出的基元接下来进入渲染管道的光栅化阶段。 几何着色器编入了效果文件中，并排顶点和像素着色器。\\
+\end{flushleft}
+
+
 
 
 
