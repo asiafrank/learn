@@ -78,6 +78,7 @@ https://my.oschina.net/jamaly/blog/272385
 Netty 的引用计数
 https://my.oschina.net/rpgmakervx/blog/687190
 http://ifeve.com/reference-counted-objects/
+http://netty.io/wiki/reference-counted-objects.html
 
 零拷贝技术
 - https://www.ibm.com/developerworks/cn/linux/l-cn-zerocopy1/
