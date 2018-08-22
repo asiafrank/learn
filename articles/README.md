@@ -40,9 +40,10 @@
 - 网络通信
   - [ ] TCP/IP ilustrated volume 1: The Protocols
     - [TCP/IP详解 卷1：协议-在线阅读](http://www.52im.net/topic-tcpipvol1.html)
-    - Http 权威指南
-    - [Http2(RFC7540)](https://httpwg.org/specs/rfc7540.html)
-    - [HPack: Header Compression for Http/2(RFC7541)](https://httpwg.org/specs/rfc7541.html)
+  - [ ] Http 权威指南
+  - [ ] [Http2(RFC7540)](https://httpwg.org/specs/rfc7540.html)
+  - [ ] [HPack: Header Compression for Http/2(RFC7541)](https://httpwg.org/specs/rfc7541.html)
+  - [ ] [bittorrent](http://bittorrent.org/beps/bep_0003.html)
 - C++
   - [ ] STL源码剖析
   - [ ] 深度探索C++对象模型
@@ -50,7 +51,7 @@
   - [ ] C++ Primer
   - [ ] 编译原理
 - Java
-  - [ ] 深入理解JVM
+  - [ ] 深入理解Java虚拟机
   - [ ] Java 大型分布式应用
   - [ ] 大型分布式网站架构设计与实践
   - [ ] Redis
@@ -58,6 +59,9 @@
   - [ ] Paxos,Raft
   - [ ] Google paper(bigtable, gfs, mapreduce)
   - [ ] ElasticSearch
+  - [ ] [Java GenericsFAQ](http://www.angelikalanger.com/GenericsFAQ/JavaGenericsFAQ.html)
+  - [ ] [Java中的逆变与协变](http://www.cnblogs.com/en-heng/p/5041124.html)
+  - [ ] [Java Design Patterns](https://github.com/iluwatar/java-design-patterns)
 - 数学
   - [ ] 高等数学
   - [ ] 线性代数

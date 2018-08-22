@@ -29,6 +29,8 @@ import java.util.zip.ZipEntry;
  * https://docs.oracle.com/javase/tutorial/deployment/jar/index.html
  * https://docs.oracle.com/javase/8/docs/api/java/util/jar/package-summary.html
  *
+ * NOTE: 这只是查看 jar 文件的一个例子。JVM 加载 jar 文件时，classpath 写前面的 jar 会优先加载，后面加载的 jar 中有重复的类名会忽略
+ *
  * @author zhangxf created at 8/6/2018.
  */
 public class JarConflictDetector {
@@ -360,8 +362,10 @@ public class JarConflictDetector {
 
         ClazzCheckEntry cce = clazzMap.get(name);
         if (cce != null) {
-            ConflictClazz cc = new ConflictClazz(clazzCE, cce);
-            conflictClazzes.add(cc);
+            if (!cce.getJar().equals(jar.getAbsolutePath())) {
+                ConflictClazz cc = new ConflictClazz(clazzCE, cce);
+                conflictClazzes.add(cc);
+            }
         } else {
             clazzMap.put(name, clazzCE);
         }

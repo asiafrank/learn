@@ -16,7 +16,7 @@ public class JarConflictDetectorTest {
     @Test
     public void test() {
         try {
-            JarConflictDetector detector = new JarConflictDetector("F:\\agent\\modules\\remote-discovery\\discovery\\deepscan\\lib");
+            JarConflictDetector detector = new JarConflictDetector("E:\\workspace\\discovery-sb\\discovery-sb-service\\src\\main\\script-lib");
             detector.start();
             List<ConflictJar> conflictJars = detector.getConflictJars();
             List<ConflictClazz> conflictClazzes = detector.getConflictClazzes();
