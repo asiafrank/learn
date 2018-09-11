@@ -44,6 +44,8 @@
   - [ ] [Http2(RFC7540)](https://httpwg.org/specs/rfc7540.html)
   - [ ] [HPack: Header Compression for Http/2(RFC7541)](https://httpwg.org/specs/rfc7541.html)
   - [ ] [bittorrent](http://bittorrent.org/beps/bep_0003.html)
+    - [BitTorrent协议规范](https://zh.wikibooks.org/wiki/BitTorrent%E5%8D%8F%E8%AE%AE%E8%A7%84%E8%8C%83)
+    - [Wireshark BitTorrent](https://wiki.wireshark.org/BitTorrent)
 - C++
   - [ ] STL源码剖析
   - [ ] 深度探索C++对象模型
@@ -55,7 +57,7 @@
   - [ ] Java 大型分布式应用
   - [ ] 大型分布式网站架构设计与实践
   - [ ] Redis
-  - [ ] Kafka,ActiveMQ
+  - [ ] Kafka,zookeeper 原理及代码研究
   - [ ] Paxos,Raft
   - [ ] Google paper(bigtable, gfs, mapreduce)
   - [ ] ElasticSearch
