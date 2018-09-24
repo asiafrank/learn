@@ -172,7 +172,12 @@ HRESULT App::createDeviceIndependentResources()
 
     if (SUCCEEDED(hr))
     {
-        hr = pTextFormat_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+        hr = pTextFormat_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = pTextFormat_->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
     }
 
     return hr;
@@ -301,6 +306,7 @@ HRESULT App::onRender()
             RECT rc;
             GetClientRect(hwnd, &rc);
 
+            // https://docs.microsoft.com/en-us/windows/desktop/learnwin32/dpi-and-device-independent-pixels
             float dpiScaleX_ = 1.0f;
             float dpiScaleY_ = 1.0f;
 
@@ -311,11 +317,18 @@ HRESULT App::onRender()
                 static_cast<FLOAT>(rc.bottom - rc.top) / dpiScaleY_
             );
 
+            D2D1_RECT_F lineRect1 = D2D1::RectF(
+                0, 0,
+                layoutRect.right, 
+                2 * 14 // ×ÖÌåµÄÁ½±¶
+            );
+            m_pRenderTarget->DrawRectangle(&lineRect1, m_pCornflowerBlueBrush);
+
             m_pRenderTarget->DrawText(
                 fileName,            // The string to render.
                 lstrlen(fileName),   // The string's length.
                 pTextFormat_, // The text format.
-                layoutRect,   // The region of the window where the text will be rendered.
+                lineRect1,    // The region of the window where the text will be rendered.
                 pBlackBrush_  // The brush used to draw the text.
             );
         }
