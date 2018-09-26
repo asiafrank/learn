@@ -59,6 +59,22 @@ int main()
     t1.join(); t2.join(); t3.join();
     std::cout << "All threads completed, the last one deleted Derived\n";
 
+    // string find char example
+    const string str = u8"nothing-filename";
+    size_t pos = str.find_last_of('\\');
+    if (pos == string::npos)
+        cout << "not path" << endl;
+    cout << "name : " << str << endl;
+    cout << "pos : " << pos << endl;
+
+    const string str2 = u8"C:\\xxxx.txt";
+    size_t pos2 = str2.find_last_of('\\');
+    cout << "name: " << str2 << endl;
+    cout << "pos : " << pos2 << endl;
+
+    string x = str2.substr(pos2 + 1);
+    cout << "x : " << x << endl;
+
     // asio example
     asio::io_context io;
     asio::steady_timer t(io, asio::chrono::seconds(5));

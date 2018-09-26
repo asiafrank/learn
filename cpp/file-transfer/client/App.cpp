@@ -81,18 +81,10 @@ HRESULT App::initialize()
             return false;
         }
 
-        // Because the CreateWindow function takes its size in pixels,
-        // obtain the system DPI and use it to scale the window size.
-        FLOAT dpiX, dpiY;
+        InitializeDPIScale(m_pDirect2dFactory);
 
-        // The factory returns the current system DPI. This is also the value it will use
-        // to create its own windows.
-        m_pDirect2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-
-        // Compute window rectangle dimensions based on requested client area dimensions.
-
-        int width = (int)ceil(clientWidth * dpiX / 96.f);
-        int height = (int)ceil(clientHeight * dpiY / 96.f);
+        int width = (int)ceil(PixelsToDipsX(clientWidth));
+        int height = (int)ceil(PixelsToDipsY(clientHeight));
 
         hwnd = CreateWindow(
             L"MainWnd", 
@@ -207,14 +199,16 @@ HRESULT App::createDeviceResources()
             // Create a gray brush.
             hr = m_pRenderTarget->CreateSolidColorBrush(
                 D2D1::ColorF(D2D1::ColorF::LightSlateGray),
-                &m_pLightSlateGrayBrush);
+                &m_pLightSlateGrayBrush
+            );
         }
         if (SUCCEEDED(hr))
         {
             // Create a blue brush.
             hr = m_pRenderTarget->CreateSolidColorBrush(
                 D2D1::ColorF(D2D1::ColorF::CornflowerBlue),
-                &m_pCornflowerBlueBrush);
+                &m_pCornflowerBlueBrush
+            );
         }
 
         // Create a black brush.
@@ -223,6 +217,22 @@ HRESULT App::createDeviceResources()
             hr = m_pRenderTarget->CreateSolidColorBrush(
                 D2D1::ColorF(D2D1::ColorF::Black),
                 &pBlackBrush_
+            );
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = m_pRenderTarget->CreateSolidColorBrush(
+                D2D1::ColorF(D2D1::ColorF::LightGreen), 
+                &m_pGreenBrush
+            );
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = m_pRenderTarget->CreateSolidColorBrush(
+                D2D1::ColorF(D2D1::ColorF::LightCyan),
+                &m_pBtnBrush
             );
         }
     }
@@ -236,6 +246,8 @@ void App::discardDeviceResources()
     SafeRelease(&m_pLightSlateGrayBrush);
     SafeRelease(&m_pCornflowerBlueBrush);
     SafeRelease(&pBlackBrush_);
+    SafeRelease(&m_pGreenBrush);
+    SafeRelease(&m_pBtnBrush);
 }
 
 // Draw content.
@@ -248,9 +260,7 @@ HRESULT App::onRender()
     if (SUCCEEDED(hr))
     {
         m_pRenderTarget->BeginDraw();
-
         m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-
         m_pRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
         D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
@@ -300,15 +310,12 @@ HRESULT App::onRender()
         // Draw the outline of a rectangle.
         m_pRenderTarget->DrawRectangle(&rectangle2, m_pCornflowerBlueBrush);
 
+        //----------- custom draw ----------
         // Draw Text
         if (fileName)
         {
             RECT rc;
             GetClientRect(hwnd, &rc);
-
-            // https://docs.microsoft.com/en-us/windows/desktop/learnwin32/dpi-and-device-independent-pixels
-            float dpiScaleX_ = 1.0f;
-            float dpiScaleY_ = 1.0f;
 
             D2D1_RECT_F layoutRect = D2D1::RectF(
                 static_cast<FLOAT>(rc.left) / dpiScaleX_,
@@ -317,18 +324,49 @@ HRESULT App::onRender()
                 static_cast<FLOAT>(rc.bottom - rc.top) / dpiScaleY_
             );
 
-            D2D1_RECT_F lineRect1 = D2D1::RectF(
+            // 文字所在方框
+            D2D1_RECT_F textRect = D2D1::RectF(
                 0, 0,
                 layoutRect.right, 
                 2 * 14 // 字体的两倍
             );
-            m_pRenderTarget->DrawRectangle(&lineRect1, m_pCornflowerBlueBrush);
+            m_pRenderTarget->DrawRectangle(&textRect, m_pCornflowerBlueBrush);
+
+            // 进度条方框
+            if (pCtx)
+            {
+                D2D1_RECT_F progressRect = D2D1::RectF(
+                    textRect.left, textRect.top,
+                    textRect.right * pCtx->getPercent() / 100,
+                    textRect.bottom
+                );
+
+                m_pRenderTarget->FillRectangle(&progressRect, m_pGreenBrush);
+            }
 
             m_pRenderTarget->DrawText(
                 fileName,            // The string to render.
                 lstrlen(fileName),   // The string's length.
                 pTextFormat_, // The text format.
-                lineRect1,    // The region of the window where the text will be rendered.
+                textRect,    // The region of the window where the text will be rendered.
+                pBlackBrush_  // The brush used to draw the text.
+            );
+
+            // 按钮
+            size_t length = btnTitle.length();
+            btnRect = D2D1::RectF(
+                0, 4 * 14,
+                length * 14,
+                6 * 14
+            );
+
+            m_pRenderTarget->FillRectangle(&btnRect, m_pBtnBrush);
+
+            m_pRenderTarget->DrawText(
+                btnTitle.c_str(),            // The string to render.
+                lstrlen(btnTitle.c_str()),   // The string's length.
+                pTextFormat_, // The text format.
+                btnRect,     // The region of the window where the text will be rendered.
                 pBlackBrush_  // The brush used to draw the text.
             );
         }
@@ -364,6 +402,29 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch (msg)
     {
+    case WM_CREATE:
+    {
+        // 建立1秒间隔的定时器
+        HRESULT hr = SetTimer(hwnd, IDT_PROGRESS_TIMER, 1000, (TIMERPROC) nullptr);
+        if (FAILED(hr))
+        {
+            MessageBox(NULL, L"This program requires Windows NT!",
+                appTitle.c_str(), MB_ICONERROR);
+        }
+    }
+    break;
+    case WM_TIMER: // 定时器消息处理
+    {
+        switch (wParam)
+        {
+        case IDT_PROGRESS_TIMER:
+            TimerProc();
+            result = 0;
+            wasHandled = true;
+            InvalidateRect(hwnd, nullptr, TRUE); // repaint
+        }
+    }
+    break;
     case WM_SIZE:
     {
         // Save the new client area dimensions.
@@ -389,8 +450,35 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         wasHandled = true;
     }
     break;
+    case WM_LBUTTONUP: // 鼠标点击
+    {
+        if (enableBtnClick)
+        {
+            mousePoint = MAKEPOINTS(lParam);
+            float dipX = PixelsToDipsX(mousePoint.x);
+            float dipY = PixelsToDipsY(mousePoint.y);
+
+            // 判断 click 范围是否在 btn 范围内
+            if (dipX > btnRect.left
+                && dipX < btnRect.right
+                && dipY > btnRect.top
+                && dipY < btnRect.bottom)
+            {
+                if (pCtx)
+                {
+                    pCtx->setState(tf::State::Running);
+                    // TODO: transfer file to server
+                    // 使用 uint8_t 接收二进制
+                }
+                OutputDebugStringW(L"click valid");
+                enableBtnClick = false;
+            }
+        }
+    }
+    break;
     case WM_DESTROY:
     {
+        KillTimer(hwnd, IDT_PROGRESS_TIMER);
         PostQuitMessage(0);
         result = 1;
         wasHandled = true;
@@ -404,6 +492,20 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     return result;
+}
+
+void App::TimerProc()
+{
+    // 计算进度条
+    if (!pCtx) return;
+
+    if (pCtx->getState() == tf::State::Running)
+        pCtx->setPercent(pCtx->getPercent() + 10);
+
+    if (pCtx->getPercent() >= 100.0) {
+        pCtx->setState(tf::State::Done);
+        OutputDebugStringW(L"context done");
+    }
 }
 
 HRESULT App::onCommand(WPARAM wParam)
@@ -441,6 +543,9 @@ HRESULT App::onCommand(WPARAM wParam)
         if (GetOpenFileName(&ofn))
         {
             fileName = ofn.lpstrFile;
+            pCtx = make_shared<tf::TransferContext>(fileName);
+            enableBtnClick = true;
+
             OutputDebugStringW(L"Open File dialog success!");
             RECT rc;
             GetClientRect(hwnd, &rc);
