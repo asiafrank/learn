@@ -2,6 +2,7 @@
 //
 
 #include "CMakeSample.h"
+#include <fstream>
 #include <iostream>
 #include <asio.hpp>
 
@@ -12,7 +13,6 @@
 #include <mutex>
 
 using namespace std;
-
 
 struct Base
 {
@@ -74,6 +74,87 @@ int main()
 
     string x = str2.substr(pos2 + 1);
     cout << "x : " << x << endl;
+
+    {
+        // vector example
+        vector<Base> v; // 不能直接用数字构造 vector 因为它会构造相应数量的 Base 对象
+        v.reserve(10);  // 改变 capacity 为 10，即预留 10 数量空间
+        cout << "vector max_size: " << v.max_size() << endl;
+        cout << "vector size: " << v.size() << endl;
+        cout << "vector capacity: " << v.capacity() << endl;
+        cout << "vector empty: " << v.empty() << endl;
+
+        // array example
+        array<Base, 10> arr; // 最好不使用默认构造函数，因为它会构造相应数量的 Base 对象，
+                             // 用 aggregate initialization
+                             // 明显 vector 更灵活
+        cout << "array max_size: " << arr.max_size() << endl;
+        cout << "array size: " << arr.size() << endl;
+        cout << "array empty: " << arr.empty() << endl;
+    }
+
+    {
+        // file test
+        int success = std::remove("test.data");
+        cout << "delete file success: " << success << endl;
+    }
+
+    {
+        // read file test
+        vector<char> v(1024); // 1KB
+        string filePath = "E:\\personal\\learn\\cpp\\asio-learn\\asio-learn\\asio-learn.cpp";
+        shared_ptr<ifstream> pfile = make_shared<ifstream>(filePath, std::ios::ate | ::ios::binary);
+        if (pfile->is_open())
+        {
+            std::streampos pos = pfile->tellg();
+            size_t remain = (size_t)pos;
+            size_t blockSize = 200;
+            size_t blockNumbers = remain / blockSize + 1;
+            size_t readSize = 0;
+            if (remain > blockSize)
+                readSize = blockSize;
+            else 
+                readSize = remain;
+
+            for (size_t i = 0; i < blockNumbers; i++)
+            {
+                cout << "------- remain: " << remain << endl;
+                cout << "------- block " << i << " ---------" << endl;
+
+                if (remain > blockSize)
+                    readSize = blockSize;
+                else
+                    readSize = remain;
+
+                pfile->seekg(i * blockSize, std::ios::beg);
+                pfile->read(&v[0], readSize);
+                remain -= readSize;
+
+                for (size_t i = 0; i < readSize; i++)
+                {
+                    cout << v[i];
+                }
+                cout << endl;
+            }
+        }
+        else
+        {
+            cout << "fail to open" << endl;
+        }
+    }
+
+    {
+        // thread example
+        std::thread th([]() {
+            cout << "thread execute" << endl;
+        });
+        th.detach();
+    }
+
+    {
+        uintmax_t x = 4 * 1024 * 1024;
+        cout << "uintmax_t " << x << endl;
+    }
 
     // asio example
     asio::io_context io;

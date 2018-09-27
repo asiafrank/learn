@@ -3,6 +3,29 @@
 #include "App.h"
 #include "Resource.h"
 
+#include "TransferClient.h"
+
+#include <sstream>
+
+using namespace std;
+
+string toString(const wstring &s)
+{
+    UINT cp = GetACP();
+    std::string utf8_str;
+    int len = WideCharToMultiByte(cp, 0,
+        s.c_str(), (int)s.length(),
+        NULL, 0, NULL, NULL);
+    if (len > 0)
+    {
+        utf8_str.resize(len);
+        WideCharToMultiByte(cp, 0,
+            s.c_str(), (int)s.length(), &utf8_str[0],
+            len, NULL, NULL);
+    }
+    return utf8_str;
+}
+
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK
@@ -106,6 +129,15 @@ HRESULT App::initialize()
         UpdateWindow(hwnd);
     }
 
+    pIOCtx = make_shared<asio::io_context>();
+
+    tcp::resolver resolver(*pIOCtx);
+    auto endpoints = resolver.resolve(serverHost, serverPort);
+    pClient = make_shared<tf::TransferClient>(*pIOCtx, endpoints);
+
+    auto pIOCtxCopy(pIOCtx);
+    std::thread t([pIOCtxCopy]() { pIOCtxCopy->run(); });
+    t.detach();
     return hr;
 }
 
@@ -470,7 +502,7 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     // TODO: transfer file to server
                     // 使用 uint8_t 接收二进制
                 }
-                OutputDebugStringW(L"click valid");
+                OutputDebugStringW(L"click valid\n");
                 enableBtnClick = false;
             }
         }
@@ -479,6 +511,8 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
     {
         KillTimer(hwnd, IDT_PROGRESS_TIMER);
+        if (pIOCtx)
+            pIOCtx->stop();
         PostQuitMessage(0);
         result = 1;
         wasHandled = true;
@@ -499,13 +533,18 @@ void App::TimerProc()
     // 计算进度条
     if (!pCtx) return;
 
-    if (pCtx->getState() == tf::State::Running)
-        pCtx->setPercent(pCtx->getPercent() + 10);
-
-    if (pCtx->getPercent() >= 100.0) {
-        pCtx->setState(tf::State::Done);
-        OutputDebugStringW(L"context done");
-    }
+    wostringstream ss;
+    ss << L"State: ";
+    if (pCtx->getState() == tf::State::Done)
+        ss << L" Done";
+    else if (pCtx->getState() == tf::State::Running)
+        ss << L" Running" << endl;
+    else if (pCtx->getState() == tf::State::Waiting)
+        ss << L" Waiting" << endl;
+    
+    ss << L"percent: " << pCtx->getPercent() << endl;
+    wstring str = ss.str();
+    OutputDebugStringW(str.c_str());
 }
 
 HRESULT App::onCommand(WPARAM wParam)
@@ -544,16 +583,22 @@ HRESULT App::onCommand(WPARAM wParam)
         {
             fileName = ofn.lpstrFile;
             pCtx = make_shared<tf::TransferContext>(fileName);
+            pClient->setContext(pCtx);
+            string fn = toString(fileName);
+            int rs = pClient->sendFile(fn);
+            if (rs != 0)
+                OutputDebugStringW(L"SendFile fail!\n");
+
             enableBtnClick = true;
 
-            OutputDebugStringW(L"Open File dialog success!");
+            OutputDebugStringW(L"Open File dialog success!\n");
             RECT rc;
             GetClientRect(hwnd, &rc);
             InvalidateRect(hwnd, &rc, TRUE);
         }
         else
         {
-            OutputDebugStringW(L"Open File dialog failed!");
+            OutputDebugStringW(L"Open File dialog failed!\n");
         }
     }
     break;

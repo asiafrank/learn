@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "TransferContext.h"
+#include "TransferClient.h"
 
 using namespace std;
 
@@ -107,4 +108,9 @@ private:
 private:
     // context
     std::shared_ptr<tf::TransferContext> pCtx;
+    // client
+    string serverHost = "127.0.0.1";
+    string serverPort = "6881";
+    std::shared_ptr<tf::TransferClient> pClient;
+    std::shared_ptr<asio::io_context> pIOCtx;
 };

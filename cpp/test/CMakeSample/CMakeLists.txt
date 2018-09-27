@@ -3,6 +3,8 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+project(CMakeSample)
+
 include_directories(../../asio-learn/asio-include)
 
 # Add source to this project's executable.
