@@ -1,28 +1,23 @@
 #pragma once
-#include "TransferContext.h"
 
 using namespace std;
 using asio::ip::tcp;
 
 namespace tf
 {
-    namespace client
-    {
-        enum ClientState
-        {
-            Waiting = 10,  // 等待传输
-            SendingLength,      // 正在传输文件大小
-            SendingData,      // 正在传输文件内容
-            Done          // 传输结束
-        };
-    }
+    /*
+    文件发送方
+    一个 Sender 只和一个远端连接，一次只能传一个文件
 
-    class TransferClient
+    @see TransferReceiver
+    @see TransferServer
+    */
+    class TransferSender
     {
     public:
-        TransferClient(asio::io_context& io_context,
+        TransferSender(asio::io_context& io_context,
             const tcp::resolver::results_type& endpoints);
-        ~TransferClient();
+        ~TransferSender();
 
         /* return 0 success, -1 fail */
         int sendFile(string filePath);
@@ -41,8 +36,8 @@ namespace tf
         size_t bufWriteSize;   // async_write 时应该写入的 Byte 个数
         vector<Byte> buf;
 
-        string currentFilePath; // 当前要传输的文件
-        client::ClientState state;      // 当前文件的传输状态
+        string currentFilePath;   // 当前要传输的文件
+        sender::State state;      // 当前文件的传输状态
         shared_ptr<ifstream> pfile;
 
         size_t fileLength;

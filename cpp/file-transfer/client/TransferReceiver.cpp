@@ -1,44 +1,49 @@
-#include "pch.h"
-#include "Session.h"
-
-#include <fstream>
+#include "stdafx.h"
+#include "TransferReceiver.h"
 
 using namespace std;
 using asio::ip::tcp;
 
-Session::Session(tcp::socket socket)
-    : socket(std::move(socket)),
-    bufMaxSize(1024),
-    bufReadSize(4),
-    buf(),
-    state(State::ReceiveLength),
-    dataLength(0),
-    dataRemain(0),
-    tmpFileName("test.data"),
-    pfile()
+namespace tf
 {
-    // buf 大小 1KB
-    buf.resize(bufMaxSize);
-}
-
-Session::~Session()
-{
-    cout << "session released" << endl;
-}
-
-void Session::start()
-{
-    doRead();
-}
-
-void Session::doRead()
-{
-    auto self(shared_from_this());
-
-    if (state == State::ReceiveLength)
+    TransferReceiver::TransferReceiver(tcp::socket socket)
+        : socket(std::move(socket)),
+        dataLength(0),
+        dataRemain(0),
+        bufMaxSize(1024),
+        bufReadSize(4),
+        buf(),
+        state(receiver::GettingLength),
+        tmpFileName("test.data"),
+        pfile()
     {
-        asio::async_read(socket, asio::buffer(buf, bufReadSize),
-            [this, self](asio::error_code ec, size_t length)
+        // buf 大小 1KB
+        buf.resize(bufMaxSize);
+    }
+
+    TransferReceiver::~TransferReceiver()
+    {
+        globalLog()->info("receiver released");
+    }
+
+    void TransferReceiver::start()
+    {
+        doRead();
+    }
+
+    const receiver::State & TransferReceiver::getState() const
+    {
+        return state;
+    }
+
+    void TransferReceiver::doRead()
+    {
+        auto self(shared_from_this());
+
+        if (state == receiver::GettingLength)
+        {
+            asio::async_read(socket, asio::buffer(buf, bufReadSize),
+                [this, self](asio::error_code ec, size_t length)
             {
                 if (!ec)
                 {
@@ -65,36 +70,36 @@ void Session::doRead()
                     else
                         bufReadSize = bufMaxSize;
 
-                    state = State::ReceiveData;
+                    state = receiver::GettingData;
                     cout << "dataLength： " << dataLength << endl;
                     doRead();
                 }
             }
-        );
-    }
-    else if (state == State::ReceiveData)
-    {
-        cout << "wait to receivedata" << endl;
-        asio::async_read(socket, asio::buffer(buf, bufReadSize),
-            [this, self](asio::error_code ec, size_t length)
+            );
+        }
+        else if (state == receiver::GettingData)
+        {
+            cout << "wait to receivedata" << endl;
+            asio::async_read(socket, asio::buffer(buf, bufReadSize),
+                [this, self](asio::error_code ec, size_t length)
             {
                 if (!ec)
                 {
                     cout << "receivedata success: " << length << endl;
                     // 将数据内容写到文件中
                     pfile->write(reinterpret_cast<char*>(&buf[0]), length);
-                    dataRemain -= length;
+                    dataRemain -= (uint32_t)length;
 
                     // 计算下一次读取的 bufReadSize
                     if (dataRemain <= 0) // 表示已经读取完成
                     {
                         // 准备下一次读取文件
-                        state = State::ReceiveLength;
+                        state = receiver::GettingLength;
                         // dont clear buf
                         bufReadSize = 4;
                         pfile = nullptr;
                     }
-                    else 
+                    else
                     {
                         if (dataRemain < bufMaxSize)
                             bufReadSize = dataRemain;
@@ -105,7 +110,8 @@ void Session::doRead()
                     }
                 }
             }
-        );
+            );
+        }
+        // else ignore
     }
-    // else ignore
-}
+} // namespace tf end

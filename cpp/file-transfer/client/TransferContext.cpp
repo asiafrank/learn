@@ -3,18 +3,9 @@
 
 namespace tf
 {
-    inline char separator()
-    {
-#ifdef _WIN32
-        return '\\';
-#else
-        return '/';
-#endif
-    }
-
     TransferContext::TransferContext(const wstring& filePath)
         : filePath(filePath),
-        state(State::Waiting),
+        state(context::Waiting),
         percent(0.0)
     {
         if (filePath.empty())
@@ -33,16 +24,19 @@ namespace tf
 
     bool TransferContext::isCompleted()
     {
-        return state == State::Done || state == State::Error;
+        return state == context::Done || state == context::Error;
     }
-    void TransferContext::setState(const State& state)
+
+    void TransferContext::setState(const context::State& state)
     {
         this->state = state;
     }
-    const State & TransferContext::getState() const
+
+    const context::State & TransferContext::getState() const
     {
         return state;
     }
+
     void TransferContext::setPercent(const float & percent)
     {
         if (percent >= 100.0)
@@ -50,6 +44,7 @@ namespace tf
         else
             this->percent = percent;
     }
+
     const float TransferContext::getPercent() const
     {
         return percent;

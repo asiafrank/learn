@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "TransferClient.h"
+#include "TransferSender.h"
 
 #include <fstream>
 #include <filesystem>
@@ -7,12 +7,12 @@
 namespace fs = std::filesystem;
 namespace tf
 {
-    TransferClient::TransferClient(asio::io_context& io_context,
+    TransferSender::TransferSender(asio::io_context& io_context,
         const tcp::resolver::results_type& endpoints)
         : io_context(io_context),
         socket(io_context),
         buf(),
-        state(client::ClientState::Waiting),
+        state(sender::Waiting),
         pfile(),
         fileLength(0),
         fileLengthSended(false),
@@ -22,40 +22,40 @@ namespace tf
         buf.resize(bufMaxSize);
     }
 
-    TransferClient::~TransferClient()
+    TransferSender::~TransferSender()
     {
         close();
     }
 
     // 传输文件
-    int TransferClient::sendFile(string filePath)
+    int TransferSender::sendFile(string filePath)
     {
         if (!pCtx)
             return -1;
 
-        if (state == client::ClientState::Done
-            || state == client::ClientState::Waiting)
+        if (state == sender::Done
+            || state == sender::Waiting)
         {
 
             uintmax_t size = fs::file_size(filePath);
-            uintmax_t maxSupportSize = 4294967296; // 这里乘法居然不起作用！！ 4 * 1024 * 1024 * 1024
+            uintmax_t maxSupportSize = 4294967296; // 这里乘法居然不起作用！！ 4 * 1024 * 1024 * 1024 Byte = 4GB
             if (size > maxSupportSize)
             {
                 // 为了简单不支持超过 4G 的文件传输
                 return -1;
             }
 
-            pCtx->setState(tf::State::Running);
+            pCtx->setState(tf::context::Running);
 
             currentFilePath = filePath;
             pfile = make_shared<ifstream>(currentFilePath, std::ios::binary);
             if (!pfile->is_open())
             {
-                OutputDebugStringW(L"file open failed");
+                globalLog()->info("file {} open failed", currentFilePath);
                 return -1;
             }
 
-            state = client::ClientState::SendingLength;
+            state = sender::SendingLength;
             bufWriteSize = 4;
             fileLength = size;
             fileLengthSended = false;
@@ -69,21 +69,24 @@ namespace tf
         }
     }
 
-    void TransferClient::doSend()
+    void TransferSender::doSend()
     {
-        // TODO: 准备 sendlength and send data
-        if (state == client::ClientState::SendingLength)
+        globalLog()->info("=============== doSend ====================");
+        if (state == sender::SendingLength)
         {
-            for (size_t i = 0; i < bufWriteSize; i++)
+            int len = (int)fileLength;
+            for (int i = 0; i < bufWriteSize; i++)
             {
-                buf[i] = fileLength >> ((3 - i) * 8);
+                int tmp = (len >> ((3 - i) * 8)) & 0x000000FF;
+                buf[i] = (Byte)tmp;
             }
             asio::async_write(socket, asio::buffer(buf, bufWriteSize),
-                [this](std::error_code ec, std::size_t /*length*/)
+                [this](std::error_code ec, std::size_t length)
             {
                 if (!ec)
                 {
-                    state = client::ClientState::SendingData;
+                    globalLog()->info("length send succcess");
+                    state = sender::SendingData;
                     if (remain < bufMaxSize)
                     {
                         bufWriteSize = remain;
@@ -96,28 +99,31 @@ namespace tf
                 }
                 else
                 {
-                    socket.close();
+                    close();
                 }
             });
         }
-        else if (state == client::ClientState::SendingData)
+        else if (state == sender::SendingData)
         {
             size_t sended = fileLength - remain;
             pfile->read(reinterpret_cast<char*>(&buf[0]), bufWriteSize);
 
-            pCtx->setPercent(sended / fileLength);
+            globalLog()->info("sending data invoke");
+            float percent = (float)sended / fileLength;
+            pCtx->setPercent(percent);
 
             asio::async_write(socket, asio::buffer(buf, bufWriteSize),
                 [this](std::error_code ec, std::size_t length)
             {
                 if (!ec)
                 {
+                    globalLog()->info("sending data success");
                     remain -= length;
                     if (remain <= 0)
                     {
-                        state = client::ClientState::Done;
+                        state = sender::Done;
 
-                        pCtx->setState(tf::State::Done);
+                        pCtx->setState(tf::context::Done);
                         fileLengthSended = true;
                     }
                     else
@@ -131,31 +137,32 @@ namespace tf
                 }
                 else
                 {
-                    socket.close();
+                    close();
                 }
             });
         }
         // else ignore
     }
 
-    void TransferClient::close()
+    void TransferSender::close()
     {
-        asio::post(io_context, [this]() { socket.close(); });
+        socket.close();
+        globalLog()->info("sender close");
     }
 
-    void TransferClient::setContext(shared_ptr<TransferContext> pCtx)
+    void TransferSender::setContext(shared_ptr<TransferContext> pCtx)
     {
         this->pCtx = pCtx;
     }
 
-    void TransferClient::doConnect(const tcp::resolver::results_type & endpoints)
+    void TransferSender::doConnect(const tcp::resolver::results_type & endpoints)
     {
         asio::async_connect(socket, endpoints,
             [this](std::error_code ec, tcp::endpoint)
         {
             if (!ec)
             {
-                OutputDebugStringW(L"client connected");
+                globalLog()->info("sender connected");
             }
         });
     }

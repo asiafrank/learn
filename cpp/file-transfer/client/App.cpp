@@ -3,28 +3,9 @@
 #include "App.h"
 #include "Resource.h"
 
-#include "TransferClient.h"
-
 #include <sstream>
 
 using namespace std;
-
-string toString(const wstring &s)
-{
-    UINT cp = GetACP();
-    std::string utf8_str;
-    int len = WideCharToMultiByte(cp, 0,
-        s.c_str(), (int)s.length(),
-        NULL, 0, NULL, NULL);
-    if (len > 0)
-    {
-        utf8_str.resize(len);
-        WideCharToMultiByte(cp, 0,
-            s.c_str(), (int)s.length(), &utf8_str[0],
-            len, NULL, NULL);
-    }
-    return utf8_str;
-}
 
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
@@ -79,6 +60,8 @@ float App::AspectRatio()const
 
 HRESULT App::initialize()
 {
+    globalLog(); // init logger
+
     HRESULT hr;
     // Initialize device-indpendent resources, such
     // as the Direct2D factory.
@@ -130,13 +113,23 @@ HRESULT App::initialize()
     }
 
     pIOCtx = make_shared<asio::io_context>();
-
     tcp::resolver resolver(*pIOCtx);
-    auto endpoints = resolver.resolve(serverHost, serverPort);
-    pClient = make_shared<tf::TransferClient>(*pIOCtx, endpoints);
+    auto endpoints = resolver.resolve(remoteHost, remotePort);
+    pSender = make_shared<tf::TransferSender>(*pIOCtx, endpoints);
+    pServer = make_shared<tf::TransferServer>(*pIOCtx, serverPort);
 
-    auto pIOCtxCopy(pIOCtx);
-    std::thread t([pIOCtxCopy]() { pIOCtxCopy->run(); });
+    std::thread t([this]() {
+        globalLog()->info("------ io context thread start --------");
+        try
+        {
+            pIOCtx->run();
+        }
+        catch (std::exception& e)
+        {
+            globalLog()->error("io context run: {}", e.what());
+        }
+        globalLog()->info("------ io context thread end --------");
+    });
     t.detach();
     return hr;
 }
@@ -388,7 +381,7 @@ HRESULT App::onRender()
             size_t length = btnTitle.length();
             btnRect = D2D1::RectF(
                 0, 4 * 14,
-                length * 14,
+                (float)length * 14,
                 6 * 14
             );
 
@@ -437,8 +430,8 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
         // 建立1秒间隔的定时器
-        HRESULT hr = SetTimer(hwnd, IDT_PROGRESS_TIMER, 1000, (TIMERPROC) nullptr);
-        if (FAILED(hr))
+        UINT_PTR hr = SetTimer(hwnd, IDT_PROGRESS_TIMER, 1000, (TIMERPROC) nullptr);
+        if (hr == 0)
         {
             MessageBox(NULL, L"This program requires Windows NT!",
                 appTitle.c_str(), MB_ICONERROR);
@@ -498,11 +491,14 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 if (pCtx)
                 {
-                    pCtx->setState(tf::State::Running);
-                    // TODO: transfer file to server
-                    // 使用 uint8_t 接收二进制
+                    pCtx->setState(tf::context::Running);
+
+                    string fn = narrow(fileName);
+                    int rs = pSender->sendFile(fn);
+                    if (rs != 0)
+                        globalLog()->error("send file {} fail", fn);
                 }
-                OutputDebugStringW(L"click valid\n");
+                globalLog()->info("click valid");
                 enableBtnClick = false;
             }
         }
@@ -530,21 +526,13 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void App::TimerProc()
 {
-    // 计算进度条
+    globalLog()->flush();
     if (!pCtx) return;
 
-    wostringstream ss;
-    ss << L"State: ";
-    if (pCtx->getState() == tf::State::Done)
-        ss << L" Done";
-    else if (pCtx->getState() == tf::State::Running)
-        ss << L" Running" << endl;
-    else if (pCtx->getState() == tf::State::Waiting)
-        ss << L" Waiting" << endl;
-    
-    ss << L"percent: " << pCtx->getPercent() << endl;
-    wstring str = ss.str();
-    OutputDebugStringW(str.c_str());
+    if (pCtx->getState() == tf::context::Done)
+    {
+        globalLog()->info("state done, percent {}", pCtx->getPercent());
+    }
 }
 
 HRESULT App::onCommand(WPARAM wParam)
@@ -583,22 +571,18 @@ HRESULT App::onCommand(WPARAM wParam)
         {
             fileName = ofn.lpstrFile;
             pCtx = make_shared<tf::TransferContext>(fileName);
-            pClient->setContext(pCtx);
-            string fn = toString(fileName);
-            int rs = pClient->sendFile(fn);
-            if (rs != 0)
-                OutputDebugStringW(L"SendFile fail!\n");
+            pSender->setContext(pCtx);
 
             enableBtnClick = true;
 
-            OutputDebugStringW(L"Open File dialog success!\n");
+            globalLog()->info("Open File dialog success!");
             RECT rc;
             GetClientRect(hwnd, &rc);
             InvalidateRect(hwnd, &rc, TRUE);
         }
         else
         {
-            OutputDebugStringW(L"Open File dialog failed!\n");
+            globalLog()->info("Open File dialog failed!");
         }
     }
     break;

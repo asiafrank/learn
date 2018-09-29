@@ -33,7 +33,16 @@
     <ClInclude Include="TransferContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TransferClient.h">
+    <ClInclude Include="TransferServer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransferSender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TransferReceiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="state.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,7 +59,13 @@
     <ClCompile Include="TransferContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TransferClient.cpp">
+    <ClCompile Include="TransferServer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TransferSender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TransferReceiver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

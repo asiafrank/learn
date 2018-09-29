@@ -5,9 +5,6 @@
 #include <string>
 #include <memory>
 
-#include "TransferContext.h"
-#include "TransferClient.h"
-
 using namespace std;
 
 class App
@@ -109,8 +106,13 @@ private:
     // context
     std::shared_ptr<tf::TransferContext> pCtx;
     // client
-    string serverHost = "127.0.0.1";
-    string serverPort = "6881";
-    std::shared_ptr<tf::TransferClient> pClient;
+    string remoteHost = "127.0.0.1";
+    string remotePort = "6882";
+    // FIXME：以后再支持多个 Sender
+    std::shared_ptr<tf::TransferSender> pSender;
+
+    // server
+    short serverPort = 6881;
+    std::shared_ptr<tf::TransferServer> pServer;
     std::shared_ptr<asio::io_context> pIOCtx;
 };
