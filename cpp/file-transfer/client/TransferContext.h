@@ -34,7 +34,7 @@ namespace tf
         wstring fileName;      // 传输的文件名，不包含前缀
         wstring filePath;      // 文件路径
         context::State state;  // 状态
-        float percent;         // 传输百分比
+        float percent;         // 已传输的必上, 范围是 0-1, 如果要百分比形式，乘以 100 即可
     };
 } // namespace tf end
 

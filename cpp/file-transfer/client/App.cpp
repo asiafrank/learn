@@ -111,7 +111,7 @@ HRESULT App::initialize()
         ShowWindow(hwnd, SW_SHOWNORMAL);
         UpdateWindow(hwnd);
     }
-
+  
     pIOCtx = make_shared<asio::io_context>();
     tcp::resolver resolver(*pIOCtx);
     auto endpoints = resolver.resolve(remoteHost, remotePort);
@@ -138,14 +138,10 @@ int App::Run()
 {
     MSG msg = { 0 };
 
-    while (msg.message != WM_QUIT)
+    while (GetMessage(&msg, NULL, 0, 0))
     {
-        // If there are Window messages then process them.
-        if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     return (int)msg.wParam;
@@ -362,7 +358,7 @@ HRESULT App::onRender()
             {
                 D2D1_RECT_F progressRect = D2D1::RectF(
                     textRect.left, textRect.top,
-                    textRect.right * pCtx->getPercent() / 100,
+                    textRect.right * pCtx->getPercent(),
                     textRect.bottom
                 );
 
@@ -373,7 +369,7 @@ HRESULT App::onRender()
                 fileName,            // The string to render.
                 lstrlen(fileName),   // The string's length.
                 pTextFormat_, // The text format.
-                textRect,    // The region of the window where the text will be rendered.
+                textRect,     // The region of the window where the text will be rendered.
                 pBlackBrush_  // The brush used to draw the text.
             );
 
@@ -526,7 +522,6 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 void App::TimerProc()
 {
-    globalLog()->flush();
     if (!pCtx) return;
 
     if (pCtx->getState() == tf::context::Done)

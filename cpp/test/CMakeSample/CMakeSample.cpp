@@ -42,7 +42,50 @@ void thr(std::shared_ptr<Base> p)
     cout << "-------------- end" << endl;
 }
 
+void testSome();
+
+using Byte = std::uint8_t;
+
 int main()
+{
+    {
+        vector<Byte> buf(4);
+        std::size_t fileLength = 454001;
+        int len = (uint32_t)fileLength;
+        for (int i = 0; i < 4; i++)
+        {
+            uint32_t tmp = (len >> ((3 - i) * 8)) & 0x000000FF;
+            buf[i] = (Byte)tmp;
+        }
+
+        cout << std::hex;
+        // print Bytes of buf
+        for (size_t i = 0; i < buf.size(); i++)
+        {
+            cout << (uint32_t)buf[i] << " ";
+        }
+        cout << endl;
+
+        // re construct to datalength
+        auto it = buf.cbegin();
+        std::uint32_t dataLength = 0;
+        for (int i = 3; i >= 0; i--, it++)
+        {
+            uint32_t tmp = (uint32_t)(*it);
+            tmp = (tmp << (i * 8));
+
+            cout << tmp << " ";
+            dataLength = (dataLength | tmp);
+        }
+        cout << endl << std::dec;
+        cout << "dataLength: " << dataLength << endl;
+    }
+
+    // testSome();
+    return 0;
+}
+
+void testSome()
 {
     // share_ptr example
     std::shared_ptr<Base> p = std::make_shared<Derived>();
@@ -113,7 +156,7 @@ int main()
             size_t readSize = 0;
             if (remain > blockSize)
                 readSize = blockSize;
-            else 
+            else
                 readSize = remain;
 
             for (size_t i = 0; i < blockNumbers; i++)
@@ -161,5 +204,4 @@ int main()
     asio::steady_timer t(io, asio::chrono::seconds(5));
     t.wait();
     cout << "Hello CMake." << endl;
-    return 0;
 }

@@ -30,6 +30,8 @@ namespace tf
     void TransferContext::setState(const context::State& state)
     {
         this->state = state;
+        if (state == context::Done)
+            this->percent = 1.0;
     }
 
     const context::State & TransferContext::getState() const
@@ -39,8 +41,8 @@ namespace tf
 
     void TransferContext::setPercent(const float & percent)
     {
-        if (percent >= 100.0)
-            this->percent = 100.0;
+        if (percent >= 1.0)
+            this->percent = 1.0;
         else
             this->percent = percent;
     }
