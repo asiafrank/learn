@@ -46,6 +46,7 @@
   - [ ] [bittorrent](http://bittorrent.org/beps/bep_0003.html)
     - [BitTorrent协议规范](https://zh.wikibooks.org/wiki/BitTorrent%E5%8D%8F%E8%AE%AE%E8%A7%84%E8%8C%83)
     - [Wireshark BitTorrent](https://wiki.wireshark.org/BitTorrent)
+    - [使用WireShark进行磁力链接协议分析](http://www.aneasystone.com/archives/2015/05/analyze-magnet-protocol-using-wireshark.html)
 - C++
   - [ ] STL源码剖析
   - [ ] 深度探索C++对象模型
