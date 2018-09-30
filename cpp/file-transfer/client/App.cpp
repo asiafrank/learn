@@ -29,7 +29,8 @@ App::App(HINSTANCE hInstance)
     m_pDirect2dFactory(nullptr),
     m_pRenderTarget(nullptr),
     m_pLightSlateGrayBrush(nullptr),
-    m_pCornflowerBlueBrush(nullptr)
+    m_pCornflowerBlueBrush(nullptr),
+    pIOCtx()
 {
     // Only one App can be constructed.
     pApp = this;
@@ -112,7 +113,7 @@ HRESULT App::initialize()
         UpdateWindow(hwnd);
     }
   
-    pIOCtx = make_shared<asio::io_context>();
+    pIOCtx = make_shared<asio::io_context>(2);
     tcp::resolver resolver(*pIOCtx);
     auto endpoints = resolver.resolve(remoteHost, remotePort);
     pSender = make_shared<tf::TransferSender>(*pIOCtx, endpoints);
@@ -503,8 +504,14 @@ LRESULT App::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
     {
         KillTimer(hwnd, IDT_PROGRESS_TIMER);
-        if (pIOCtx)
+        if (pIOCtx) {
             pIOCtx->stop();
+            globalLog()->info("io_context stop invoked");
+        }
+        else
+        {
+            globalLog()->info("io_context stop not be invoked");
+        }
         PostQuitMessage(0);
         result = 1;
         wasHandled = true;
