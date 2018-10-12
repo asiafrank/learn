@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.asiafrank.bplan</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <modules>
+    <module>core</module>
+    <module>tracker</module>
+    <module>downloader</module>
+    <module>downloader-jlink</module>
+    <module>tracker-jlink</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>10</java.version>
+    <maven.compiler.target>10</maven.compiler.target>
+    <maven.compiler.source>10</maven.compiler.source>
+    <maven.compiler.version>3.7.0</maven.compiler.version>
+    <maven.dependency.version>3.1.0</maven.dependency.version>
+    <maven.jlink-jmod.version>3.0.0-alpha-1</maven.jlink-jmod.version>
+    <maven.plugin.asm.version>6.2</maven.plugin.asm.version>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.version}</version>
+        <configuration>
+          <compilerVersion>${java.version}</compilerVersion>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
+        </configuration>
+        <!-- Java 10 FIX:
+        https://issues.apache.org/jira/projects/MCOMPILER/issues/MCOMPILER-332
+        -->
+        <dependencies>
+          <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>${maven.plugin.asm.version}</version> <!-- Use newer version of ASM -->
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <!-- The jlink plugin is alpha. -->
+        <!-- It only seems to work if the artifacts are resolved by the time jlink runs -->
+        <!-- One clean-ish way to achieve that is to use the maven-dependency-plugin to build the classpath  -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${maven.dependency.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build-classpath</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jlink-plugin</artifactId>
+        <version>${maven.jlink-jmod.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <noHeaderFiles>true</noHeaderFiles>
+          <noManPages>true</noManPages>
+        </configuration>
+        <!-- Java 10 FIX:
+        https://issues.apache.org/jira/projects/MCOMPILER/issues/MCOMPILER-332
+        -->
+        <dependencies>
+          <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>${maven.plugin.asm.version}</version> <!-- Use newer version of ASM -->
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jmod-plugin</artifactId>
+        <version>${maven.jlink-jmod.version}</version>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.asiafrank.bplan</groupId>
+        <artifactId>core</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+</project>
