@@ -20,7 +20,7 @@
   <properties>
     <scala.version>2.11.7</scala.version>
     <jersey.version>2.25</jersey.version>
-    <akka.version>2.4.16</akka.version>
+    <akka.version>2.4.17</akka.version>
     <aopalliance.version>1.0</aopalliance.version>
     <servlet.version>3.1.0</servlet.version>
     <freemarker.version>2.3.20</freemarker.version>

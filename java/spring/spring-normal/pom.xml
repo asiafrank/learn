@@ -17,7 +17,7 @@
 
   <properties>
     <aopalliance.version>1.0</aopalliance.version>
-    <spring.version>4.2.6.RELEASE</spring.version>
+    <spring.version>4.3.17</spring.version>
     <spring.data.mongodb>1.9.5.RELEASE</spring.data.mongodb>
     <spring.data.redis>1.7.5.RELEASE</spring.data.redis>
     <jedis.version>2.9.0</jedis.version>
