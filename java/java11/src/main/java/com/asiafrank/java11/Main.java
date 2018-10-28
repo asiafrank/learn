@@ -16,6 +16,10 @@ import java.time.Duration;
 
 public class Main {
     public static void main(String[] args) {
+        // sslTest();
+    }
+
+    private static void sslTest() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                                              .uri(URI.create("https://app.anitama.net/guide/today/all"))

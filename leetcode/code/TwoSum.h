@@ -19,9 +19,11 @@
 namespace TwoSum {
     using namespace std;
 
-    class __declspec(dllexport) Solution {
+    class API Solution 
+    {
     public:
-        vector<int> twoSum(vector<int>& nums, int target) {
+        vector<int> twoSum(vector<int>& nums, int target) 
+        {
             // 默认从小到大顺序
             // key: diff, value: index
             vector<int> result;

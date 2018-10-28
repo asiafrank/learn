@@ -49,6 +49,16 @@ using Byte = std::uint8_t;
 int main()
 {
     {
+        vector<uint32_t> v(10, 0);
+        v.at(1) = 10;
+        // print Bytes of buf
+        for (size_t i = 0; i < v.size(); i++)
+        {
+            cout << v[i] << " ";
+        }
+    }
+
+    {
         vector<Byte> buf(4);
         std::size_t fileLength = 454001;
         int len = (uint32_t)fileLength;
