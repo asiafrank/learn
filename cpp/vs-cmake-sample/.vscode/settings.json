@@ -1,0 +1,7 @@
+{
+    "cmake.debugConfig": {
+        "miDebuggerPath": "lldb",
+        "externalConsole": true,
+        "stopAtEntry": false
+    }
+}
