@@ -19,4 +19,13 @@ public class SortsTest {
         int[] expect = {1,2,3,4,5,6,7};
         assertArrayEquals(expect, a);
     }
+
+    @Test
+    public void mergeSortTest() {
+        int[] a = {7,6,5,4,3,2,1};
+        Sorts.mergeSort(a, 0, a.length - 1);
+
+        int[] expect = {1,2,3,4,5,6,7};
+        assertArrayEquals(expect, a);
+    }
 }

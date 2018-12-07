@@ -1,9 +1,54 @@
+#include <iostream>
+
+#include "lib/Sorts.h"
 #include "lib/Printer.h"
 
 // VSCode 的 CMakeTools 插件 DEBUG 按钮不起作用。直接用 F5 按钮启动 DEBUG 程序
+
+void InsertSortTest();
+void MergeSortTest();
+void PrinterTest();
+void printArray(int a[], int len);
+
 int main() {
+    InsertSortTest();
+    MergeSortTest();
+    // PrinterTest();
+    return 0;
+}
+
+void InsertSortTest()
+{
+    int a[] = {7, 6, 5, 4, 3, 2, 1};
+    int len = sizeof(a) / sizeof(int);
+
+    clrs::InsertSort(a, len);
+    printArray(a, len);
+}
+
+void MergeSortTest()
+{
+    int a[] = {7, 6, 5, 4, 3, 2, 1};
+    int len = sizeof(a) / sizeof(int);
+    clrs::MergeSort(a, 0, len - 1);
+    printArray(a, len);
+}
+
+void PrinterTest()
+{
     Printer* printer = new Printer();
     printer->print();
     delete printer;
-    return 0;
+}
+
+void printArray(int a[], int len)
+{
+    std::cout << "[";
+    for (int i = 0; i < len; i++)
+    {
+        std::cout << a[i];
+        if (i < len - 1)
+            std::cout << ",";
+    }
+    std::cout << "]" << std::endl;
 }
