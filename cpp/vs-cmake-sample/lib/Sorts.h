@@ -80,7 +80,7 @@ namespace clrs {
      * @param lo a数组里，排好序的第一个数组范围开始下标
      * @param mi a数组里，排好序的第一个数组范围的结束下标
      * @param hi a数组里，排好序的第二个数组范围的结束下标
-     */ 
+     */
     void Merge(int a[], int lo, int mi, int hi)
     {
         int n1 = mi - lo + 1;

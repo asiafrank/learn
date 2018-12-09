@@ -4,5 +4,9 @@
         "externalConsole": true,
         "stopAtEntry": false
     },
-    "C_Cpp.configurationWarnings": "Disabled"
+    "C_Cpp.configurationWarnings": "Disabled",
+    "C_Cpp.intelliSenseEngineFallback": "Disabled",
+    "files.associations": {
+        "climits": "cpp"
+    }
 }
