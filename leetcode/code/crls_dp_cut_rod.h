@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-namespace crls {
+namespace clrs {
     using namespace std;
 
     /*
@@ -72,5 +72,5 @@ namespace crls {
 
         return r[n];
     };
-}
+} // clrs end
 

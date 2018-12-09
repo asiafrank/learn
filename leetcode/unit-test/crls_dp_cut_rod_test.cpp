@@ -25,7 +25,7 @@ namespace unittest
             V r(10 + 1, 0);
             PV prices = std::make_shared<V>(p);
             PV result = std::make_shared<V>(r);
-            uint32_t r4 = crls::MemorizedRecursiveCutRod(prices, 4, result);
+            uint32_t r4 = clrs::MemorizedRecursiveCutRod(prices, 4, result);
 
             Assert::AreEqual(10, (int)r4);
         }
@@ -38,7 +38,7 @@ namespace unittest
             */
             V p = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
             PV s = std::make_shared<V>(4 + 1, 0);
-            uint32_t r4 = crls::CutRod(p, 4, s);
+            uint32_t r4 = clrs::CutRod(p, 4, s);
 
             Assert::AreEqual(10, (int)r4);
 
