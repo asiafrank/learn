@@ -149,4 +149,57 @@ namespace clrs {
         }
     }
 
+    //----------------------------
+    // P95,快速排序
+    //----------------------------
+    
+    /**
+     * 快速排序-分解
+     * 图解见 P96
+     *
+     * @param a length 大于等于 2 的数组
+     * @param p 数组的开始下标
+     * @param r 数组的结束下标
+     * p和r参数，输入时，注意不能超出界限
+     *
+     * @return 主元右边开始的下标
+     */
+    int Partition(int a[], int p, int r)
+    {
+        int x = a[r];
+        int i = p - 1;
+        for (int j = p; j < r; j++)
+        {
+            if (a[j] <= x)
+            {
+                i = i + 1;
+                int t = a[j];
+                a[j] = a[i];
+                a[i] = t;
+            }
+        }
+        int t = a[i + 1];
+        a[i + 1] = a[r];
+        a[r] = t;
+        return i + 1;
+    }
+
+    /**
+     * 快速排序
+     *
+     * @param a length 大于等于 2 的数组
+     * @param p 数组的开始下标
+     * @param r 数组的结束下标
+     * p和r参数，输入时，注意不能超出界限
+     */
+    void QuickSort(int a[], int p, int r)
+    {
+        if (p >= r)
+            return;
+
+        int q = Partition(a, p, r);
+        QuickSort(a, p, q - 1);
+        QuickSort(a, q + 1, r);
+    }
+
 } // clrs end
