@@ -7,12 +7,14 @@
 
 void InsertSortTest();
 void MergeSortTest();
+void BubbleSortTest();
 void PrinterTest();
 void printArray(int a[], int len);
 
 int main() {
     InsertSortTest();
     MergeSortTest();
+    BubbleSortTest();
     // PrinterTest();
     return 0;
 }
@@ -31,6 +33,14 @@ void MergeSortTest()
     int a[] = {7, 6, 5, 4, 3, 2, 1};
     int len = sizeof(a) / sizeof(int);
     clrs::MergeSort(a, 0, len - 1);
+    printArray(a, len);
+}
+
+void BubbleSortTest()
+{
+    int a[] = {7, 6, 5, 4, 3, 2, 1};
+    int len = sizeof(a) / sizeof(int);
+    clrs::BubbleSort(a, len);
     printArray(a, len);
 }
 

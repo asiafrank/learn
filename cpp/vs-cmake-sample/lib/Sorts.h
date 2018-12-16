@@ -85,7 +85,7 @@ namespace clrs {
     {
         int n1 = mi - lo + 1;
         int n2 = hi - mi;
-        int left[n1 + 1], right[n2 + 1];
+        int *left = new int[n1 + 1], *right = new int[n2 + 1];
         for (int i = 0; i < n1; i++)
             left[i] = a[lo + i];
         for (int j = 0; j < n2; j++)
@@ -106,6 +106,45 @@ namespace clrs {
             {
                 a[k] = ri;
                 j++;
+            }
+        }
+
+        delete[] left;
+        delete[] right;
+    }
+
+    //----------------------------
+    // P23习题2-2，冒泡排序
+    //----------------------------
+
+    /**
+     * 冒泡排序
+     *
+     *  索引：   0   1   2   3   4   5   6
+     *         ---------------------------
+     *  数组： | 6 | 7 | 4 | 5 | 3 | 2 | 1 |
+     *         ---------------------------
+     *          i                       j
+     * 0~i-1 为已排好序的部分。
+     * i~n-1 为未排好序的部分
+     * 在未排好序的部分中，比较中相对小的元素一步一步向左推移（冒泡）：一次内循环完毕后
+     * 未排好序的部分中最小的元素到达 i 下标处，至此 0~i 编程已排好序的部分，这时 i++ 准备下一次循环。
+     *
+     * @param a length 大于等于 2 的数组
+     * @param len 数组的长度
+     */
+    void BubbleSort(int a[], int len)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            for (int j = len-1; j >= i+1; j--)
+            {
+                if (a[j] < a[j - 1])
+                {
+                    int t = a[j];
+                    a[j] = a[j - 1];
+                    a[j - 1] = t;
+                }
             }
         }
     }
