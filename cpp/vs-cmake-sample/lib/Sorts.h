@@ -4,6 +4,8 @@
 namespace clrs {
     /**
      * 插入排序 P9
+     * 时间复杂度，最好情况已经有序 O(n)，最坏情况倒序 O(n^2)
+     * 空间复杂度 O(1)，原址排序
      *
      * 给定一个数组
      *  索引：   0   1   2   3   4   5   6
@@ -39,6 +41,9 @@ namespace clrs {
     void Merge(int a[], int lo, int mi, int hi);
     /**
      * 归并排序
+     * 时间复杂度 O(nlgn)
+     * 空间复杂度 O(n)
+     *
      * 给定一个数组
      *  索引：   0   1   2   3   4   5   6
      *         ---------------------------
@@ -119,6 +124,8 @@ namespace clrs {
 
     /**
      * 冒泡排序
+     * 时间复杂度，最好情况已经有序 O(n)，最坏情况倒序 O(n^2)
+     * 空间复杂度 O(1)，原址排序
      *
      *  索引：   0   1   2   3   4   5   6
      *         ---------------------------
@@ -186,6 +193,9 @@ namespace clrs {
 
     /**
      * 快速排序
+     * 时间复杂度，最好情况左右划分均匀 O(nlgn)，最坏情况左右划分始终不均匀 O(n^2)
+     * 平均情况 O(nlgn)
+     * 空间复杂度 O(1)，原址排序
      *
      * @param a length 大于等于 2 的数组
      * @param p 数组的开始下标
@@ -200,6 +210,99 @@ namespace clrs {
         int q = Partition(a, p, r);
         QuickSort(a, p, q - 1);
         QuickSort(a, q + 1, r);
+    }
+
+    //----------------------------
+    // P85,堆排序
+    //----------------------------
+
+    /**
+     * 由当前结点的下标，获取它的左子结点的下标
+     */
+    int Left(int i)
+    {
+        return 2 * i;
+    }
+
+    /**
+     * 由当前结点的下标，获取它的右子结点的下标
+     */
+    int Right(int i)
+    {
+        return 2 * i + 1;
+    }
+
+    /**
+     * 由当前结点的下标，获取它的父结点的下标
+     */
+    int Parent(int i)
+    {
+        return i / 2;
+    }
+
+    /**
+     * 维护最大堆性质
+     * 时间复杂度，O(lgn)
+     *
+     * @param a   0元素为空的，用于排序的数组
+     * @param len 数组的长度
+     * @param i   大于0的数组下标
+     */
+    void MaxHeapify(int a[], int len, int i)
+    {
+        if (i >= len)
+            return;
+
+        int largest = i;
+        int l = Left(i);
+        int r = Right(i);
+        if (l < len && a[l] > a[largest])
+            largest = l;
+        if (r < len && a[r] > a[largest])
+            largest = r;
+        if (largest != i)
+        {
+            int t = a[largest];
+            a[largest] = a[i];
+            a[i] = t;
+            MaxHeapify(a, len, largest);
+        }
+    }
+
+    /**
+     * 创建一个最大堆
+     * 时间复杂度 O(nlgn)
+     *
+     * @param a   0元素为空的，用于排序的数组
+     * @param len 数组的长度
+     */
+    void BuildMaxHeap(int a[], int len)
+    {
+        int heapSize = len - 1;
+        for (int i = heapSize/2; i > 0; i--)
+        {
+            MaxHeapify(a, len, i);
+        }
+    }
+
+    /**
+     * 堆排序
+     * 时间复杂度，O(nlgn)
+     * 空间复杂度 O(1)，原址排序
+     *
+     * @param a   0元素为空的，用于排序的数组
+     * @param len 数组的长度
+     */
+    void HeapSort(int a[], int len)
+    {
+        BuildMaxHeap(a, len);
+        for (int heapSize = len - 1; heapSize > 1; heapSize--)
+        {
+            int t = a[heapSize];
+            a[heapSize] = a[1];
+            a[1] = t;
+            MaxHeapify(a, heapSize, 1);
+        }
     }
 
 } // clrs end

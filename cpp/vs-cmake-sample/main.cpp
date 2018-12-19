@@ -9,6 +9,7 @@ void InsertSortTest();
 void MergeSortTest();
 void BubbleSortTest();
 void QuickSortTest();
+void HeapSortTest();
 void PrinterTest();
 void printArray(int a[], int len);
 
@@ -17,6 +18,7 @@ int main() {
     MergeSortTest();
     BubbleSortTest();
     QuickSortTest();
+    HeapSortTest();
     // PrinterTest();
     return 0;
 }
@@ -51,6 +53,15 @@ void QuickSortTest()
     int a[] = {7, 6, 5, 4, 3, 2, 1};
     int len = sizeof(a) / sizeof(int);
     clrs::QuickSort(a, 0, len - 1);
+    printArray(a, len);
+}
+
+void HeapSortTest()
+{
+    // 堆排序，第一个元素为空
+    int a[] = {0, 7, 6, 5, 4, 3, 2, 1};
+    int len = sizeof(a) / sizeof(int);
+    clrs::HeapSort(a, len);
     printArray(a, len);
 }
 
