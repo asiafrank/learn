@@ -25,12 +25,19 @@ public class Fibonacci {
      * 动态规划-求第 n 个斐波那契数
      */
     private static int dp_f(int n) {
-        int[] f = new int[n + 1];
-        f[0] = 0;
-        f[1] = 1;
-        for (int i = 2; i < f.length; i++) {
-            f[i] = f[i-1] + f[i-2];
+        if (n == 0)
+            return 0;
+        if (n == 1)
+            return 1;
+
+        int first = 0; // n-1
+        int second = 1; // n-2
+        int fn = 0;
+        for (int i = 2; i <= n; i++) {
+            fn = first + second;
+            first = second;
+            second = fn;
         }
-        return f[n];
+        return fn;
     }
 }
