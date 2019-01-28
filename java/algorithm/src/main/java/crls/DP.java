@@ -1,6 +1,6 @@
 package crls;
 
-import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * 动态规划-P204
@@ -125,5 +125,107 @@ public class DP {
         } else {
             printLCS(b, x, i, j - 1);
         }
+    }
+
+    //-----------------------------------------------------
+    // 思考题 15-1 有向无环图中的最长简单路径. 结点编号都从零开始
+    //-----------------------------------------------------
+
+    /**
+     * 图的邻接链表表示法中的一个结点
+     */
+    public static class Node {
+        /**
+         * 指向下一个结点，如果到链尾，则下一个结点为 null
+         */
+        Node next;
+
+        /**
+         * 当前结点的编号，只要编号一样，就是同一个结点。
+         * 注意：由于邻接链表法，一个编号可能有多个 Node 实例。
+         */
+        int num;
+
+        /**
+         * 当前边的权重
+         */
+        int weight;
+
+        public Node(int num) {
+            this.num = num;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Node node = (Node) o;
+            return num == node.num;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(num);
+        }
+    }
+
+    // Longest-Simple-Path Pair
+    public static class LSPPair {
+        /**
+         * dist[1][2] 表示结点 1 到结点 2 的最长简单路径的权重和
+         */
+        int[][] dist;
+
+        /**
+         * 求得最长简单路径上各个结点的编号。不包括第一个结点
+         */
+        int[] p;
+    }
+
+    /**
+     * 求有向无环图中的最长简单路径
+     *
+     * @param nodes 结点编号列表
+     * @param adj   邻接链表
+     * @param u     从 u 结点开始
+     * @param v     到 v 结点结束
+     * @return 结果
+     */
+    public static LSPPair lsp(int[] nodes, Node[] adj, int u, int v) {
+        LSPPair lspPair = new LSPPair();
+        lspPair.dist = new int[nodes.length][nodes.length];
+        lspPair.p = new int[nodes.length];
+
+        findLSP(lspPair.dist, lspPair.p, 0, adj, u, v);
+        return lspPair;
+    }
+
+    /**
+     * 求有向无环图中的最长简单路径
+     *
+     * @param dist 最长简单路径权重和记录表
+     * @param p    最长简单路径结点编号记录表
+     * @param i    p路径上第几个结点
+     * @param adj  邻接链表
+     * @param u    开始结点编号
+     * @param v    结束结点编号
+     * @return u 到 v 的最长简单路径的权重和
+     */
+    private static int findLSP(int[][] dist, int[] p, int i, Node[] adj, int u, int v) {
+        if (u == v) {
+            return 0;
+        }
+
+        Node x = adj[u].next; // x 为代表 u 的 Node 实例的下一个结点\
+        int q;
+        while (x != null) {
+            q = findLSP(dist, p, i+1, adj, x.num, v) + x.weight;
+            if (q > dist[u][v]) {
+                dist[u][v] = q;
+                p[i] = x.num;
+            }
+            x = x.next;
+        }
+        return dist[u][v];
     }
 }
