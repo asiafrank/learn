@@ -1,5 +1,6 @@
 package crls;
 
+import crls.dp.LongestPalindromeSequence;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -94,6 +95,16 @@ public class DPTest {
             System.out.print(n + " ");
         }
         System.out.println();
+    }
+
+    @Test
+    public void longestPalindromeSequenceTest() {
+        String s = "civic";
+        char[] x = s.toCharArray();
+        LongestPalindromeSequence.LPSPair pair = LongestPalindromeSequence.solution(x);
+        printArray(pair.c);
+        System.out.println();
+        LongestPalindromeSequence.printLSP(x, pair.c, 0, x.length - 1);
     }
 
     private void printArray(int[][] a) {
