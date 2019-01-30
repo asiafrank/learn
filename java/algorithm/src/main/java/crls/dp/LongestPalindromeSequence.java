@@ -1,7 +1,7 @@
 package crls.dp;
 
 /**
- * 思考题 15-2 最长回文子序列(LPS)
+ * P231 思考题 15-2 最长回文子序列(LPS)
  *
  * @author zhangxf created at 1/29/2019.
  */

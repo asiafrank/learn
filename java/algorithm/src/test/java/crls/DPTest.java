@@ -14,9 +14,9 @@ public class DPTest {
         int[] p = {5, 10, 3, 12, 5, 50, 6};
         DP.Pair pair = DP.matrixChainOrder(p);
         DP.printOptimalParens(pair.s, 1, pair.s.length);
-        printArray(pair.m);
+        Tools.printArray(pair.m);
         System.out.println();
-        printArray(pair.s);
+        Tools.printArray(pair.s);
     }
 
     // 最长公共子序列
@@ -25,8 +25,8 @@ public class DPTest {
         int[] x = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
         int[] y = {'B', 'D', 'C', 'A', 'B', 'A'};
         DP.LCSPair pair = DP.lcsLength(x, y);
-        printArray(pair.c);
-        printArray(pair.b);
+        Tools.printArray(pair.c);
+        Tools.printArray(pair.b);
         DP.printLCS(pair.b, x, x.length - 1, y.length - 1);
         System.out.println();
     }
@@ -88,7 +88,7 @@ public class DPTest {
 
         DP.LSPPair lspPair = DP.lsp(v, adj, 0, 3);
 
-        printArray(lspPair.dist);
+        Tools.printArray(lspPair.dist);
         System.out.println();
         System.out.print(0 + " ");
         for (int n : lspPair.p) {
@@ -102,26 +102,8 @@ public class DPTest {
         String s = "civic";
         char[] x = s.toCharArray();
         LongestPalindromeSequence.LPSPair pair = LongestPalindromeSequence.solution(x);
-        printArray(pair.c);
+        Tools.printArray(pair.c);
         System.out.println();
         LongestPalindromeSequence.printLSP(x, pair.c, 0, x.length - 1);
-    }
-
-    private void printArray(int[][] a) {
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < a[i].length; j++) {
-                System.out.print(a[i][j] + " ");
-            }
-            System.out.println();
-        }
-    }
-
-    private void printArray(char[][] a) {
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < a[i].length; j++) {
-                System.out.print(a[i][j] + " ");
-            }
-            System.out.println();
-        }
     }
 }
