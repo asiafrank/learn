@@ -1,7 +1,7 @@
 package tooffer;
 
 /**
- * 2.3.4 树
+ * 2.3.4节-树
  */
 public class Trees {
 
@@ -31,12 +31,14 @@ public class Trees {
 
     /**
      *
+     * <pre>
      * preOrder: 1  2  4  7  3  5  6  8
      *           |  \-----/  \--------/
      *           根  左子树    右子树
      * inOrder:  4  7  2  1  5  3  8  6
      *           \-----/  |  \--------/
      *            左子树   根   右子树
+     * </pre>
      * @param preOrder 先序遍历序列
      * @param inOrder  中序遍历序列
      * @return 根节点

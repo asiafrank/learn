@@ -35,7 +35,7 @@ public class DPTest {
      * 有向无环图中的最长简单路径
      *
      * 图如下, 其中 0-3 的最长简单路径是 0,1,2,3 权重和为 6
-     * <prev>
+     * <pre>
      *              [4]
      *              /|\
      *               | 1
@@ -44,7 +44,7 @@ public class DPTest {
      *               |                    /|\
      *               |---------------------|
      *                       2
-     * </prev>
+     * </pre>
      */
     @Test
     public void lspTest() {
