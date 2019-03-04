@@ -169,7 +169,7 @@ namespace clrs {
      * @param r 数组的结束下标
      * p和r参数，输入时，注意不能超出界限
      *
-     * @return 主元右边开始的下标
+     * @return 主元的下标
      */
     int Partition(int a[], int p, int r)
     {
