@@ -1,18 +1,6 @@
 # learn
 学习 C++，Java 基础的练习代码。
 
-### TODO:
-- [Todo Projects](https://github.com/asiafrank/learn/projects)
-- Spring + mybatis 例子优化，减少 xml mapper 的使用，用 SQLBuilder 替代 Expressions
+[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
 
-### 当前学习顺序
-- [ ] 1.数据库，分布式一致性协议paxos，raft，raft实战，高可用系统方案
-- [x] 2.TCP/IP详解
-- [ ] 3.中间件kafka,zookeeper使用及原理
-- [ ] 4.JVM巩固：GC，性能判断及优化，并发
-- [ ] 5.bittorrent 简单实现
-  - [ ] 编写 file-transfer 示例程序
-- [ ] 6.direct3d 翻译
-- [ ] 7.算法导论
-- [ ] 8.操作系统
-- [ ] 9.cpp进阶
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
