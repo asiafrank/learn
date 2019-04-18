@@ -47,6 +47,8 @@ cmake-build-debug
 .idea
 *.aps
 *.ini
+ipch/
+*.code-workspace
 
 # Java Project ignore
 target
