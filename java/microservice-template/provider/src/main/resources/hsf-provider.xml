@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:hsf="http://www.taobao.com/hsf"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+     http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+     http://www.taobao.com/hsf
+     http://www.taobao.com/hsf/hsf.xsd" default-autowire="byType">
+    <!-- 定义该服务的具体实现 -->
+    <bean id="helloServiceImpl" class="com.asiafrank.microservice.provider.impl.HelloServiceImpl" />
+    <!-- 用 hsf:provider 标签表明提供一个服务生产者 -->
+    <hsf:provider id="helloService"
+                  interface="com.asiafrank.microservice.provider.api.HelloService"
+                  ref="helloServiceImpl"
+                  version="1.0.0">
+    </hsf:provider>
+</beans>
