@@ -1,0 +1,19 @@
+{
+    "cmake.debugConfig": {
+        //"miDebuggerPath": "lldb",
+        "externalConsole": false,
+        "stopAtEntry": false,
+        "miDebuggerPath": "/Users/asiafrank/.vscode/extensions/ms-vscode.cpptools-0.22.1/debugAdapters/lldb/bin/lldb-mi",
+        "logging": {
+            "trace": true,
+            "engineLogging": true,
+            "traceResponse": true
+        }
+    },
+    "C_Cpp.configurationWarnings": "Disabled",
+    "C_Cpp.intelliSenseEngineFallback": "Disabled",
+    "files.associations": {
+        "climits": "cpp",
+        "iostream": "cpp"
+    }
+}
