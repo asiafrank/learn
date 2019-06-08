@@ -1,9 +1,0 @@
-DROP TABLE IF EXISTS sample;
-
-CREATE TABLE IF NOT EXISTS sample(
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  created_at DATETIME,
-  updated_at DATETIME
-);

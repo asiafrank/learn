@@ -84,3 +84,11 @@ path to the Lib folder
 # white list
 !java/jna/jni-example/src/main/resources/*
 !java/netty-sample/src/main/resources/*
+
+# Qt 
+*.creator.user*
+*.pro.user*
+*.pyqtc.user*
+*.qbs.user*
+*.qmlproject.user*
+build-*Qt*/
