@@ -64,6 +64,10 @@ build
 *.bin
 .gradle
 
+# rust build
+*.pdb
+*.lock
+
 # Others
 *.pkc
 path to the Lib folder
@@ -92,3 +96,4 @@ path to the Lib folder
 *.qbs.user*
 *.qmlproject.user*
 build-*Qt*/
+*.qmake.stash

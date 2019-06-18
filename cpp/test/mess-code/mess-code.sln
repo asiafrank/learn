@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2003
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mess-code", "mess-code\mess-code.vcxproj", "{094FBD4D-D0E2-4C63-9ECD-A2EE1EBF7171}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "calc01", "..\..\qt-learn\calc01\calc01.vcxproj", "{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,12 @@ Global
 		{094FBD4D-D0E2-4C63-9ECD-A2EE1EBF7171}.Release|x64.Build.0 = Release|x64
 		{094FBD4D-D0E2-4C63-9ECD-A2EE1EBF7171}.Release|x86.ActiveCfg = Release|Win32
 		{094FBD4D-D0E2-4C63-9ECD-A2EE1EBF7171}.Release|x86.Build.0 = Release|Win32
+		{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}.Debug|x64.ActiveCfg = Debug|x64
+		{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}.Debug|x64.Build.0 = Debug|x64
+		{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}.Debug|x86.ActiveCfg = Debug|x64
+		{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}.Release|x64.ActiveCfg = Release|x64
+		{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}.Release|x64.Build.0 = Release|x64
+		{4DF67292-8BCC-3DD8-92CF-A1FBF1C6935E}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
