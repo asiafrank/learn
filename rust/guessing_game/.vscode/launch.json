@@ -45,9 +45,7 @@
             },
             "windows": {    // Windows 系统下的配置
                 "program": "${workspaceFolder}/target/debug/guessing_game.exe",
-                "MIMode": "gdb",
-                "miDebuggerPath": "gdb.exe",
-                "externalConsole": false,
+                "externalConsole": false
             }
         }
     ]

@@ -1,5 +1,5 @@
 [package]
-name = "exersice"
+name = "variables"
 version = "0.1.0"
 authors = ["asiafrank <zhangxfdev@gmail.com>"]
 edition = "2018"
