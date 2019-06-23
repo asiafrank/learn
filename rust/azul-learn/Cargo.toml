@@ -5,4 +5,4 @@ authors = ["asiafrank <zhangxfdev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-azul = { git = "https://github.com/maps4print/azul" }
+azul = { git = "https://github.com/maps4print/azul", rev = "26aa483aff609a335b24baa360873837627dc2de"}
