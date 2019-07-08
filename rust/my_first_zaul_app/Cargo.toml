@@ -1,9 +1,8 @@
 [package]
-name = "winit-learn"
+name = "my_first_zaul_app"
 version = "0.1.0"
 authors = ["asiafrank <zhangxfdev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-winit = "0.20.0-alpha1"
-image = "0.21"
+azul = { git = "https://github.com/maps4print/azul"}
