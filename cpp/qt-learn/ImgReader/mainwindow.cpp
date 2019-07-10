@@ -1,8 +1,9 @@
 #include "mainwindow.h"
 #include <QHBoxLayout>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QDialog(parent)
+    : QWidget(parent)
 {
     iniUI(); //界面创建与布局
     iniSignalSlots(); //信号与槽的关联
@@ -36,47 +37,92 @@ void MainWindow::setTextFontColor()
 
 }
 
+void MainWindow::openDir()
+{
+    QString dlgTitle="选择一个文件"; //对话框标题
+    QString dirName = QFileDialog::getExistingDirectory(this, dlgTitle, *basePath);
+    if (!dirName.isEmpty()) {
+        basePath->clear();
+        basePath->append(dirName); // 这里只是做个字符串变更的例子
+        fileListTree->setRootIndex(fileSystemModel->index(dirName));
+    }
+}
+
+void MainWindow::treeDoubleClicked(const QModelIndex &index)
+{
+    if (!index.isValid()) {
+        return;
+    }
+
+    QFileInfo fileInfo = fileSystemModel->fileInfo(index);
+    if (fileInfo.isDir()) {
+        QString filePath = fileInfo.filePath();
+        fileListTree->setRootIndex(fileSystemModel->index(filePath));
+    }
+}
+
 void MainWindow::iniUI()
 {
     //创建 Underline, Italic, Bold 3 个CheckBox，并水平布局
-    chkBoxUnder=new QCheckBox(tr("Underline"));
-    chkBoxItalic=new QCheckBox(tr("Italic"));
-    chkBoxBold=new QCheckBox(tr("Bold"));
-    QHBoxLayout *HLay1=new QHBoxLayout;
+    chkBoxUnder = new QCheckBox(tr("Underline"));
+    chkBoxItalic = new QCheckBox(tr("Italic"));
+    chkBoxBold = new QCheckBox(tr("Bold"));
+
+    QHBoxLayout *HLay1 = new QHBoxLayout;
     HLay1->addWidget(chkBoxUnder);
     HLay1->addWidget(chkBoxItalic);
     HLay1->addWidget(chkBoxBold);
+
     //创建 Black, Red, Blue 3 个RadioButton，并水平布局
-    rBtnBlack=new QRadioButton(tr("Black"));
+    rBtnBlack = new QRadioButton(tr("Black"));
     rBtnBlack->setChecked(true);
-    rBtnRed=new QRadioButton(tr("Red"));
-    rBtnBlue=new QRadioButton(tr("Blue"));
+    rBtnRed = new QRadioButton(tr("Red"));
+    rBtnBlue = new QRadioButton(tr("Blue"));
+
     QHBoxLayout *HLay2=new QHBoxLayout;
     HLay2->addWidget(rBtnBlack);
     HLay2->addWidget(rBtnRed);
     HLay2->addWidget(rBtnBlue);
+
     //创建确定, 取消, 退出3 个 PushButton, 并水平布局
-    btnOK=new QPushButton(tr("确定"));
-    btnCancel=new QPushButton(tr("取消"));
-    btnClose=new QPushButton(tr("退出"));
-    QHBoxLayout *HLay3=new QHBoxLayout;
+    btnOK = new QPushButton(tr("确定"));
+    btnCancel = new QPushButton(tr("取消"));
+    btnClose = new QPushButton(tr("退出"));
+    btnOpenDir = new QPushButton(tr("选择目录"));
+
+    QHBoxLayout *HLay3 = new QHBoxLayout;
     HLay3->addStretch();
     HLay3->addWidget(btnOK);
     HLay3->addWidget(btnCancel);
     HLay3->addStretch();
     HLay3->addWidget(btnClose);
+    HLay3->addWidget(btnOpenDir);
+
     //创建文本框,并设置初始字体
-    txtEdit=new QPlainTextEdit;
+    txtEdit = new QPlainTextEdit;
     txtEdit->setPlainText("Hello world\n\nIt is my demo");
-    QFont font=txtEdit->font(); //获取字体
+
+    QFont font = txtEdit->font(); //获取字体
     font.setPointSize(20);//修改字体大小
     txtEdit->setFont(font);//设置字体
+
+    basePath = new QString(QDir::currentPath());
+
+    fileSystemModel = new QFileSystemModel;
+    fileSystemModel->setRootPath(*basePath);
+
+    fileListTree = new QTreeView;
+    fileListTree->setModel(fileSystemModel);
+    fileListTree->setRootIndex(fileSystemModel->index(*basePath));
+
     //创建垂直布局，并设置为主布局
-    QVBoxLayout *VLay=new QVBoxLayout;
+    QVBoxLayout *VLay = new QVBoxLayout;
     VLay->addLayout(HLay1); //添加字体类型组
     VLay->addLayout(HLay2);//添加字体颜色组
     VLay->addWidget(txtEdit);//添加PlainTextEdit
     VLay->addLayout(HLay3);//添加按键组
+    VLay->addWidget(fileListTree);
+
     setLayout(VLay); //设置为窗体的主布局
 }
 
@@ -97,4 +143,8 @@ void MainWindow::iniSignalSlots()
     connect(btnOK,SIGNAL(clicked()),this,SLOT(accept()));
     connect(btnCancel,SIGNAL(clicked()),this,SLOT(reject()));
     connect(btnClose,SIGNAL(clicked()),this,SLOT(close()));
+    connect(btnOpenDir,SIGNAL(clicked()),this,SLOT(openDir()));
+    connect(fileListTree,SIGNAL(doubleClicked(const QModelIndex)),this,SLOT(treeDoubleClicked(const QModelIndex)));
+
+    // TODO: 双击文件夹，判断是否包含了图片列表，如果包含了图片列表，则用新的组件来打开第一张图片
 }
