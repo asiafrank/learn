@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include <QHBoxLayout>
 #include <QFileDialog>
+#include <QPixmap>
+#include <QImageReader>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
@@ -17,7 +20,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_chkBoxUnder(bool checked)
 {
-    QFont font=txtEdit->font();
+    QFont font = txtEdit->font();
     font.setUnderline(checked);
     txtEdit->setFont(font);
 }
@@ -40,10 +43,10 @@ void MainWindow::setTextFontColor()
 void MainWindow::openDir()
 {
     QString dlgTitle="选择一个文件"; //对话框标题
-    QString dirName = QFileDialog::getExistingDirectory(this, dlgTitle, *basePath);
+    QString dirName = QFileDialog::getExistingDirectory(this, dlgTitle, *currentDir);
     if (!dirName.isEmpty()) {
-        basePath->clear();
-        basePath->append(dirName); // 这里只是做个字符串变更的例子
+        currentDir->clear();
+        currentDir->append(dirName);
         fileListTree->setRootIndex(fileSystemModel->index(dirName));
     }
 }
@@ -58,6 +61,21 @@ void MainWindow::treeDoubleClicked(const QModelIndex &index)
     if (fileInfo.isDir()) {
         QString filePath = fileInfo.filePath();
         fileListTree->setRootIndex(fileSystemModel->index(filePath));
+        return;
+    }
+
+    if (fileInfo.isFile()) {
+        if (fileInfo.suffix() == "png" || fileInfo.suffix() == "jpg") {
+            QString path = fileInfo.path();
+            QString fullFileName = fileInfo.path() + "/" + fileInfo.fileName();
+            QImageReader reader(fullFileName);
+            reader.setAutoTransform(true);
+
+            const QImage image = reader.read();
+            imageLabel->setPixmap(QPixmap::fromImage(image));
+            imageLabel->show();
+            return;
+        }
     }
 }
 
@@ -106,24 +124,29 @@ void MainWindow::iniUI()
     font.setPointSize(20);//修改字体大小
     txtEdit->setFont(font);//设置字体
 
-    basePath = new QString(QDir::currentPath());
+    currentDir = new QString(QDir::currentPath());
 
     fileSystemModel = new QFileSystemModel;
-    fileSystemModel->setRootPath(*basePath);
+    fileSystemModel->setRootPath(*currentDir);
 
     fileListTree = new QTreeView;
     fileListTree->setModel(fileSystemModel);
-    fileListTree->setRootIndex(fileSystemModel->index(*basePath));
+    fileListTree->setRootIndex(fileSystemModel->index(*currentDir));
+
+    // imageLable
+    imageLabel = new QLabel;
+    imageLabel->hide();
 
     //创建垂直布局，并设置为主布局
-    QVBoxLayout *VLay = new QVBoxLayout;
-    VLay->addLayout(HLay1); //添加字体类型组
-    VLay->addLayout(HLay2);//添加字体颜色组
-    VLay->addWidget(txtEdit);//添加PlainTextEdit
-    VLay->addLayout(HLay3);//添加按键组
-    VLay->addWidget(fileListTree);
+    mainLayout = new QVBoxLayout;
+    mainLayout->addLayout(HLay1); //添加字体类型组
+    mainLayout->addLayout(HLay2);//添加字体颜色组
+    mainLayout->addWidget(txtEdit);//添加PlainTextEdit
+    mainLayout->addLayout(HLay3);//添加按键组
+    mainLayout->addWidget(fileListTree);
+    mainLayout->addWidget(imageLabel);
 
-    setLayout(VLay); //设置为窗体的主布局
+    setLayout(mainLayout); //设置为窗体的主布局
 }
 
 void MainWindow::iniSignalSlots()
@@ -146,5 +169,12 @@ void MainWindow::iniSignalSlots()
     connect(btnOpenDir,SIGNAL(clicked()),this,SLOT(openDir()));
     connect(fileListTree,SIGNAL(doubleClicked(const QModelIndex)),this,SLOT(treeDoubleClicked(const QModelIndex)));
 
-    // TODO: 双击文件夹，判断是否包含了图片列表，如果包含了图片列表，则用新的组件来打开第一张图片
+    // tab 使用见 https://doc.qt.io/qt-5/qtwidgets-dialogs-tabdialog-example.html
+    // TODO: 1.组件排版调整，两种页面(使用 tab)，第一个页面是 TreeView；第二个页面是 imageLabel
+    //       2.第一个页面功能：a.选择漫画收藏夹根路径，展示其下的所有漫画文件夹
+    //                     b.双击文件夹，进入第二个页面
+    //       3.第二个页面功能：a.左右翻页浏览图片； b.左翻到第一页，能进入上一个漫画的图片最后一页
+    //                     c.同样最后一页再右翻，就是下一个漫画的图片第一页
+    //                     d.显示 当前页/总页数，当前页从 1 开始
+    //       4.记录看过的漫画，下次打开时，点击继续按钮，从上一次关闭时的地方看起。
 }

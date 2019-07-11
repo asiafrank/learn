@@ -9,6 +9,8 @@
 #include <QPushButton>
 #include <QFileSystemModel>
 #include <QTreeView>
+#include <QVBoxLayout>
+#include <QLabel>
 
 class MainWindow : public QWidget
 {
@@ -26,9 +28,15 @@ private:
     QPushButton     *btnClose;
     QPushButton     *btnOpenDir;
 
+    // 当选择目录时，才展示
+    QLabel          *imageLabel;
+
     QFileSystemModel *fileSystemModel;
-    QString          *basePath;
+    QString          *currentDir;
     QTreeView        *fileListTree;
+
+    // 垂直布局，软件的主布局
+    QVBoxLayout      *mainLayout;
 
     void    iniUI();//UI 创建与初始化
     void    iniSignalSlots();//初始化信号与槽的链接
