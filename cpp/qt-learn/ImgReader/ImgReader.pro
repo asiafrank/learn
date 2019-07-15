@@ -25,10 +25,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        DirListTab.cpp \
+        ImgTab.cpp \
         main.cpp \
         mainwindow.cpp
 
 HEADERS += \
+        CustomTabStyle.h \
+        DirListTab.h \
+        ImgTab.h \
         mainwindow.h
 
 # Default rules for deployment.
