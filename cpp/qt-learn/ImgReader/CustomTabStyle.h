@@ -11,6 +11,8 @@ public:
         QSize s = QProxyStyle::sizeFromContents(type, option, size, widget);
         if (type == QStyle::CT_TabBarTab) {
             s.transpose();
+            s.rwidth() = 200;
+            s.rheight() = 200;
         }
         return s;
     }
@@ -20,6 +22,8 @@ public:
             if (const QStyleOptionTab* tab = qstyleoption_cast<const QStyleOptionTab*>(option)) {
                 QStyleOptionTab opt(*tab);
                 opt.shape = QTabBar::RoundedNorth;
+                opt.palette.setCurrentColorGroup(QPalette::Disabled);
+                opt.state |= QStyle::State_Sunken;
                 QProxyStyle::drawControl(element, &opt, painter, widget);
                 return;
             }

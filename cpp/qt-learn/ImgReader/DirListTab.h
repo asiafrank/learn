@@ -24,7 +24,7 @@ private slots:
     void treeDoubleClicked(const QModelIndex &index); // 文件夹列表-双击事件
 
 public:
-    explicit DirListTab(MainWindow *parent = nullptr);
+    explicit DirListTab(QTabWidget *parent = nullptr);
 
 signals:
 

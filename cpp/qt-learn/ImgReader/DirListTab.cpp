@@ -47,7 +47,7 @@ void DirListTab::treeDoubleClicked(const QModelIndex &index)
     }
 }
 
-DirListTab::DirListTab(MainWindow *parent) : QWidget(parent)
+DirListTab::DirListTab(QTabWidget *parent) : QWidget(parent)
 {
     this->parent = parent;
     // btnOpenDir 对应的 content fileListTree 设置

@@ -9,9 +9,12 @@
 #include <QVBoxLayout>
 #include <QLabel>
 
-class MainWindow : public QTabWidget
+class MainWindow : public QWidget
 {
     Q_OBJECT
+private:
+    QTabWidget *tabWidget;
+
 private:
     void    iniUI();//UI 创建与初始化
     void    iniSignalSlots();//初始化信号与槽的链接
