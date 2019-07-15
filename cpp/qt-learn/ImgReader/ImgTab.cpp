@@ -19,5 +19,10 @@ void ImgTab::changeImg(QString fullFileName)
     QImageReader reader(fullFileName);
     reader.setAutoTransform(true);
     const QImage image = reader.read();
-    imageLabel->setPixmap(QPixmap::fromImage(image));
+    QPixmap p = QPixmap::fromImage(image);
+
+    int w = imageLabel->width();
+    int h = imageLabel->height();
+
+    imageLabel->setPixmap(p.scaled(w, h, Qt::KeepAspectRatio));
 }

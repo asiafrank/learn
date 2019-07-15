@@ -6,6 +6,8 @@
 #include <QFileSystemModel>
 #include <QTreeView>
 
+#include "mainwindow.h"
+
 // 文件夹浏览表
 class DirListTab : public QWidget
 {
@@ -22,7 +24,7 @@ private slots:
     void treeDoubleClicked(const QModelIndex &index); // 文件夹列表-双击事件
 
 public:
-    explicit DirListTab(QTabWidget *parent = nullptr);
+    explicit DirListTab(MainWindow *parent = nullptr);
 
 signals:
 
