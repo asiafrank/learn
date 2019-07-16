@@ -15,10 +15,14 @@ class MainWindow : public QWidget
 private:
     QTabWidget *tabWidget;
 
+    QPushButton *listBtn;
+    QPushButton *imageBtn;
+
 private:
     void    iniUI();//UI 创建与初始化
     void    iniSignalSlots();//初始化信号与槽的链接
 private slots:
+    void    setCurrentIndex(int index);
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);

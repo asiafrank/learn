@@ -18,6 +18,10 @@ void DirListTab::openDir()
     }
 }
 
+
+// 双击文件：
+// 如果是文件夹，则以该文件夹为 root，展示其子文件
+// 如果是图片，则切换到“图像”展示该图像
 void DirListTab::treeDoubleClicked(const QModelIndex &index)
 {
     if (!index.isValid()) {
@@ -35,9 +39,6 @@ void DirListTab::treeDoubleClicked(const QModelIndex &index)
         if (fileInfo.suffix() == "png" || fileInfo.suffix() == "jpg") {
             QString path = fileInfo.path();
             QString fullFileName = fileInfo.path() + "/" + fileInfo.fileName();
-
-            int currentIndex = parent->currentIndex();
-            qDebug() << "currentIndex: " << currentIndex << "\n";
 
             ImgTab *imgTab = static_cast<ImgTab*>(parent->widget(1));
             imgTab->changeImg(fullFileName);
