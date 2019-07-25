@@ -1,19 +1,20 @@
-#include "mainwindow.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QPixmap>
 #include <QImageReader>
 #include <QAction>
-#include <QSignalMapper>
+
 #include <QDebug>
 
+#include "MainWindow.h"
 #include "DirListTab.h"
 #include "ImgTab.h"
 #include "CustomTabStyle.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent),
+      config(new Config)
 {
     iniUI(); //界面创建与布局
     iniSignalSlots(); //信号与槽的关联
@@ -25,8 +26,28 @@ MainWindow::~MainWindow()
 
 }
 
+// 退出清空资源
+void MainWindow::exit()
+{
+    delete config;
+}
+
 void MainWindow::iniUI()
 {
+    config->init();
+    int width = config->getWidth();
+    int height = config->getHeight();
+    QRect rec = config->getRect();
+
+    QSize newSize(width, height);
+    this->setWindowTitle("图片查看器");
+    this->setGeometry(QStyle::alignedRect(
+                          Qt::LeftToRight,
+                          Qt::AlignCenter,
+                          newSize,
+                          rec
+                      ));
+
     tabWidget = new QTabWidget;
     tabWidget->addTab(new DirListTab(tabWidget), "列表");
     tabWidget->addTab(new ImgTab(tabWidget), "图像");

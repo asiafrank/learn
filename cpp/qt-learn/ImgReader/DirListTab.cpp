@@ -7,9 +7,10 @@
 
 #include "ImgTab.h"
 
+// TODO: 收藏夹配置, 支持多个收藏夹
 void DirListTab::openDir()
 {
-    QString dlgTitle="选择一个文件"; //对话框标题
+    QString dlgTitle="选择一个文件夹"; //对话框标题
     QString dirName = QFileDialog::getExistingDirectory(this, dlgTitle, *currentDir);
     if (!dirName.isEmpty()) {
         currentDir->clear();
@@ -17,7 +18,6 @@ void DirListTab::openDir()
         fileListTree->setRootIndex(fileSystemModel->index(dirName));
     }
 }
-
 
 // 双击文件：
 // 如果是文件夹，则以该文件夹为 root，展示其子文件

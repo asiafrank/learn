@@ -9,6 +9,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 
+#include "Config.h"
+
 class MainWindow : public QWidget
 {
     Q_OBJECT
@@ -17,6 +19,8 @@ private:
 
     QPushButton *listBtn;
     QPushButton *imageBtn;
+
+    Config *config;
 
 private:
     void    iniUI();//UI 创建与初始化
@@ -27,6 +31,8 @@ private slots:
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+public slots:
+    void exit();
 };
 
 #endif // MAINWINDOW_H

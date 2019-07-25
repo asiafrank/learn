@@ -25,16 +25,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        Config.cpp \
         DirListTab.cpp \
         ImgTab.cpp \
-        main.cpp \
-        mainwindow.cpp
+        MainWindow.cpp \
+        main.cpp
 
 HEADERS += \
+        Config.h \
         CustomTabStyle.h \
         DirListTab.h \
         ImgTab.h \
-        mainwindow.h
+        MainWindow.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

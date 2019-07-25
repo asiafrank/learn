@@ -6,7 +6,7 @@
 #include <QFileSystemModel>
 #include <QTreeView>
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 // 文件夹浏览表
 class DirListTab : public QWidget
