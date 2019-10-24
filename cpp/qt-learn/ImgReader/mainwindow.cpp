@@ -7,7 +7,7 @@
 
 #include <QDebug>
 
-#include "MainWindow.h"
+#include "mainwindow.h"
 #include "DirListTab.h"
 #include "ImgTab.h"
 #include "CustomTabStyle.h"
@@ -74,6 +74,7 @@ void MainWindow::iniUI()
     mainLayout->setSpacing(0);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
+    // setStyleSheet("background:white");
     setLayout(mainLayout);
 }
 
