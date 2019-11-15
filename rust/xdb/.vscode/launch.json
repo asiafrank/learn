@@ -12,21 +12,9 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "program": "${workspaceFolder}/target/debug/exercise",
+            "program": "${workspaceFolder}/target/debug/xdb",
             "MIMode": "lldb",
             "externalConsole": true,
         }
-        // windows
-        // {
-        //     "name": "(Windows) Launch",
-        //     "type": "cppvsdbg",
-        //     "request": "launch",
-        //     "program": "${workspaceFolder}/target/debug/exercise.exe",
-        //     "args": [],
-        //     "stopAtEntry": false,
-        //     "cwd": "${workspaceFolder}",
-        //     "environment": [],
-        //     "externalConsole": true
-        // }
     ]
 }
