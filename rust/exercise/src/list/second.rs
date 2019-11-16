@@ -6,10 +6,7 @@ pub struct List {
     head: Link,
 }
 
-enum Link {
-    Empty,
-    More(Box<Node>),
-}
+type Link = Option<Box<Node>>;
 
 struct Node {
     elem: i32,
@@ -18,36 +15,33 @@ struct Node {
 
 impl List {
     pub fn new() -> Self {
-        List {head: Link::Empty}
+        List {head: None}
     }
 
     pub fn push(&mut self, elem: i32) {
         let new_node = Box::new(Node {
             elem: elem,
-            next: mem::replace(&mut self.head, Link::Empty),
+            next: mem::replace(&mut self.head, None),
         });
 
-        self.head = Link::More(new_node);
+        self.head = Some(new_node);
     }
 
     pub fn pop(&mut self) -> Option<i32> {
-        match mem::replace(&mut self.head, Link::Empty) {
-            Link::Empty => None,
-            Link::More(boxed_node) => {
-                let node = *boxed_node;
-                self.head = node.next;
-                Some(node.elem)
-            }
-        }
+        self.head.take().map(|node| {
+            let node = *node;
+            self.head = node.next;
+            node.elem
+        })
     }
 }
 
 impl Drop for List {
     fn drop(&mut self) {
-        let mut cur_link = mem::replace(&mut self.head, Link::Empty);
+        let mut cur_link = mem::replace(&mut self.head, None);
         // `while let` == “在这个模式不匹配之前持续循环”
-        while let Link::More(mut boxed_node) = cur_link {
-            cur_link = mem::replace(&mut boxed_node.next, Link::Empty);
+        while let Some(mut boxed_node) = cur_link {
+            cur_link = mem::replace(&mut boxed_node.next, None);
             // boxed_node在这里退出作用域然后被丢弃；
             // 但是其节点的`next`字段被设置为 Link::Empty
             // 所以没有多层递归产生。
