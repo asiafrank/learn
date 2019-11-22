@@ -92,5 +92,11 @@ fn set_action(pair: &Pair) {
 
 /// get：从文件中获取 value
 fn get_action(pair: &Pair) {
-    read_record_bytes(&pair.key);
+    match read_record_bytes(&pair.key) {
+        Ok(v) => {
+            let s = String::from_utf8_lossy(&v);
+            println!("{}", s);
+        },
+        Err(e) => eprintln!("{}", e),
+    }
 }

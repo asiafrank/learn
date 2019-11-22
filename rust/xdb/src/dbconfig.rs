@@ -57,19 +57,23 @@ pub fn write_record_bytes(record_bytes: &Vec<u8>) {
     DBFILE.lock().unwrap().write_all(record_bytes.as_ref()).unwrap();
 }
 
-pub fn read_record_bytes(key: &str) {
+// TODO: get abc 实验，返回 123
+pub fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
     use std::io::Read;
-    // TODO: seek文件，找出key
+    let mut f = DBFILE.lock().unwrap();
+
     let mut seeked_bytes_num: u64 = 0;
     let mut current_total_size: u64 = 0;
     let mut current_key_size: u16 = 0;
-    let mut f = DBFILE.lock().unwrap();
+    let mut current_value_size: u32 = 0;
 
     let mut total_size_buf = [0; 8];
     let mut key_size_buf = [0; 2];
-    loop {
+    let mut value_size_buf = [0; 4];
+    let x = loop {
+        println!("loop...... {}", key);
         match f.seek(SeekFrom::Start(seeked_bytes_num)) {
-            Ok(_) => {
+            Ok(m) => {
                 // 找 total size
                 f.read_exact(&mut total_size_buf);
                 current_total_size = unsafe {
@@ -93,28 +97,42 @@ pub fn read_record_bytes(key: &str) {
                 // key content 比较
                 if key_bytes_size == current_key_size {
                     let mut is_match = true;
-                    let mut index = 0;
-                    while index < key_bytes_size {
+                    let mut index: usize = 0;
+                    while index < key_bytes_size as usize {
+                        let k0 = key_bytes[index];
+                        let k1 = key_buf[index];
+
+                        println!("loop...... {}, {}", k0, k1);
+
                         if key_bytes[index] != key_buf[index] {
                             is_match = false;
                             break
                         }
+                        index = index + 1;
                     }
 
                     if is_match { // key 匹配，则查找 value
-                        // TODO: 查找 value
                         // 获取 value size
+                        f.read_exact(&mut value_size_buf);
+                        current_value_size = unsafe {
+                            transmute::<[u8; 4], u32>(value_size_buf)
+                        };
 
                         // 获取 value content
+                        let mut value_buf: Vec<u8> = Vec::with_capacity(current_value_size as usize);
+                        let mut value_handle = f.by_ref().take(current_value_size as u64);
+                        value_handle.read_to_end(&mut value_buf);
 
+                        break Ok(value_buf)
                     }
                 }
             },
             Err(e) => {
                 eprintln!("{}", e);
-                break;
+                break Err(String::from("Nothing found"));
             }
         }
         seeked_bytes_num = seeked_bytes_num + current_total_size;
-    }
+    };
+    x
 }
