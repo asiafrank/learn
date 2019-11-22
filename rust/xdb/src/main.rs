@@ -20,6 +20,9 @@ use cmds::action;
 fn main() {
     config_init();
     println!("Well come to xdb!");
-    let cmd_line = get_cmd_line();
-    action(&cmd_line);
+
+    loop {
+        let cmd_line = get_cmd_line();
+        action(&cmd_line);
+    }
 }

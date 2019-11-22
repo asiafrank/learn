@@ -58,7 +58,7 @@ impl CmdLine {
 
         let key = match it.next() {
             Some(x) => x,
-            None => return Err(String::from("key not exists")),
+            None => "",
         };
 
         let value = match it.next() {

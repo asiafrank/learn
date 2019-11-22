@@ -11,6 +11,7 @@ lazy_static! {
         let mut set = HashSet::new();
         set.insert("set");
         set.insert("get");
+        set.insert("exit");
         set
     };
 }
@@ -21,6 +22,7 @@ pub fn action(cmd_line: &CmdLine) {
     match command {
         "set" => set_action(&cmd_line.pair),
         "get" => get_action(&cmd_line.pair),
+        "exit" => exit_action(),
         _ => eprintln!("not command found and no action")
     }
 }
@@ -108,32 +110,32 @@ fn write_record_bytes(record_bytes: &Vec<u8>) {
     DBFILE.lock().unwrap().write_all(record_bytes.as_ref()).unwrap();
 }
 
-// TODO: get abc 实验，返回 123
 /// 通过 key 获取 value
 fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
     use std::io::Read;
     let mut f = DBFILE.lock().unwrap();
+    let db_file_size = f.metadata().unwrap().len();
 
     let mut seeked_bytes_num: u64 = 0;
-    let mut current_total_size: u64 = 0;
-    let mut current_key_size: u16 = 0;
-    let mut current_value_size: u32 = 0;
+    let mut current_total_size: u64;
+    let mut current_key_size: u16;
+    let current_value_size: u32;
 
     let mut total_size_buf = [0; 8];
     let mut key_size_buf = [0; 2];
     let mut value_size_buf = [0; 4];
     let rs = loop {
-        println!("loop...... {}", key);
+        println!("loop...... {}", seeked_bytes_num);
         match f.seek(SeekFrom::Start(seeked_bytes_num)) {
-            Ok(m) => {
+            Ok(_) => {
                 // 找 total size
-                f.read_exact(&mut total_size_buf);
+                f.read_exact(&mut total_size_buf).unwrap();
                 current_total_size = unsafe {
                     transmute::<[u8; 8], u64>(total_size_buf)
                 };
 
                 // 找 key size
-                f.read_exact(&mut key_size_buf);
+                f.read_exact(&mut key_size_buf).unwrap();
                 current_key_size = unsafe {
                     transmute::<[u8; 2], u16>(key_size_buf)
                 };
@@ -141,7 +143,7 @@ fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
                 // 获取 key content
                 let mut key_buf: Vec<u8> = Vec::with_capacity(current_key_size as usize);
                 let mut handle = f.by_ref().take(current_key_size as u64);
-                handle.read_to_end(&mut key_buf);
+                handle.read_to_end(&mut key_buf).unwrap();
 
                 let key_bytes = key.as_bytes();
                 let key_bytes_size = key_bytes.len() as u16;
@@ -165,7 +167,7 @@ fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
 
                     if is_match { // key 匹配，则查找 value
                         // 获取 value size
-                        f.read_exact(&mut value_size_buf);
+                        f.read_exact(&mut value_size_buf).unwrap();
                         current_value_size = unsafe {
                             transmute::<[u8; 4], u32>(value_size_buf)
                         };
@@ -173,7 +175,7 @@ fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
                         // 获取 value content
                         let mut value_buf: Vec<u8> = Vec::with_capacity(current_value_size as usize);
                         let mut value_handle = f.by_ref().take(current_value_size as u64);
-                        value_handle.read_to_end(&mut value_buf);
+                        value_handle.read_to_end(&mut value_buf).unwrap();
 
                         break Ok(value_buf)
                     }
@@ -185,6 +187,15 @@ fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
             }
         }
         seeked_bytes_num = seeked_bytes_num + current_total_size;
+        if seeked_bytes_num >= db_file_size {
+            break Err(String::from("File ending"))
+        }
     };
     rs
+}
+
+fn exit_action() {
+    // DB 退出，这里做些收尾工作
+    use std::process;
+    process::exit(0x0100);
 }

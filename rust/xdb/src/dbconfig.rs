@@ -5,7 +5,6 @@ use std::sync::Mutex;
 use config::*;
 use std::fs;
 use std::io::{ErrorKind};
-use std::mem::transmute;
 
 //pub static VERSION: &str = "version";
 pub static DBFILE_KEY: &str = "dbfile";
