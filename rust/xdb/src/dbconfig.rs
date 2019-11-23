@@ -13,6 +13,7 @@ lazy_static! {
     static ref DBCONFIG: RwLock<Config> = RwLock::new(Config::default());
 
     // 全局 DB 文件
+    // TODO: 使用 OpenOptions 分读写两个 file 实例
     pub static ref DBFILE: Mutex<fs::File> = {
         // 打开 db 二进制文件
         let db_file_name = match get_string(DBFILE_KEY) {
