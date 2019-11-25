@@ -1,6 +1,6 @@
 use std::collections::{HashSet};
 use crate::cmd_line::{CmdLine, Pair};
-use crate::dbconfig::{DBFILE};
+use crate::dbconfig::{get_db_file_write_instance, get_db_file_read_instance};
 use std::mem::transmute;
 use std::io::{SeekFrom,Seek};
 
@@ -107,13 +107,13 @@ fn get_action(pair: &Pair) {
 /// 将字节码存入文件
 fn write_record_bytes(record_bytes: &Vec<u8>) {
     use std::io::Write;
-    DBFILE.lock().unwrap().write_all(record_bytes.as_ref()).unwrap();
+    get_db_file_write_instance().write_all(record_bytes.as_ref()).unwrap();
 }
 
 /// 通过 key 获取 value
 fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
     use std::io::Read;
-    let mut f = DBFILE.lock().unwrap();
+    let mut f = get_db_file_read_instance();
     let db_file_size = f.metadata().unwrap().len();
 
     let mut seeked_bytes_num: u64 = 0;
