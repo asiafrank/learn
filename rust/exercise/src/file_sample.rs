@@ -1,12 +1,13 @@
-use std::fs::File;
+use std::fs::{File};
 use std::io::prelude::*;
 use std::io::{Error, ErrorKind};
 
 /// 文件读写例子
 
 pub fn file_sample() {
-    file_write_1().unwrap();
-    open_with_option();
+//    file_write_1().unwrap();
+//    open_with_option();
+    read_lines();
 }
 
 /// 简单的文件写
@@ -33,6 +34,7 @@ fn file_write_1() -> Result<(), Error> {
 }
 
 /// 使用 OpenOptions 灵活读写
+/// TODO: 尝试并发读写都用同一个 file 实例
 fn open_with_option() {
     use std::fs::OpenOptions;
     let mut write = OpenOptions::new().read(true)
@@ -51,4 +53,24 @@ fn open_with_option() {
     let mut contents = String::new();
     read.read_to_string(&mut contents).unwrap();
     println!("contents: {}", contents);
+}
+
+/// 使用 BufReader 读文件
+fn read_lines() {
+    use std::io::BufReader;
+
+    let file = File::open("foo.txt").unwrap();
+    let mut reader = BufReader::new(file);
+    let mut buf = String::new();
+    let mut line_number = 0;
+    loop {
+        let bytes_num = reader.read_line(&mut buf).unwrap();
+        println!("bytes_num={}", bytes_num);
+        if bytes_num == 0 { // EOF
+            break
+        }
+        print!("{}: {}", line_number, buf);
+        buf.clear(); // read_line 是对 String 的追加操作，因此这里需要 clear
+        line_number = line_number + 1;
+    }
 }

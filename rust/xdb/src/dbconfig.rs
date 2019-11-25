@@ -8,19 +8,22 @@ use std::fs::OpenOptions;
 
 //pub static VERSION: &str = "version";
 pub static DBFILE_KEY: &str = "dbfile";
+pub static DBINDEX_FILE_KEY: &str = "dbindex_file";
 
 lazy_static! {
     static ref DBCONFIG: RwLock<Config> = RwLock::new(Config::default());
 
     // 全局 DB 写文件
-    static ref DBFILE_WRITE: Mutex<fs::File> = init_mutex_db_file_write();
+    pub static ref DBFILE_WRITE: Mutex<fs::File> = init_mutex_db_file_write();
+
+    pub static ref DBINDEX_WRITE: Mutex<fs::File> = init_mutex_index_file_write();
 }
 
+//--- 存储文件 dbfile 相关, 该文件操作见 dbfile.rs --------------
+
+/// 获取 db_file_name
 fn get_db_file_name() -> String {
-    get_string(DBFILE_KEY).unwrap_or_else(|e| {
-        eprintln!("{}", e);
-        String::from("xdb_default.bin")
-    })
+    get_string(DBFILE_KEY).unwrap()
 }
 
 /// 只在 lazy_static! 调用一次
@@ -52,6 +55,38 @@ pub fn get_db_file_read_instance() -> fs::File {
         .open(db_file_name)
         .unwrap()
 }
+
+//------ 索引文件 index_file 相关 -------
+
+fn get_db_index_name() -> String {
+    get_string(DBINDEX_FILE_KEY).unwrap()
+}
+
+/// 只在 lazy_static! 调用一次
+/// 初始化 DBINDEX_WRITE
+pub fn init_mutex_index_file_write() -> Mutex<fs::File> {
+    let dbindex_file_name = get_db_file_name();
+    // 打开二进制文件
+    let write_file = OpenOptions::new()
+        .read(true)
+        .append(true)
+        .create(true)
+        .open(dbindex_file_name)
+        .unwrap();
+    Mutex::new(write_file)
+}
+
+/// 获取只读文件实例，无锁
+pub fn get_db_index_read_instance() -> fs::File {
+    let dbindex_file_name = get_db_file_name();
+
+    OpenOptions::new()
+        .read(true)
+        .open(dbindex_file_name)
+        .unwrap()
+}
+
+//------ 其他辅助方法 -----
 
 /// 系统配置初始化，在 main 中调用
 pub fn config_init() {

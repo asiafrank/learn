@@ -111,6 +111,7 @@ fn write_record_bytes(record_bytes: &Vec<u8>) {
 }
 
 /// 通过 key 获取 value
+/// TODO: 尝试使用 std::io::Cursor 来替代 Seek
 fn read_record_bytes(key: &str) -> Result<Vec<u8>, String> {
     use std::io::Read;
     let mut f = get_db_file_read_instance();

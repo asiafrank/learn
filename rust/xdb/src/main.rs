@@ -5,19 +5,20 @@ extern crate config;
 mod dbconfig;
 mod cmds;
 mod cmd_line;
+mod dbfile;
+mod dbindex;
 
 use dbconfig::config_init;
 use cmd_line::get_cmd_line;
 use cmds::action;
 
-// TODO: 避免大量 match 嵌套 https://kaisery.github.io/trpl-zh-cn/ch09-02-recoverable-errors-with-result.html
-
 // TODO: 实现 p72 页 最简单的 DB
-//       1.维护 set get 命令
-//       2.追加写入文件，key，value二进制存储，key大小|key|value大小|value 这样的格式
+//       1.维护 set get 命令 √
+//       2.追加写入文件，key，value二进制存储，key大小|key|value大小|value 这样的格式 √
 //       3.维护索引文件，启动时加载，定时刷盘
 //       4.实现预写日志
 //       5.使用 tokio 提供网络服务
+//       6.实现 SSTable
 
 fn main() {
     config_init();

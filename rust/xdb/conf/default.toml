@@ -1,2 +1,5 @@
 version = "1.0.0"
+# db 存储文件
 dbfile = "xdb.bin"
+# 索引文件, in 后缀是指 index
+dbindex_file = "xdb.in"
