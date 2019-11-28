@@ -7,7 +7,7 @@ use std::io::{Error, ErrorKind};
 pub fn file_sample() {
 //    file_write_1().unwrap();
 //    open_with_option();
-    read_lines();
+//    read_lines();
 }
 
 /// 简单的文件写

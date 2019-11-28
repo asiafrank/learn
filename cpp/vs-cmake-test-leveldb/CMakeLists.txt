@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.8)
 # 项目名称
 project(UseLevelDB)
 
+set(CMAKE_CXX_STANDARD 11)
 set(INC_DIR /Users/asiafrank/workspace/leveldb/include)
 # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath -Wl,/usr/local/lib") #新加行，编译选项，添加库路径
 

@@ -5,3 +5,4 @@ authors = ["asiafrank <zhangxfdev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+ssh2 = "0.5"

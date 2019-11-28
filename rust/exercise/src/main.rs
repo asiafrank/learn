@@ -1,3 +1,5 @@
+extern crate ssh2;
+
 mod variable;
 mod slice;
 mod struct_object;
@@ -7,6 +9,7 @@ mod linked_list;
 mod list;
 mod byte_sample;
 mod file_sample;
+mod ssh_sample;
 
 fn main() {
     variable::mutable_variable();
@@ -21,4 +24,6 @@ fn main() {
 
     let x = 23;
     println!("{}", x);
+
+    ssh_sample::ssh_example_1();
 }
