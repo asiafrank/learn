@@ -20,8 +20,8 @@ lazy_static! {
 pub fn action(cmd_line: &CmdLine) {
     let command = cmd_line.command.as_str();
     match command {
-        "set" => set_action(&cmd_line.pair),
-        "get" => get_action(&cmd_line.pair),
+        "set"  => set_action(&cmd_line.pair),
+        "get"  => get_action(&cmd_line.pair),
         "exit" => exit_action(),
         _ => eprintln!("not command found and no action")
     }

@@ -1,6 +1,9 @@
 use std::fs::{File};
 use std::io::prelude::*;
 use std::io::{Error, ErrorKind};
+use std::thread;
+use std::time::Duration;
+use std::thread::JoinHandle;
 
 /// 文件读写例子
 
@@ -37,22 +40,49 @@ fn file_write_1() -> Result<(), Error> {
 /// TODO: 尝试并发读写都用同一个 file 实例
 fn open_with_option() {
     use std::fs::OpenOptions;
-    let mut write = OpenOptions::new().read(true)
-                                     .append(true)
-                                     .create(true)
-                                     .open("foo.txt").unwrap();
+    let mut handles = Vec::new();
 
-    write.write_all(b"hahhaahah").unwrap_or_else(|error| {
-        println!("{}", error)
-    });
+    for i in 1..3 {
+        let handle = thread::spawn(move || {
+            let id = i;
+            println!("write_s {}", id);
 
-    let mut read = OpenOptions::new().read(true)
-                                     .open("foo.txt")
-                                     .unwrap();
+            let mut buf = format!("thread={}\n", id);
+            let mut write = OpenOptions::new().read(true)
+                                              .append(true)
+                                              .create(true)
+                                              .open("foo.txt").unwrap();
 
-    let mut contents = String::new();
-    read.read_to_string(&mut contents).unwrap();
-    println!("contents: {}", contents);
+            thread::sleep(Duration::from_millis(100));
+
+            write.write_all(buf.as_ref()).unwrap_or_else(|error| {
+                println!("{}", error)
+            });
+            println!("write {}", id);
+            thread::sleep(Duration::from_millis(100));
+        });
+        handles.push(handle);
+    }
+
+    for i in 1..100 {
+        let handle = thread::spawn(move || {
+            let mut read = OpenOptions::new().read(true)
+                                             .open("foo.txt")
+                                             .unwrap();
+
+            let mut contents = String::new();
+            read.read_to_string(&mut contents).unwrap();
+            thread::sleep(Duration::from_millis(1));
+            println!("read {}", i);
+
+            println!("contents: {}", contents);
+        });
+        handles.push(handle);
+    }
+
+    for h in handles {
+        h.join().unwrap();
+    }
 }
 
 /// 使用 BufReader 读文件

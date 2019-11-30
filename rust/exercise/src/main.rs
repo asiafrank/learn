@@ -10,6 +10,7 @@ mod list;
 mod byte_sample;
 mod file_sample;
 mod ssh_sample;
+mod concurrency;
 
 fn main() {
     variable::mutable_variable();
@@ -25,5 +26,6 @@ fn main() {
     let x = 23;
     println!("{}", x);
 
-    ssh_sample::ssh_example_1();
+//    ssh_sample::ssh_example_1();
+//    concurrency::concurrency_example();
 }

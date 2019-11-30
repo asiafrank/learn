@@ -1,10 +1,12 @@
 // db 全局配置
 
-use std::sync::RwLock;
+use std::sync::{RwLock, Arc};
 use std::sync::{Mutex,MutexGuard};
 use config::*;
 use std::fs;
 use std::fs::OpenOptions;
+
+type ShareFile = Mutex<fs::File>;
 
 //pub static VERSION: &str = "version";
 pub static DBFILE_KEY: &str = "dbfile";
@@ -14,9 +16,9 @@ lazy_static! {
     static ref DBCONFIG: RwLock<Config> = RwLock::new(Config::default());
 
     // 全局 DB 写文件
-    pub static ref DBFILE_WRITE: Mutex<fs::File> = init_mutex_db_file_write();
+    pub static ref DBFILE_WRITE: ShareFile = init_mutex_db_file_write();
 
-    pub static ref DBINDEX_WRITE: Mutex<fs::File> = init_mutex_index_file_write();
+    pub static ref DBINDEX_WRITE: ShareFile = init_mutex_index_file_write();
 }
 
 //--- 存储文件 dbfile 相关, 该文件操作见 dbfile.rs --------------
@@ -28,7 +30,7 @@ fn get_db_file_name() -> String {
 
 /// 只在 lazy_static! 调用一次
 /// 初始化 DBFILE_WRITE
-fn init_mutex_db_file_write() -> Mutex<fs::File> {
+fn init_mutex_db_file_write() -> ShareFile {
     let db_file_name = get_db_file_name();
 
     // 打开 db 二进制文件
@@ -50,6 +52,7 @@ pub fn get_db_file_write_instance() -> MutexGuard<'static, fs::File> {
 pub fn get_db_file_read_instance() -> fs::File {
     let db_file_name = get_db_file_name();
 
+    // FIXME: 如果多线程，则请维护一个 读文件 句柄池(线程安全队列)
     OpenOptions::new()
         .read(true)
         .open(db_file_name)
@@ -64,7 +67,7 @@ fn get_db_index_name() -> String {
 
 /// 只在 lazy_static! 调用一次
 /// 初始化 DBINDEX_WRITE
-pub fn init_mutex_index_file_write() -> Mutex<fs::File> {
+pub fn init_mutex_index_file_write() -> ShareFile {
     let dbindex_file_name = get_db_file_name();
     // 打开二进制文件
     let write_file = OpenOptions::new()
