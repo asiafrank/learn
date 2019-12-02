@@ -37,6 +37,23 @@ public final class Sorts {
         return a;
     }
 
+    // 自写版本 1
+    // 原址排序，所以返回值为 void
+    public static void insertSort1(int[] a) {
+        int len = a.length;
+        int j = 1;
+        while (j < len) {
+            int i = j - 1;
+            int key = a[j];
+            while (i >= 0 && key < a[i]) {
+                a[i+1] = a[i]; // 排好序的往后移
+                i--;
+            }
+            a[i+1] = key;
+            j++;
+        }
+    }
+
     //------------------------
     // 归并排序
     //------------------------

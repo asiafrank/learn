@@ -4,29 +4,29 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "(lldb) Launch",
-            "request": "launch",
-            "type": "cppdbg",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "program": "${workspaceFolder}/target/debug/exercise",
-            "MIMode": "lldb",
-            "externalConsole": true,
-        }
-        // windows
         // {
-        //     "name": "(Windows) Launch",
-        //     "type": "cppvsdbg",
+        //     "name": "(lldb) Launch",
         //     "request": "launch",
-        //     "program": "${workspaceFolder}/target/debug/exercise.exe",
+        //     "type": "cppdbg",
         //     "args": [],
         //     "stopAtEntry": false,
         //     "cwd": "${workspaceFolder}",
         //     "environment": [],
-        //     "externalConsole": true
+        //     "program": "${workspaceFolder}/target/debug/exercise",
+        //     "MIMode": "lldb",
+        //     "externalConsole": true,
         // }
+        // windows
+        {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/exercise.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true
+        }
     ]
 }
