@@ -1,4 +1,4 @@
-// TODO: 索引文件的维护
+// TODO: 索引文件的维护, 面向对象写
 
 use crate::dbconfig::{get_db_index_read_instance, get_db_file_read_instance};
 use std::sync::RwLock;
@@ -106,7 +106,21 @@ fn bytes_to_u64(buf: &[u8]) -> u64 {
 
 #[test]
 fn test_take_bytes() {
-    let mut f = File::open("conf/default.toml").unwrap();
+    use std::env;
+    use std::path::PathBuf;
+
+    // 拼接绝对路径
+    let mut path = match env::current_dir() {
+        Ok(p) => p,
+        _ => {
+            let mut path = PathBuf::new();
+            path.push(r"");
+            path
+        }
+    };
+    path.push("conf/default.toml");
+
+    let mut f = File::open(path).unwrap();
     let mut buf = Vec::new();
     let bytes_num = take_bytes(&mut f, &mut buf, 17);
 
