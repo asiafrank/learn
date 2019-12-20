@@ -21,4 +21,10 @@ public class Tools {
             System.out.println();
         }
     }
+
+    public static void printArray(int[] a) {
+        for (int value : a) {
+            System.out.print(value + " ");
+        }
+    }
 }
