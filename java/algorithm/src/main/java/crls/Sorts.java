@@ -130,4 +130,60 @@ public final class Sorts {
             }
         }
     }
+
+    //-------- 快速排序 ------
+
+    /**
+     * 快速排序
+     *
+     *
+     *
+     * @param a 数组
+     * @param p 数组开始下标
+     * @param r 数组结束下标
+     */
+    public static void quickSort(int[] a, int p, int r) {
+        if (p >= r) return;
+
+        int q = partition(a, p, r);
+        quickSort(a, p, q - 1);
+        quickSort(a, q + 1, r);
+    }
+
+    /**
+     * 快速排序-分区
+     *
+     * i = p - 1
+     * 主元：x = a[r]
+     * p 到 i - 1 表示 <= x 的部分
+     * i + 1 到 j - 1 表示 > x 的部分
+     * j 为当前比较的元素下标
+     *
+     * 1. 比较 a[j] 与 x，如果 a[j] <= x，a[j] 与 a[i+1] 交换
+     *
+     * @param a 数组
+     * @param p 开始下标
+     * @param r 结束下标
+     * @return 当前下标
+     */
+    private static int partition(int[] a, int p, int r) {
+        int i = p - 1;
+        int j = p;
+        int x = a[r];
+
+        for (; j < r; j++) {
+            if (a[j] <= x) {
+                int t = a[j];
+                a[j] = a[i + 1];
+                a[i + 1] = t;
+                i++;
+            }
+        }
+
+        int t = a[i + 1];
+        a[i + 1] = a[r];
+        a[r] = t;
+        return i + 1;
+    }
 }
+
