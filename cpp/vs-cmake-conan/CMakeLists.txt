@@ -25,3 +25,19 @@ add_executable(ConanExample main.cpp ${DIR_ROOT_SRCS})
 
 # 添加链接库
 target_link_libraries(ConanExample PrinterLib ${CONAN_LIBS})
+
+################################
+# GTest
+################################
+add_subdirectory(googletest)
+enable_testing()
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+
+################################
+# Unit Tests
+################################
+# Add test cpp file
+add_executable( runUnitTests test/test.cpp )
+# Link test executable against gtest & gtest_main
+target_link_libraries(runUnitTests gtest gtest_main)
+add_test( runUnitTests runUnitTests )

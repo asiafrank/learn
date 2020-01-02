@@ -14,6 +14,11 @@ void HeapSortTest();
 void PrinterTest();
 void printArray(int a[], int len);
 
+// build 目录下
+// 安装依赖：conan install ..
+// 编译：cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release 或 -DCMAKE_BUILD_TYPE=Debug
+//      cmake --build .
+// 如果按 debug 编译，则 VSCode 中按 F5 debug 调试
 int main() {
     InsertSortTest();
     MergeSortTest();

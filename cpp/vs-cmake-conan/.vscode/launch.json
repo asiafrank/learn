@@ -8,7 +8,7 @@
             "name": "(lldb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${command:cmake.launchTargetPath}",
+            "program": "${workspaceFolder}/build/bin/ConanExample",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
