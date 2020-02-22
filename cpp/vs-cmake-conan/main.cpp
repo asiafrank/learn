@@ -32,6 +32,19 @@ int main() {
     ds << "abcdefghijklmnopqrstuvwxyz";
     ds.close();
     std::cout << Poco::DigestEngine::digestToHex(md5.digest()) << std::endl;
+
+    double cash = 92174.25;
+    double delta = 4320.0;
+    double total = 0;
+    for (int i = 0; i < 12; ++i) {
+        total += cash;
+        cash -= delta;
+    }
+    double t = total / 12;
+    double rs = t * 15;
+    std::cout << "total: " << total << std::endl;
+    std::cout << "total / 12: " << t << std::endl;
+    std::cout << "rs: " << rs << std::endl;
     return 0;
 }
 

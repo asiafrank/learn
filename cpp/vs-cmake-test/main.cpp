@@ -13,6 +13,13 @@ void HeapSortTest();
 void PrinterTest();
 void printArray(int a[], int len);
 
+static const uint32_t kMaskDelta = 0xa282ead8ul;
+
+inline uint32_t Unmask(uint32_t masked_crc) {
+    uint32_t rot = masked_crc - kMaskDelta;
+    return ((rot >> 17) | (rot << 15));
+}
+
 int main() {
     InsertSortTest();
     MergeSortTest();
@@ -22,6 +29,14 @@ int main() {
     // PrinterTest();
 
     std::cout << "hahah" << std::endl;
+    int64_t kTableMagicNumber = 0xdb4775248b80fb57ull;
+    std::cout << kTableMagicNumber << std::endl;
+
+    uint32_t masked_crc = 897624450;
+    // rot = -1828864342
+    uint32_t crc = Unmask(masked_crc);
+    std::cout << kMaskDelta << std::endl;
+    std::cout << crc << std::endl;
     return 0;
 }
 
