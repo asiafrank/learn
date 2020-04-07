@@ -34,3 +34,20 @@ fn match2(x: &SpreadsheetCell) {
         _ => println!("enum others")
     }
 }
+
+pub fn vector_sort() {
+    let mut v: Vec<String> = Vec::new();
+
+    let size = 10;
+    for i in 0..size {
+        let s = format!("log_{:04}", size - i);
+        println!("{}", s);
+        v.push(s);
+    }
+
+    println!("========");
+    v.sort();
+    for x in v {
+        println!("{}", x);
+    }
+}

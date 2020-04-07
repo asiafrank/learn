@@ -1,5 +1,7 @@
 extern crate ssh2;
 
+use std::fs;
+
 mod variable;
 mod slice;
 mod struct_object;

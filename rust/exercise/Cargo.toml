@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 ssh2 = "0.5"
+futures = "0.3.4"
