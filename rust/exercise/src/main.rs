@@ -1,6 +1,12 @@
 extern crate ssh2;
+#[macro_use]
+extern crate slog;
+extern crate slog_term;
+extern crate slog_async;
 
 use std::fs;
+use std::fs::OpenOptions;
+use slog::Drain;
 
 mod variable;
 mod slice;
@@ -30,4 +36,20 @@ fn main() {
 
 //    ssh_sample::ssh_example_1();
 //    concurrency::concurrency_example();
+
+    let log_path = "target/your_log_file_path.log";
+    let file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(log_path)
+        .unwrap();
+
+    let decorator = slog_term::PlainDecorator::new(file);
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+
+    let _log = slog::Logger::root(drain, o!());
+
+    info!(_log, "formatted: {}", 1; "log-key" => true);
 }
