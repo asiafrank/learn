@@ -1,16 +1,17 @@
-use std::fs::{File};
+use std::{env, thread};
+use std::fs::File;
+use std::io::{Error, ErrorKind, SeekFrom};
 use std::io::prelude::*;
-use std::io::{Error, ErrorKind};
-use std::thread;
+use std::path::PathBuf;
+use std::thread::{JoinHandle, sleep};
 use std::time::Duration;
-use std::thread::JoinHandle;
 
 /// 文件读写例子
 
 pub fn file_sample() {
 //    file_write_1().unwrap();
 //    open_with_option();
-//    read_lines();
+//     read_lines();
 }
 
 /// 简单的文件写
