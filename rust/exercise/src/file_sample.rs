@@ -1,17 +1,17 @@
-use std::{env, thread};
-use std::fs::File;
-use std::io::{Error, ErrorKind, SeekFrom};
+use std::fs::{File};
 use std::io::prelude::*;
-use std::path::PathBuf;
-use std::thread::{JoinHandle, sleep};
+use std::io::{Error, ErrorKind};
+use std::{thread, fs};
 use std::time::Duration;
+use std::thread::JoinHandle;
 
 /// 文件读写例子
 
 pub fn file_sample() {
 //    file_write_1().unwrap();
 //    open_with_option();
-//     read_lines();
+//    read_lines();
+// iter_files();
 }
 
 /// 简单的文件写
@@ -103,5 +103,14 @@ fn read_lines() {
         print!("{}: {}", line_number, buf);
         buf.clear(); // read_line 是对 String 的追加操作，因此这里需要 clear
         line_number = line_number + 1;
+    }
+}
+
+fn iter_files() {
+    let paths = fs::read_dir(".").unwrap();
+    for path in paths {
+        if let Some(s) = path.unwrap().path().to_str() {
+            println!("Name: {}", s);
+        }
     }
 }

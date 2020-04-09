@@ -6,3 +6,7 @@ edition = "2018"
 
 [dependencies]
 ssh2 = "0.5"
+futures = "0.3.4"
+slog = { version = "2.5.0" , features = ["max_level_trace", "release_max_level_warn"] }
+slog-term = "2.5.0"
+slog-async = "2.5.0"
