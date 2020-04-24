@@ -3,6 +3,7 @@ extern crate ssh2;
 extern crate slog;
 extern crate slog_term;
 extern crate slog_async;
+extern crate futures_timer;
 
 use std::fs;
 use std::fs::OpenOptions;
