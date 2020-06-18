@@ -53,4 +53,11 @@ fn main() {
     let _log = slog::Logger::root(drain, o!());
 
     info!(_log, "formatted: {}", 1; "log-key" => true);
+
+    let mut num: u64 = 12665987562875263;
+    let mut x;
+    for i in 0..8 {
+        x = num >> (8 * (7 - i));
+        println!("num{}={}", i, x as u8);
+    }
 }

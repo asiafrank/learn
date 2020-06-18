@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 ssh2 = "0.5"
-futures = { version = "0.3.4", features = ["thread-pool"]}
 slog = { version = "2.5.0" , features = ["max_level_trace", "release_max_level_warn"] }
 slog-term = "2.5.0"
 slog-async = "2.5.0"
+futures = { version = "0.3.4", features = ["thread-pool"]}
 futures-timer = "3.0.2"
