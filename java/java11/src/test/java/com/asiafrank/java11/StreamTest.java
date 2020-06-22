@@ -2,10 +2,7 @@ package com.asiafrank.java11;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -14,6 +11,18 @@ import java.util.stream.Stream;
  * https://zhuanlan.zhihu.com/p/92321454
  */
 public class StreamTest {
+
+    @Test
+    public void flatMapTest() {
+        Set<Integer> s1 = Set.of(1, 2, 3, 4, 5);
+        Set<Integer> s2 = Set.of(2, 3, 4, 8, 9, 10);
+        Set<Integer> s3 = Set.of(5, 6, 7, 8);
+
+        Set<Integer> collect = Stream.of(s1, s2, s3)
+                                     .flatMap(Collection::stream)
+                                     .collect(Collectors.toSet());
+        System.out.println(collect);
+    }
 
     /**
      * 筛选出长度为4的名字,用逗号分隔
