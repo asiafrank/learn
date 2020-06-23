@@ -51,8 +51,8 @@ public class Q146_LRUCache {
     static class LRUCache {
         private final int capacity;
 
-        private Node head;
-        private Node tail;
+        private final Node head;
+        private final Node tail;
 
         private final Map<Integer, Node> map = new HashMap<>();
 
@@ -74,11 +74,13 @@ public class Q146_LRUCache {
 
         public LRUCache(int capacity) {
             this.capacity = capacity;
+            // 头尾固定，避免判断 null 值
             this.head = new Node();
             this.tail = new Node();
+            head.next = tail;
+            tail.prev = head;
         }
 
-        // TODO：修正
         public int get(int key) {
             Node node = map.get(key);
             if (node == null) {
@@ -89,58 +91,59 @@ public class Q146_LRUCache {
                 return node.value;
             }
 
-            // 将节点放入尾部
-            if (head == node) { // 如果是 head 则将下一个节点设为 head
-                Node next = head.next;
-                head = next;
-                if (next != null) {
-                    next.prev = null;
-                }
-            }
-            Node prev = node.prev;
-            Node next = node.next;
-            tail.next = node;
-            node.prev = tail;
-            node.next = null;
-            tail = node;
-
-            // 将 prev 与 next 连接
-            if (prev != null) {
-                prev.next = next;
-            }
-            if (next != null) {
-                next.prev = prev;
-            }
+            moveToEnd(node);
             return node.value;
         }
 
         public void put(int key, int value) {
+            Node node = map.get(key);
             if (map.size() == capacity) {
-                Node node = map.get(key);
                 if (Objects.isNull(node)) { // put 的是 map 中不存在的，剔除最久未使用的
-                    Node next = head.next;
-                    map.remove(head.key);
-                    if (next != null) {
-                        next.prev = null;
-                    }
-                    head = next;
+                    removeStart();
                 } // else put 的是 map 中存在的，则无需剔除最久的
             }
-            Node n = new Node();
-            n.key = key;
-            n.value = value;
 
-            n.prev = tail;
-            n.next = null;
-            if (tail != null) {
-                tail.next = n;
+            if (node == null) {
+                Node n = new Node();
+                n.key = key;
+                n.value = value;
+                appendToEnd(n);
+                map.put(key, n);
+            } else {
+                node.value = value;
+                moveToEnd(node);
             }
+        }
 
-            if (head == null) {
-                head = n;
-            }
-            tail = n;
-            map.put(key, n);
+        private void moveToEnd(Node node) {
+            Node prev = node.prev;
+            Node next = node.next;
+            prev.next = next;
+            next.prev = prev;
+
+            appendToEnd(node);
+        }
+
+        // 将节点放入尾部
+        private void appendToEnd(Node node) {
+            Node prev = tail.prev;
+            prev.next = node;
+            node.prev = prev;
+
+            node.next = tail;
+            tail.prev = node;
+        }
+
+        // 移除第一个
+        private void removeStart() {
+            Node needToRemove = head.next;
+            Node next = needToRemove.next;
+            head.next = next;
+            next.prev = head;
+
+            map.remove(needToRemove.key);
+            needToRemove.next = null;
+            needToRemove.prev = null;
         }
     }
 }

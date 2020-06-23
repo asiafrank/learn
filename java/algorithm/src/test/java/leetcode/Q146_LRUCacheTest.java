@@ -53,7 +53,7 @@ public class Q146_LRUCacheTest {
         cache.put(1, 1);
         cache.put(2, 3);
         cache.put(4, 1);
-        Assertions.assertEquals(1, cache.get(1));
+        Assertions.assertEquals(-1, cache.get(1));
         Assertions.assertEquals(3, cache.get(2));
     }
 }
