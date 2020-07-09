@@ -1,5 +1,6 @@
 
 extern crate raft;
+extern crate grpcio;
 
 #[cfg(test)]
 mod tests {
