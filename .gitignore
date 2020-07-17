@@ -71,6 +71,7 @@ build
 # Others
 *.pkc
 path to the Lib folder
+out
 
 # latex
 *.aux
