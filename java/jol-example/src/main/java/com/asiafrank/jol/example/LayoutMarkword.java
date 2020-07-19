@@ -12,5 +12,4 @@ public class LayoutMarkword {
 
         System.out.println(VM.current().details());
         System.out.println(ClassLayout.parseInstance(o).toPrintable());
-    }
 }
