@@ -36,3 +36,16 @@
 - [maps.go](maps.go)
 - [map-literals.go](map-literals.go)
 - [map-literals-continued.go](map-literals-continued.go)
+- [mutating-maps.go](mutating-maps.go)
+- [exercise-maps.go](exercise-maps.go)
+- [function-values.go](function-values.go)
+- [function-closures.go](function-closures.go)
+- [exercise-fibonacci-closure.go](exercise-fibonacci-closure.go)
+
+- [methods.go](methods.go)
+- [methods-func.go](methods-func.go)
+- [methods-continued.go](methods-continued.go)
+- [methods-pointers-explained.go](methods-pointers-explained.go)
+
+- [indirection.go](indirection.go)
+- [indirection-values.go](indirection-values.go)
