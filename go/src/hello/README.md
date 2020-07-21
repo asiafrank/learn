@@ -46,6 +46,35 @@
 - [methods-func.go](methods-func.go)
 - [methods-continued.go](methods-continued.go)
 - [methods-pointers-explained.go](methods-pointers-explained.go)
+- [methods-with-pointer-receivers.go](methods-with-pointer-receivers.go)
 
 - [indirection.go](indirection.go)
 - [indirection-values.go](indirection-values.go)
+
+- [interfaces.go](interfaces.go)
+- [interface-values.go](interface-values.go)
+- [interface-values-with-nil.go](interface-values-with-nil.go)
+- [empty-interface.go](empty-interface.go)
+
+- [type-assertions.go](type-assertions.go)
+- [type-switches.go](type-switches.go)
+- [stringer.go](stringer.go)
+- [exercise-stringer.go](exercise-stringer.go)
+
+
+- [errors.go](errors.go)
+- [exercise-errors.go](exercise-errors.go)
+
+- [reader.go](reader.go)
+- [exercise-reader.go](exercise-reader.go)
+- [exercise-rot-reader.go](exercise-rot-reader.go)
+
+- [goroutines.go](goroutines.go)
+- [channels.go](channels.go)
+- [range-and-close.go](range-and-close.go)
+- [select.go](select.go)
+- [default-selection.go](default-selection.go)
+- [exercise-equivalent-binary-trees.go](exercise-equivalent-binary-trees.go)
+- [mutex-counter.go](mutex-counter.go)
+
+- [exercise-web-crawler.go](exercise-web-crawler.go)
