@@ -1,0 +1,31 @@
+
+host: 127.0.0.1
+port: 22
+user: root
+# 不需要密码，注释即可
+password: root
+
+# 如果需要通过私钥登录则声明
+# 不需要则注释即可
+identify:
+  filePath: "~/.ssh/id_rsa"
+  passphrase: root
+
+# 如果不需要跳板机，则注释
+jumpServer:
+  enable: true
+  host: 127.0.0.2
+  port: 6000
+  user: root2
+  password: root2
+  # 跳板机也可能需要私钥登录
+  identify:
+    filePath: "~/.ssh/id_rsa2"
+    passphrase: root2
+
+# scp 传文件配置
+scp:
+  localFilePath: /root/hello.txt
+  destFilePath: /root/hello2.txt
+  permission: 0600
+
