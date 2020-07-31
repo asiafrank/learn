@@ -9,6 +9,8 @@ import com.asiafrank.demo.core.dao.SampleDAO;
 import com.asiafrank.demo.core.model.Sample;
 import com.asiafrank.demo.core.vo.SampleVO;
 
+import java.util.List;
+
 @Repository("sampleDAO")
 public class SampleDAOImpl extends AbstractDAO<Sample, SampleVO, Long> implements SampleDAO {
     @Autowired
@@ -22,5 +24,10 @@ public class SampleDAOImpl extends AbstractDAO<Sample, SampleVO, Long> implement
     @Override
     protected String getNamespace() {
         return "sampleDAO";
+    }
+
+    @Override
+    public List<Sample> findForUpdate() {
+        return getSqlSessionTemplate().selectList(getNamespace() + ".findForUpdate");
     }
 }

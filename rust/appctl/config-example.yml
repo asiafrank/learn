@@ -1,0 +1,7 @@
+
+file_path: x.jar
+
+start: nohup java -Dspring.profiles.active=dev -jar x.jar > xxx.out 2>&1 &
+
+output_file: xxx.out
+output_end_flag: Started MainWebStartup

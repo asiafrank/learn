@@ -5,6 +5,10 @@ extern crate slog_term;
 extern crate slog_async;
 extern crate futures_timer;
 
+extern crate csv;
+extern crate serde;
+extern crate chrono;
+
 use std::fs;
 use std::fs::OpenOptions;
 use slog::Drain;

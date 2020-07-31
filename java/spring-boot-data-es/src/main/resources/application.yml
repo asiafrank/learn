@@ -6,7 +6,7 @@ spring:
     driverClassName: com.mysql.cj.jdbc.Driver
     username: asiafrank
     password: 123456
-    url: jdbc:mysql://127.0.0.1:3306/test?serverTimezone=Asia/Shanghai&allowMultiQueries=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false&useUnicode=true&queryTimeoutKillsConnection=true
+    url: jdbc:mysql://127.0.0.1:3306/test?allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&allowMultiQueries=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false&useUnicode=true&queryTimeoutKillsConnection=true
   hikari:
     maximumPoolSize: 3
     minimumIdle: 1

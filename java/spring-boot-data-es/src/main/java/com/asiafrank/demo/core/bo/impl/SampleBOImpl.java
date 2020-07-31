@@ -10,7 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 @Service("sampleBO")
 public class SampleBOImpl extends AbstractBO<Sample, SampleVO, Long> implements SampleBO {
@@ -25,7 +26,16 @@ public class SampleBOImpl extends AbstractBO<Sample, SampleVO, Long> implements 
     @Transactional
     @Override
     public void take() {
-        List<Sample> samples = find();
-        System.out.println(samples.size());
+        Sample s = new Sample();
+        s.setName("插入时间实验");
+        s.setDescription("插入时间实验");
+        sampleDAO.insert(s);
+        System.out.println("insert time," + LocalDateTime.now());
+        try {
+            TimeUnit.MINUTES.sleep(5L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("transaction end time," + LocalDateTime.now());
     }
 }
