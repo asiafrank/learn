@@ -26,6 +26,7 @@ public class A1B1C1ChannelExample {
     private static final BlockingQueue<Boolean> channel_2_1 = new ArrayBlockingQueue<>(1);
 
     public static void main(String[] args) {
+        long start = System.currentTimeMillis();
         Thread t1 = new Thread(()->{
             // 打印 26 字母
             for (int i = 0; i < 26; i++) {
@@ -53,5 +54,9 @@ public class A1B1C1ChannelExample {
 
         t1.start();
         t2.start();
+
+        long end = System.currentTimeMillis();
+        long delta = end - start;
+        System.out.println("\ndelta=" + delta + "ms");
     }
 }
