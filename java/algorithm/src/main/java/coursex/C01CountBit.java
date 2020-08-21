@@ -1,7 +1,7 @@
 package coursex;
 
 /**
- * 4.输出二进制1的个数
+ * 4.输出二进制1的个数 (Hamming Weight, 汉明权重)
  * 如：5 二进制是 0101 则个数是 2
  * @author zhangxiaofan 2020/08/19-10:58
  */
@@ -9,6 +9,7 @@ public class C01CountBit {
     public static void main(String[] args) {
         countBit1();
         countBit2();
+        countBit3();
     }
 
     /*
@@ -39,6 +40,20 @@ public class C01CountBit {
             int onlyOne = a & (~a + 1);
             count++;
             a ^= onlyOne; // 去除 onlyOne
+        }
+        System.out.println(count);
+    }
+
+    /*
+     n & (n - 1) 能直接消除最右边的 1
+     所以，不断消除 1，直到 变成 0 为止
+     */
+    private static void countBit3() {
+        int a = -5;
+        int count = 0;
+        while (a != 0) {
+            a = a & (a - 1);
+            count++;
         }
         System.out.println(count);
     }
