@@ -15,7 +15,7 @@
     <groovy>2.5.0-rc-1</groovy>
     <python>2.7.0</python>
     <jna>4.5.1</jna>
-    <junit>4.12</junit>
+    <junit>4.13.1</junit>
   </properties>
 
   <build>
