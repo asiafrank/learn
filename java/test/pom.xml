@@ -10,7 +10,7 @@
 
   <properties>
     <servlet.version>3.1.0</servlet.version>
-    <junit.version>4.12</junit.version>
+    <junit.version>4.13.1</junit.version>
     <tika.version>1.19.1</tika.version>
   </properties>
 
