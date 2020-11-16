@@ -16,6 +16,11 @@ public class C12ReverseStack {
         }
     }
 
+    /**
+     * 1.每踢出一个栈底
+     * 2.再调用 reverseStack 下一层继续
+     * 3.将这个栈底塞入 stack (最外面一层的方法，是栈顶)
+     */
     private static void reverseStack(Stack<Integer> stack) {
         if (stack.isEmpty())
             return;
@@ -25,7 +30,7 @@ public class C12ReverseStack {
         stack.add(i);
     }
 
-    // 将底提出栈，并最终返回
+    // 将底踢出栈，并最终返回
     private static Integer f(Stack<Integer> stack) {
         Integer pop = stack.pop();
         if (stack.isEmpty())
