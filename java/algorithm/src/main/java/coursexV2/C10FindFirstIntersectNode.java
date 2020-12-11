@@ -21,9 +21,94 @@ import coursexV2.util.Node;
  *    3）环一样，但是两个链表入环点不一样（环节点不相等）
  *       loop1 和 loop2 一个不动，另一个绕一圈，loop1 和 loop2 会相遇
  *
- * leetcode 有原题
+ * LeetCode 有原题
  */
 public class C10FindFirstIntersectNode {
+
+    /**
+     * 主方法：
+     * 1. 判断两个链表是否有环
+     * 2. 分三种情况讨论
+     * @return 相交第一个 Node, 如果为 null，则表示不相交
+     */
+    public static Node findFirstIntersectNode(Node head1, Node head2) {
+        Node loopNode1 = getLoopNode(head1);
+        Node loopNode2 = getLoopNode(head2);
+
+        // 两链表无环情况
+        if (loopNode1 == null && loopNode2 == null) {
+            return noLoop(head1, head2);
+        }
+
+        // 两链表 其中一个有环，必定不相交
+        if (loopNode1 == null || loopNode2 == null) {
+            return null;
+        }
+
+        // 两链表 两个都有环。bothLoop 三种子情况
+        if (loopNode1 == loopNode2) { // 环节点相等, case 2）
+            // 以这个环节点作为 end 节点
+            //    1. 遍历 head1, head2 直到 end 节点，计算两者长度，差为 k
+            //    2. 在从头开始遍历，长的链表先走 k 步，然后一起走。
+            //    3. 如果相遇，则这个相遇点，就是第一个交点
+            Node end = loopNode1;
+            Node p1 = head1;
+            int M = 0;
+            while (p1 != end) {
+                p1 = p1.next;
+                M++;
+            }
+
+            Node p2 = head2;
+            int N = 0;
+            while (p2 != end) {
+                p2 = p2.next;
+                N++;
+            }
+
+            int k = 0;
+            Node longNode;
+            Node shortNode;
+            if (M > N) {
+                longNode = head1;
+                shortNode = head2;
+                k = M - N;
+            } else {
+                longNode = head2;
+                shortNode = head1;
+                k = N - M;
+            }
+
+            // 长链表先走k步
+            while (k > 0) {
+                longNode = longNode.next;
+                k--;
+            }
+
+            while (longNode != shortNode) {
+                longNode = longNode.next;
+                shortNode = shortNode.next;
+            }
+            return longNode; // longNode 与 shortNode 相遇的节点
+        } else { // case 1）, case 3） 判断
+            // loopNode1 绕圈
+            //     遇到 loopNode2，则是 case 3）
+            //     遇到 loopNode1(回到原点)，则是 case 1)
+            Node p1 = loopNode1;
+            while (true) {
+                p1 = p1.next;
+                if (p1 == loopNode1) { // 绕了一圈，都没遇到 loopNode2，则无相交
+                    return null;
+                }
+
+                if (p1 == loopNode2) { // 绕了一圈，遇到 loopNode2，有相交，返回 loopNode1, loopNode2 均可以
+                    break;
+                }
+            }
+        }
+        return null;
+    }
+
 
     /**
      * 快慢指针
