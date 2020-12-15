@@ -1,7 +1,6 @@
 package com.asiafrank.util;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.*;
 
 public class Printer {
     public static void printStackWithNoChange(Deque<Integer> stack) {
@@ -33,5 +32,13 @@ public class Printer {
         }
         sb.append("]");
         System.out.println(sb.toString());
+    }
+
+    public static void printColl(Collection<String> list) {
+        System.out.println("[");
+        for (String s : list) {
+            System.out.println(s);
+        }
+        System.out.println("]");
     }
 }
