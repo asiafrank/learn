@@ -39,12 +39,49 @@ public class C01LongestIncreasingSubsequence {
         return max;
     }
 
-    // 二分查找解法, patience game 的纸牌排序，patience sorting
+    /**
+     * 二分查找解法, patience game 的纸牌排序，patience sorting
+     *  O(nlog(n))
+     * 只能把点数⼩的牌压到点数⽐它⼤的牌上。
+     * 如果当前牌点数较⼤没有可以放 置的堆，则新建⼀个堆，把这张牌放进去。
+     * 如果当前牌有多个堆可供选择， 则选择最左边的堆放置。
+     *
+     * @param nums 牌组
+     * @return 牌堆个数，即最大上升子序列长度
+     */
+    public static int lengthOfLIS(int[] nums) {
+        int[] top = new int[nums.length]; // 牌堆放置的地方, 每个元素是堆顶牌大小
+        int piles = 0; // 牌堆数量设置 0
 
+        for (int i = 0; i < nums.length; i++) {
+            int poker = nums[i]; // 牌
+            // 二分查找应该放置到哪个牌堆, 左边界二分查找
+            int left = 0, right = piles;
+            while (left < right) {
+                int mid = (left + right) / 2;
+                if (top[mid] < poker) {
+                    right = mid;
+                } else if (top[mid] > poker) {
+                    left = mid + 1;
+                } else if (top[mid] == poker) { // 相等
+                    right = mid;
+                }
+            }
+
+            // 没找到合适的牌堆，新建⼀堆
+            if (left == piles) piles++;
+            // 把这张牌放到牌堆顶
+            top[left] = poker;
+        }
+        return piles;
+    }
 
     public static void main(String[] args) {
         int[] nums = new int[]{10, 9, 2, 5, 3, 7, 101, 18};
         int lis = lis(nums);
         System.out.println(lis);
+
+        int lis2 = lengthOfLIS(nums);
+        System.out.println(lis2);
     }
 }
