@@ -12,6 +12,8 @@ public class C01CoinChange {
     /**
      * coins 中是可选硬币面值，amount 是目标金额
      * 暴力递归
+     * O(k * n ^ k)
+     * k 为 coins 个数，n 为 amount 个数
      */
     static int coinChange(int[] coins, int amount) {
         if (amount == 0)
@@ -33,6 +35,7 @@ public class C01CoinChange {
     /**
      * dp 表
      * dp[i] = c; 含义是 amount = i 时，最小的凑硬币数量为 c
+     * O(nk)
      */
     static int coinChangeDp(int[] coins, int amount) {
         if (amount == 0)
