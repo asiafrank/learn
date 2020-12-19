@@ -1,5 +1,7 @@
 package coursex;
 
+import com.asiafrank.util.Printer;
+
 /**
  * 从左往右尝试模型
  * <p>
@@ -10,7 +12,7 @@ package coursex;
  * 你装的物品不能超过这个重量。
  * 返回你能装下最多的价值是多少?
  */
-public class C13Bag {
+public class C13Knapsack {
 
     /**
      * 暴力递归处理 01 背包
@@ -20,7 +22,7 @@ public class C13Bag {
      * @param bagWeight 背包容量
      * @return 背包所能装下的最大价值
      */
-    public static int bag1(int[] weight, int[] value, int bagWeight) {
+    public static int knapsack1(int[] weight, int[] value, int bagWeight) {
         return recursive(weight, value, 0, bagWeight);
     }
 
@@ -57,44 +59,69 @@ public class C13Bag {
 
     /**
      * 动态规划，自底向上
+     *
+     * 为什么 dp[0][bagWeight] 是解？
+     *   因为递归方法中，第一层的求解调用就是 (0, bagWeight)，
+     *   递归调用结束时，最后一个计算的就是 (0, bagWeight) 的解
+     *
+     * 为什么 i 的循环是 i-- 倒着遍历的？
+     *   因为递归方法中，i 层的解，依赖 i + 1 层的解。
+     *   也就是说，i 的解由 i + 1 层的解计算得到的。
+     *   dp数组本质是用制表法，重现递归的递推过程，
+     *   所以倒着遍历
+     *
      * @param weight    重量数组
      * @param value     价值数组
      * @param bagWeight 背包容量
      * @return 背包所能装下的最大价值
      */
-    public static int bag2(int[] weight, int[] value, int bagWeight) {
+    public static int knapsack2(int[] weight, int[] value, int bagWeight) {
         if (bagWeight <= 0)
             return 0;
 
         // dp[i][X] = V 含义 以 i 为止的物品放入 X 重量的背包，最大能装 V 价值
-        int[][] dp = new int[weight.length][bagWeight + 1];
-        for (int i = 0; i < weight.length; i++) {
-            dp[i][0] = 0;
-        }
+        int[][] dp = new int[weight.length + 1][bagWeight + 1];
 
-        for (int i = 1; i < weight.length; i++) {
+        for (int i = weight.length - 1; i >= 0; i--) {
             for (int bw = 1; bw <= bagWeight; bw++) {
                 int w = weight[i];
                 int rest = bw - w;
                 if (rest < 0) { // 物品重量大于背包重量，则无法选择
-                    dp[i][bw] = dp[i - 1][bw];
+                    dp[i][bw] = dp[i + 1][bw];
                 } else {
-                    // 不选择: dp[i - 1][bw]
-                    // 选择：dp[i][bw - w] + value[i]
+                    // 不选择: dp[i + 1][bw]
+                    // 选择：dp[i + 1][bw - w] + value[i]
                     // 哪个大取哪个
-                    dp[i][bw] = Math.max(dp[i - 1][bw], dp[i][bw - w] + value[i]);
+                    dp[i][bw] = Math.max(dp[i + 1][bw], dp[i + 1][bw - w] + value[i]);
                 }
             }
         }
-        return dp[weight.length - 1][bagWeight];
+
+        //Printer.print2DArray(dp); // 打印看看表格
+        return dp[0][bagWeight];
     }
 
     public static void main(String[] args) {
+        test1();
+        test2();
+    }
+
+    private static void test1() {
         int[] weight = new int[]{1, 2, 3, 4, 5};
         int[] value = new int[]{1, 2, 3, 4, 5};
         int bag = 6; // [2,4] 是最大
-        int v = bag1(weight, value, bag);
-        int v2 = bag2(weight, value, bag);
+        int v = knapsack1(weight, value, bag);
+        int v2 = knapsack2(weight, value, bag);
+        System.out.println(v);
+        System.out.println(v2);
+    }
+
+    private static void test2() {
+        int[] weight = new int[]{3, 2, 4, 7};
+        int[] value = new int[]{5, 6, 3, 19};
+        int bag = 11;
+        int v = knapsack1(weight, value, bag);
+        int v2 = knapsack2(weight, value, bag);
         System.out.println(v);
         System.out.println(v2);
     }
