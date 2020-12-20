@@ -33,6 +33,8 @@ public class C13Knapsack {
      * 2.不选择当前物品时，计算 rest 的最大价值
      * 3.上面两者取最大值
      *
+     * 每一层，选与不选 2 个选择，所以复杂度为 O(2^n)
+     *
      * @param weight 重量数组
      * @param value  价值数组
      * @param i      当前物品编号。数组下标
@@ -59,6 +61,8 @@ public class C13Knapsack {
 
     /**
      * 动态规划，自底向上
+     *
+     * O(nW)
      *
      * 为什么 dp[0][bagWeight] 是解？
      *   因为递归方法中，第一层的求解调用就是 (0, bagWeight)，

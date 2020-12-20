@@ -10,7 +10,7 @@ public class Q28_ImplementStrStr {
 
     /**
      * KMP 匹配字符串
-     *
+     * O(N)
      * @param str   需要匹配的串
      * @param match 模式串
      * @return 返回匹配的第一个字符
@@ -49,6 +49,7 @@ public class Q28_ImplementStrStr {
     }
 
     // 求 next 数组
+    // O(M)
     private int[] getNextArray(char[] matchArr) {
         int[] next = new int[matchArr.length];
         next[0] = -1;

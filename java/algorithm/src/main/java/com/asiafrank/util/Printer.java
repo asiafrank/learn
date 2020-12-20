@@ -60,5 +60,19 @@ public class Printer {
             }
         }
         print2DArray(arr);
+
+        System.out.println();
+
+        // 斜着遍历2
+        for (int i = 1; i < n; i++) {
+            int row = 0;
+            int col = i;
+            while (row < n && col < n) {
+                arr[row][col]++;
+                row++;
+                col++;
+            }
+        }
+        print2DArray(arr);
     }
 }

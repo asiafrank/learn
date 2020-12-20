@@ -55,6 +55,8 @@ public class C13CardInLine {
         return Math.min(chooseLeft, chooseRight);
     }
 
+    // TODO: dp做法
+
     public static void main(String[] args) {
         int[] cards = new int[] {1, 100, 4};
         int winMaxValue = cardInLine(cards);
