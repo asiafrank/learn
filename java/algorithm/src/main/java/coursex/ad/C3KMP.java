@@ -9,7 +9,7 @@ public class C3KMP {
 
     public static int indexOf(String s, String m) {
         if (s == null || m == null || s.isEmpty() || m.isEmpty())
-            return 0;
+            return -1;
 
         char[] str = s.toCharArray();
         char[] match = m.toCharArray();
