@@ -11,3 +11,8 @@ spring:
       host: 127.0.0.1
       port: 6379
 #      password: HZhhdd1209
+
+# 被 HBase 使用
+zkAddress: hbase01.kada.com:2181
+zkUserName: root
+zkPassword: root

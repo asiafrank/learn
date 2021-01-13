@@ -16,6 +16,7 @@
 
     <properties>
         <java.version>11</java.version>
+        <alihbase-client.version>2.0.8</alihbase-client.version>
     </properties>
 
     <dependencies>
@@ -33,6 +34,12 @@
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.hbase</groupId>
+            <artifactId>alihbase-client</artifactId>
+            <version>${alihbase-client.version}</version>
         </dependency>
 
         <dependency>

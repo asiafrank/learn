@@ -1,0 +1,366 @@
+{
+  "type": "job",
+  "steps": [
+    {
+      "stepType": "odps",
+      "parameter": {
+        "partition": [],
+        "datasource": "odps_first",
+        "column": [
+          "userid",
+          "paidall1",
+          "paidall3",
+          "paidall7",
+          "paidall14",
+          "paidall30",
+          "paidall60",
+          "unpaidall1",
+          "unpaidall3",
+          "unpaidall7",
+          "unpaidall14",
+          "unpaidall30",
+          "unpaidall60",
+          "paidcompilation1",
+          "paidcompilation3",
+          "paidcompilation7",
+          "paidcompilation14",
+          "paidcompilation30",
+          "paidcompilation60",
+          "unpaidcompilation1",
+          "unpaidcompilation3",
+          "unpaidcompilation7",
+          "unpaidcompilation14",
+          "unpaidcompilation30",
+          "unpaidcompilation60",
+          "paidvip1",
+          "paidvip3",
+          "paidvip7",
+          "paidvip14",
+          "paidvip30",
+          "paidvip60",
+          "unpaidvip1",
+          "unpaidvip3",
+          "unpaidvip7",
+          "unpaidvip14",
+          "unpaidvip30",
+          "unpaidvip60",
+          "paidwallet1",
+          "paidwallet3",
+          "paidwallet7",
+          "paidwallet14",
+          "paidwallet30",
+          "paidwallet60",
+          "unpaidwallet1",
+          "unpaidwallet3",
+          "unpaidwallet7",
+          "unpaidwallet14",
+          "unpaidwallet30",
+          "unpaidwallet60",
+          "usersubscribe",
+          "datacreationdate"
+        ],
+        "emptyAsNull": false,
+        "table": "configuring_user_classification_info_temp"
+      },
+      "name": "Reader",
+      "category": "reader"
+    },
+    {
+      "stepType": "hbase",
+      "parameter": {
+        "mode": "normal",
+        "walFlag": "true",
+        "hbaseVersion": "11x",
+        "rowkeyColumn": [
+          {
+            "index": "0",
+            "type": "string"
+          }
+        ],
+        "nullMode": "skip",
+        "column": [
+          {
+            "name": "info:paidAll1",
+            "index": "1",
+            "type": "string"
+          },
+          {
+            "name": "info:paidAll3",
+            "index": "2",
+            "type": "string"
+          },
+          {
+            "name": "info:paidAll7",
+            "index": "3",
+            "type": "string"
+          },
+          {
+            "name": "info:paidAll14",
+            "index": "4",
+            "type": "string"
+          },
+          {
+            "name": "info:paidAll30",
+            "index": "5",
+            "type": "string"
+          },
+          {
+            "name": "info:paidAll60",
+            "index": "6",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidAll1",
+            "index": "7",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidAll3",
+            "index": "8",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidAll7",
+            "index": "9",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidAll14",
+            "index": "10",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidAll30",
+            "index": "11",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidAll60",
+            "index": "12",
+            "type": "string"
+          },
+          {
+            "name": "info:paidCompilation1",
+            "index": "13",
+            "type": "string"
+          },
+          {
+            "name": "info:paidCompilation3",
+            "index": "14",
+            "type": "string"
+          },
+          {
+            "name": "info:paidCompilation7",
+            "index": "15",
+            "type": "string"
+          },
+          {
+            "name": "info:paidCompilation14",
+            "index": "16",
+            "type": "string"
+          },
+          {
+            "name": "info:paidCompilation30",
+            "index": "17",
+            "type": "string"
+          },
+          {
+            "name": "info:paidCompilation60",
+            "index": "18",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidCompilation1",
+            "index": "19",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidCompilation3",
+            "index": "20",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidCompilation7",
+            "index": "21",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidCompilation14",
+            "index": "22",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidCompilation30",
+            "index": "23",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidCompilation60",
+            "index": "24",
+            "type": "string"
+          },
+          {
+            "name": "info:paidVip1",
+            "index": "25",
+            "type": "string"
+          },
+          {
+            "name": "info:paidVip3",
+            "index": "26",
+            "type": "string"
+          },
+          {
+            "name": "info:paidVip7",
+            "index": "27",
+            "type": "string"
+          },
+          {
+            "name": "info:paidVip14",
+            "index": "28",
+            "type": "string"
+          },
+          {
+            "name": "info:paidVip30",
+            "index": "29",
+            "type": "string"
+          },
+          {
+            "name": "info:paidVip60",
+            "index": "30",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidVip1",
+            "index": "31",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidVip3",
+            "index": "32",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidVip7",
+            "index": "33",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidVip14",
+            "index": "34",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidVip30",
+            "index": "35",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidVip60",
+            "index": "36",
+            "type": "string"
+          },
+          {
+            "name": "info:paidWallet1",
+            "index": "37",
+            "type": "string"
+          },
+          {
+            "name": "info:paidWallet3",
+            "index": "38",
+            "type": "string"
+          },
+          {
+            "name": "info:paidWallet7",
+            "index": "39",
+            "type": "string"
+          },
+          {
+            "name": "info:paidWallet14",
+            "index": "40",
+            "type": "string"
+          },
+          {
+            "name": "info:paidWallet30",
+            "index": "41",
+            "type": "string"
+          },
+          {
+            "name": "info:paidWallet60",
+            "index": "42",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidWallet1",
+            "index": "43",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidWallet3",
+            "index": "44",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidWallet7",
+            "index": "45",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidWallet14",
+            "index": "46",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidWallet30",
+            "index": "47",
+            "type": "string"
+          },
+          {
+            "name": "info:unpaidWallet60",
+            "index": "48",
+            "type": "string"
+          },
+          {
+            "name": "info:userSubscribe",
+            "index": "49",
+            "type": "string"
+          },
+          {
+            "name": "info:dataCreationDate",
+            "index": "50",
+            "type": "string"
+          }
+        ],
+        "writeMode": "api",
+        "encoding": "utf-8",
+        "table": "userinfo:user_classification_info",
+        "hbaseConfig": {
+          "hbase.client.connection.impl": "com.alibaba.hbase.client.AliHBaseUEConnection",
+          "hbase.client.password": "PNkJPSTj",
+          "hbase.client.endpoint": "ld-bp1l8376315kwbe7x-proxy-hbaseue.hbaseue.rds.aliyuncs.com:30020",
+          "hbase.client.username": "hhdd_admin_odps"
+        }
+      },
+      "name": "Writer",
+      "category": "writer"
+    }
+  ],
+  "version": "2.0",
+  "order": {
+    "hops": [
+      {
+        "from": "Reader",
+        "to": "Writer"
+      }
+    ]
+  },
+  "setting": {
+    "errorLimit": {
+      "record": "0"
+    },
+    "speed": {
+      "throttle": false,
+      "concurrent": 2,
+      "dmu": 1
+    }
+  }
+}

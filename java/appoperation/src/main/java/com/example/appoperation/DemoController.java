@@ -1,14 +1,18 @@
 package com.example.appoperation;
 
+import com.example.appoperation.hbase.ActiveDaysPO;
+import com.example.appoperation.hbase.TableInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 查询 HBase，查询 Redis
@@ -24,6 +28,9 @@ public class DemoController {
     @Resource(name="redisTemplate")
     private ValueOperations<String, String> valueOps;
 
+    @Autowired
+    private HBaseComponent hBaseComponent;
+
     private String flag = "namexyz";
 
     /*
@@ -33,17 +40,29 @@ public class DemoController {
           3. 从 hbase 中获取 userId 对应的计算信息部分
           4. 遍历资源列表，每个资源的用户分群计算，返回 true，false
           5. 只返回前 5 个命中的资源列表
-          以上3步，串行 QPS 实验，并行 QPS 实验。加 guava cache 实验
+          以上1-3步，串行 QPS 实验，并行 QPS 实验。加 guava cache 实验
+          第 4 步，并发看看提升多少性能
      */
 
     /**
-     * curl http://127.0.0.1:18092/hello
+     * curl http://127.0.0.1:18092/sync-load?device=iPad&userId=60038515
      */
-    @GetMapping("/hello")
-    public ResponseEntity<String> hello() {
-        valueOps.set(flag, "helloxxxxxx");
-        String v = valueOps.get(flag);
-        return ResponseEntity.ok(v);
+    @GetMapping("/sync-load")
+    public ResponseEntity<ActiveDaysPO> hello(@RequestParam Integer userId,
+                                              @RequestParam String device) {
+//        valueOps.set(flag, "helloxxxxxx");
+//        String v = valueOps.get(flag);
+        ActiveDaysPO po = hBaseComponent.getActiveDays(userId);
+        return ResponseEntity.ok(po);
+    }
+
+    /**
+     * curl http://127.0.0.1:18092/sync-load-list
+     */
+    @GetMapping("/sync-load-list")
+    public ResponseEntity<List<ActiveDaysPO>> list() {
+        List<ActiveDaysPO> list = hBaseComponent.findActiveDays();
+        return ResponseEntity.ok(list);
     }
 
     /**

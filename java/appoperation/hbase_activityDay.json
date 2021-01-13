@@ -1,0 +1,108 @@
+{
+  "type": "job",
+  "steps": [
+    {
+      "stepType": "odps",
+      "parameter": {
+        "partition": [],
+        "datasource": "odps_first",
+        "column": [
+          "userid",
+          "activitydays1",
+          "activitydays3",
+          "activitydays7",
+          "activitydays14",
+          "activitydays30",
+          "activitydays60",
+          "datacreationdate"
+        ],
+        "emptyAsNull": false,
+        "table": "configuring_user_active_days_temp"
+      },
+      "name": "Reader",
+      "category": "reader"
+    },
+    {
+      "stepType": "hbase",
+      "parameter": {
+        "mode": "normal",
+        "walFlag": "true",
+        "hbaseVersion": "11x",
+        "rowkeyColumn": [
+          {
+            "index": "0",
+            "type": "string"
+          }
+        ],
+        "nullMode": "skip",
+        "column": [
+          {
+            "name": "info:activityDays1",
+            "index": "1",
+            "type": "string"
+          },
+          {
+            "name": "info:activityDays3",
+            "index": "2",
+            "type": "string"
+          },
+          {
+            "name": "info:activityDays7",
+            "index": "3",
+            "type": "string"
+          },
+          {
+            "name": "info:activityDays14",
+            "index": "4",
+            "type": "string"
+          },
+          {
+            "name": "info:activityDays30",
+            "index": "5",
+            "type": "string"
+          },
+          {
+            "name": "info:activityDays60",
+            "index": "6",
+            "type": "string"
+          },
+          {
+            "name": "info:dataCreationDate",
+            "index": "7",
+            "type": "string"
+          }
+        ],
+        "writeMode": "api",
+        "encoding": "utf-8",
+        "table": "userinfo:user_active_days_info",
+        "hbaseConfig": {
+          "hbase.client.connection.impl": "com.alibaba.hbase.client.AliHBaseUEConnection",
+          "hbase.client.password": "PNkJPSTj",
+          "hbase.client.endpoint": "ld-bp1l8376315kwbe7x-proxy-hbaseue.hbaseue.rds.aliyuncs.com:30020",
+          "hbase.client.username": "hhdd_admin_odps"
+        }
+      },
+      "name": "Writer",
+      "category": "writer"
+    }
+  ],
+  "version": "2.0",
+  "order": {
+    "hops": [
+      {
+        "from": "Reader",
+        "to": "Writer"
+      }
+    ]
+  },
+  "setting": {
+    "errorLimit": {
+      "record": "0"
+    },
+    "speed": {
+      "throttle": false,
+      "concurrent": 1,
+      "dmu": 1
+    }
+  }
+}
