@@ -32,13 +32,23 @@
         </dependency>
 
         <dependency>
+            <groupId>com.alibaba.spring</groupId>
+            <artifactId>spring-context-support</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.alibaba.nacos</groupId>
             <artifactId>nacos-spring-context</artifactId>
         </dependency>
 
         <dependency>
             <groupId>com.alibaba.nacos</groupId>
-            <artifactId>nacos-client</artifactId>
+            <artifactId>nacos-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
 </project>
