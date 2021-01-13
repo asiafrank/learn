@@ -21,6 +21,8 @@ package coursex.ad;
  *
  * 2 <= S.length <= 10^5
  * S 由小写英文字母组成。
+ *
+ * TODO：
  */
 public class LongestDuplicateSubstring {
 }
