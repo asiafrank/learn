@@ -5,6 +5,13 @@ server:
 
 spring:
   datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://10.0.10.61:3306/configuring?serverTimezone=Asia/Shanghai&allowMultiQueries=true&characterEncoding=utf8&characterSetResults=utf8&useSSL=false&useUnicode=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: mainservice
+    password: LXhf5NG8
+    hikari:
+      idle-timeout: 10000
     redis:
       #数据库索引
       database: 0

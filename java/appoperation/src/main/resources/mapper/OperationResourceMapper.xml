@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="operationResourceDAO">
+  <resultMap id="operationResourcePO" type="com.example.appoperation.db.po.OperationResourcePO">
+    <result property="id" column="id" />
+    <result property="title" column="title" />
+    <result property="effectBegin" column="effect_begin" />
+    <result property="effectEnd" column="effect_end" />
+    <result property="resourceLocationId" column="resource_location_id" />
+    <result property="bannerUrl" column="banner_url" />
+    <result property="coverUrl" column="cover_url" />
+    <result property="displayAliases" column="display_aliases" />
+    <result property="haveFlash" column="have_flash" />
+    <result property="qrcodeTitle" column="qrcode_title" />
+    <result property="soundUrl" column="sound_url" />
+    <result property="imgHighScreen" column="img_high_screen" />
+    <result property="imgNormalScreen" column="img_normal_screen" />
+    <result property="imgWideScreen" column="img_wide_screen" />
+    <result property="protocolType" column="protocol_type" />
+    <result property="protocolContent" column="protocol_content" />
+    <result property="commonParam" column="common_param" />
+    <result property="comments" column="comments" />
+    <result property="operateUser" column="operate_user" />
+    <result property="createTime" column="create_time" />
+    <result property="modifyTime" column="modify_time" />
+    <result property="status" column="status" />
+  </resultMap>
+
+  <sql id="sql_insert_column_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,id</if>
+      <if test="entity.title != null">,title</if>
+      <if test="entity.effectBegin != null">,effect_begin</if>
+      <if test="entity.effectEnd != null">,effect_end</if>
+      <if test="entity.resourceLocationId != null">,resource_location_id</if>
+      <if test="entity.bannerUrl != null">,banner_url</if>
+      <if test="entity.coverUrl != null">,cover_url</if>
+      <if test="entity.displayAliases != null">,display_aliases</if>
+      <if test="entity.haveFlash != null">,have_flash</if>
+      <if test="entity.qrcodeTitle != null">,qrcode_title</if>
+      <if test="entity.soundUrl != null">,sound_url</if>
+      <if test="entity.imgHighScreen != null">,img_high_screen</if>
+      <if test="entity.imgNormalScreen != null">,img_normal_screen</if>
+      <if test="entity.imgWideScreen != null">,img_wide_screen</if>
+      <if test="entity.protocolType != null">,protocol_type</if>
+      <if test="entity.protocolContent != null">,protocol_content</if>
+      <if test="entity.commonParam != null">,common_param</if>
+      <if test="entity.comments != null">,comments</if>
+      <if test="entity.operateUser != null">,operate_user</if>
+      <if test="entity.createTime != null">,create_time</if>
+      <if test="entity.modifyTime != null">,modify_time</if>
+      <if test="entity.status != null">,status</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_insert_property_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,#{entity.id}</if>
+      <if test="entity.title != null">,#{entity.title}</if>
+      <if test="entity.effectBegin != null">,#{entity.effectBegin}</if>
+      <if test="entity.effectEnd != null">,#{entity.effectEnd}</if>
+      <if test="entity.resourceLocationId != null">,#{entity.resourceLocationId}</if>
+      <if test="entity.bannerUrl != null">,#{entity.bannerUrl}</if>
+      <if test="entity.coverUrl != null">,#{entity.coverUrl}</if>
+      <if test="entity.displayAliases != null">,#{entity.displayAliases}</if>
+      <if test="entity.haveFlash != null">,#{entity.haveFlash}</if>
+      <if test="entity.qrcodeTitle != null">,#{entity.qrcodeTitle}</if>
+      <if test="entity.soundUrl != null">,#{entity.soundUrl}</if>
+      <if test="entity.imgHighScreen != null">,#{entity.imgHighScreen}</if>
+      <if test="entity.imgNormalScreen != null">,#{entity.imgNormalScreen}</if>
+      <if test="entity.imgWideScreen != null">,#{entity.imgWideScreen}</if>
+      <if test="entity.protocolType != null">,#{entity.protocolType}</if>
+      <if test="entity.protocolContent != null">,#{entity.protocolContent}</if>
+      <if test="entity.commonParam != null">,#{entity.commonParam}</if>
+      <if test="entity.comments != null">,#{entity.comments}</if>
+      <if test="entity.operateUser != null">,#{entity.operateUser}</if>
+      <if test="entity.createTime != null">,#{entity.createTime}</if>
+      <if test="entity.modifyTime != null">,#{entity.modifyTime}</if>
+      <if test="entity.status != null">,#{entity.status}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_column_list">
+    id
+    ,title
+    ,effect_begin
+    ,effect_end
+    ,resource_location_id
+    ,banner_url
+    ,cover_url
+    ,display_aliases
+    ,have_flash
+    ,qrcode_title
+    ,sound_url
+    ,img_high_screen
+    ,img_normal_screen
+    ,img_wide_screen
+    ,protocol_type
+    ,protocol_content
+    ,common_param
+    ,comments
+    ,operate_user
+    ,create_time
+    ,modify_time
+    ,status
+  </sql>
+
+  <sql id="sql_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="entity != null">
+        <if test="entity.id != null">,id = #{entity.id}</if>
+        <if test="entity.title != null">,title = #{entity.title}</if>
+        <if test="entity.effectBegin != null">,effect_begin = #{entity.effectBegin}</if>
+        <if test="entity.effectEnd != null">,effect_end = #{entity.effectEnd}</if>
+        <if test="entity.resourceLocationId != null">,resource_location_id = #{entity.resourceLocationId}</if>
+        <if test="entity.bannerUrl != null">,banner_url = #{entity.bannerUrl}</if>
+        <if test="entity.coverUrl != null">,cover_url = #{entity.coverUrl}</if>
+        <if test="entity.displayAliases != null">,display_aliases = #{entity.displayAliases}</if>
+        <if test="entity.haveFlash != null">,have_flash = #{entity.haveFlash}</if>
+        <if test="entity.qrcodeTitle != null">,qrcode_title = #{entity.qrcodeTitle}</if>
+        <if test="entity.soundUrl != null">,sound_url = #{entity.soundUrl}</if>
+        <if test="entity.imgHighScreen != null">,img_high_screen = #{entity.imgHighScreen}</if>
+        <if test="entity.imgNormalScreen != null">,img_normal_screen = #{entity.imgNormalScreen}</if>
+        <if test="entity.imgWideScreen != null">,img_wide_screen = #{entity.imgWideScreen}</if>
+        <if test="entity.protocolType != null">,protocol_type = #{entity.protocolType}</if>
+        <if test="entity.protocolContent != null">,protocol_content = #{entity.protocolContent}</if>
+        <if test="entity.commonParam != null">,common_param = #{entity.commonParam}</if>
+        <if test="entity.comments != null">,comments = #{entity.comments}</if>
+        <if test="entity.operateUser != null">,operate_user = #{entity.operateUser}</if>
+        <if test="entity.createTime != null">,create_time = #{entity.createTime}</if>
+        <if test="entity.modifyTime != null">,modify_time = #{entity.modifyTime}</if>
+        <if test="entity.status != null">,status = #{entity.status}</if>
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="sql_force_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="_parameter.containsKey('entity_id')">,id = #{entity_id, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_title')">,title = #{entity_title, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_effectBegin')">,effect_begin = #{entity_effectBegin, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_effectEnd')">,effect_end = #{entity_effectEnd, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_resourceLocationId')">,resource_location_id = #{entity_resourceLocationId, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_bannerUrl')">,banner_url = #{entity_bannerUrl, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_coverUrl')">,cover_url = #{entity_coverUrl, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_displayAliases')">,display_aliases = #{entity_displayAliases, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_haveFlash')">,have_flash = #{entity_haveFlash, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_qrcodeTitle')">,qrcode_title = #{entity_qrcodeTitle, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_soundUrl')">,sound_url = #{entity_soundUrl, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_imgHighScreen')">,img_high_screen = #{entity_imgHighScreen, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_imgNormalScreen')">,img_normal_screen = #{entity_imgNormalScreen, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_imgWideScreen')">,img_wide_screen = #{entity_imgWideScreen, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_protocolType')">,protocol_type = #{entity_protocolType, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_protocolContent')">,protocol_content = #{entity_protocolContent, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_commonParam')">,common_param = #{entity_commonParam, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_comments')">,comments = #{entity_comments, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_operateUser')">,operate_user = #{entity_operateUser, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_createTime')">,create_time = #{entity_createTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_modifyTime')">,modify_time = #{entity_modifyTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_status')">,status = #{entity_status, jdbcType=BIT}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_condition">
+    <if test="condition != null">
+      <if test="condition.id != null">AND id = #{condition.id}</if>
+      <if test="condition.title != null">AND title = #{condition.title}</if>
+      <if test="condition.effectBegin != null">AND effect_begin = #{condition.effectBegin}</if>
+      <if test="condition.effectEnd != null">AND effect_end = #{condition.effectEnd}</if>
+      <if test="condition.resourceLocationId != null">AND resource_location_id = #{condition.resourceLocationId}</if>
+      <if test="condition.bannerUrl != null">AND banner_url = #{condition.bannerUrl}</if>
+      <if test="condition.coverUrl != null">AND cover_url = #{condition.coverUrl}</if>
+      <if test="condition.displayAliases != null">AND display_aliases = #{condition.displayAliases}</if>
+      <if test="condition.haveFlash != null">AND have_flash = #{condition.haveFlash}</if>
+      <if test="condition.qrcodeTitle != null">AND qrcode_title = #{condition.qrcodeTitle}</if>
+      <if test="condition.soundUrl != null">AND sound_url = #{condition.soundUrl}</if>
+      <if test="condition.imgHighScreen != null">AND img_high_screen = #{condition.imgHighScreen}</if>
+      <if test="condition.imgNormalScreen != null">AND img_normal_screen = #{condition.imgNormalScreen}</if>
+      <if test="condition.imgWideScreen != null">AND img_wide_screen = #{condition.imgWideScreen}</if>
+      <if test="condition.protocolType != null">AND protocol_type = #{condition.protocolType}</if>
+      <if test="condition.protocolContent != null">AND protocol_content = #{condition.protocolContent}</if>
+      <if test="condition.commonParam != null">AND common_param = #{condition.commonParam}</if>
+      <if test="condition.comments != null">AND comments = #{condition.comments}</if>
+      <if test="condition.operateUser != null">AND operate_user = #{condition.operateUser}</if>
+      <if test="condition.createTime != null">AND create_time = #{condition.createTime}</if>
+      <if test="condition.modifyTime != null">AND modify_time = #{condition.modifyTime}</if>
+      <if test="condition.status != null">AND status = #{condition.status}</if>
+      <if test="!condition.expressionChainList.empty">
+        AND
+        <foreach collection="condition.expressionChainList" item="expressionChain" open="(" separator="OR" close=")">
+          <if test="!expressionChain.expressionList.empty">
+            <foreach collection="expressionChain.expressionList" item="expression" separator="AND">
+              <choose>
+                <when test="expression.type == 0">
+                  ${expression.column} ${expression.operator}
+                </when>
+                <when test="expression.type == 1">
+                  ${expression.column} ${expression.operator} #{expression.value}
+                </when>
+                <when test="expression.type == 2">
+                  ${expression.column} ${expression.operator} #{expression.value} AND #{expression.value1}
+                </when>
+                <when test="expression.type == 3">
+                  ${expression.column} ${expression.operator}
+                  <foreach collection="expression.values" item="value" open="(" separator="," close=")">
+                    #{value}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </if>
+        </foreach>
+      </if>
+    </if>
+  </sql>
+
+  <sql id="sql_pagination_start">
+  <![CDATA[
+  ]]>
+  </sql>
+
+  <sql id="sql_pagination_end">
+  <![CDATA[
+    LIMIT #{offset,javaType=Integer}, #{limit,javaType=Integer}
+  ]]>
+  </sql>
+
+  <insert id="insert" parameterType="java.util.Map">
+    <selectKey keyProperty="entity.id" resultType="Integer" order="AFTER">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    INSERT INTO operation_resource (
+      <include refid="sql_insert_column_list" />
+    ) VALUES (
+      <include refid="sql_insert_property_list" />
+    )
+  </insert>
+
+  <select id="get" parameterType="java.util.Map" resultMap="operationResourcePO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="getById" parameterType="java.util.Map" resultMap="operationResourcePO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource
+    WHERE id = #{id}
+  </select>
+
+  <select id="find" parameterType="java.util.Map" resultMap="operationResourcePO">
+    <if test="offset != null">
+      <include refid="sql_pagination_start" />
+    </if>
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+    <if test="offset != null">
+      <include refid="sql_pagination_end" />
+    </if>
+  </select>
+
+  <select id="findByIdList" parameterType="java.util.Map" resultMap="operationResourcePO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+  </select>
+
+  <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+    SELECT count(${count_column}) AS count_ FROM operation_resource
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="aggregate" parameterType="java.util.Map" resultType="java.util.HashMap">
+    SELECT ${aggregate_sql} FROM operation_resource
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <update id="update" parameterType="java.util.Map">
+    UPDATE operation_resource
+    <include refid="sql_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="updateById" parameterType="java.util.Map">
+    UPDATE operation_resource
+    <include refid="sql_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateByIdList" parameterType="java.util.Map">
+    UPDATE operation_resource
+    <include refid="sql_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <update id="forceUpdate" parameterType="java.util.Map">
+    UPDATE operation_resource
+    <include refid="sql_force_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="forceUpdateById" parameterType="java.util.Map">
+    UPDATE operation_resource
+    <include refid="sql_force_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="forceUpdateByIdList" parameterType="java.util.Map">
+    UPDATE operation_resource
+    <include refid="sql_force_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <delete id="remove" parameterType="java.util.Map">
+    DELETE FROM operation_resource
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </delete>
+
+  <delete id="removeById" parameterType="java.util.Map">
+    DELETE FROM operation_resource
+    WHERE id = #{id}
+  </delete>
+
+  <delete id="removeByIdList" parameterType="java.util.Map">
+    DELETE FROM operation_resource
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </delete>
+</mapper>

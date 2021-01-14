@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="operationResourceWeeklySortingDAO">
+  <resultMap id="operationResourceWeeklySortingPO" type="com.example.appoperation.db.po.OperationResourceWeeklySortingPO">
+    <result property="id" column="id" />
+    <result property="resourceLocationId" column="resource_location_id" />
+    <result property="operationResourceId" column="operation_resource_id" />
+    <result property="order" column="order" />
+    <result property="weekBegin" column="week_begin" />
+    <result property="weekEnd" column="week_end" />
+    <result property="createTime" column="create_time" />
+    <result property="modifyTime" column="modify_time" />
+    <result property="status" column="status" />
+  </resultMap>
+
+  <sql id="sql_insert_column_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,id</if>
+      <if test="entity.resourceLocationId != null">,resource_location_id</if>
+      <if test="entity.operationResourceId != null">,operation_resource_id</if>
+      <if test="entity.order != null">,order</if>
+      <if test="entity.weekBegin != null">,week_begin</if>
+      <if test="entity.weekEnd != null">,week_end</if>
+      <if test="entity.createTime != null">,create_time</if>
+      <if test="entity.modifyTime != null">,modify_time</if>
+      <if test="entity.status != null">,status</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_insert_property_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,#{entity.id}</if>
+      <if test="entity.resourceLocationId != null">,#{entity.resourceLocationId}</if>
+      <if test="entity.operationResourceId != null">,#{entity.operationResourceId}</if>
+      <if test="entity.order != null">,#{entity.order}</if>
+      <if test="entity.weekBegin != null">,#{entity.weekBegin}</if>
+      <if test="entity.weekEnd != null">,#{entity.weekEnd}</if>
+      <if test="entity.createTime != null">,#{entity.createTime}</if>
+      <if test="entity.modifyTime != null">,#{entity.modifyTime}</if>
+      <if test="entity.status != null">,#{entity.status}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_column_list">
+    id
+    ,resource_location_id
+    ,operation_resource_id
+    ,`order`
+    ,week_begin
+    ,week_end
+    ,create_time
+    ,modify_time
+    ,status
+  </sql>
+
+  <sql id="sql_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="entity != null">
+        <if test="entity.id != null">,id = #{entity.id}</if>
+        <if test="entity.resourceLocationId != null">,resource_location_id = #{entity.resourceLocationId}</if>
+        <if test="entity.operationResourceId != null">,operation_resource_id = #{entity.operationResourceId}</if>
+        <if test="entity.order != null">,`order` = #{entity.order}</if>
+        <if test="entity.weekBegin != null">,week_begin = #{entity.weekBegin}</if>
+        <if test="entity.weekEnd != null">,week_end = #{entity.weekEnd}</if>
+        <if test="entity.createTime != null">,create_time = #{entity.createTime}</if>
+        <if test="entity.modifyTime != null">,modify_time = #{entity.modifyTime}</if>
+        <if test="entity.status != null">,status = #{entity.status}</if>
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="sql_force_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="_parameter.containsKey('entity_id')">,id = #{entity_id, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_resourceLocationId')">,resource_location_id = #{entity_resourceLocationId, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_operationResourceId')">,operation_resource_id = #{entity_operationResourceId, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_order')">,`order` = #{entity_order, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_weekBegin')">,week_begin = #{entity_weekBegin, jdbcType=BIGINT}</if>
+      <if test="_parameter.containsKey('entity_weekEnd')">,week_end = #{entity_weekEnd, jdbcType=BIGINT}</if>
+      <if test="_parameter.containsKey('entity_createTime')">,create_time = #{entity_createTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_modifyTime')">,modify_time = #{entity_modifyTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_status')">,status = #{entity_status, jdbcType=BIT}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_condition">
+    <if test="condition != null">
+      <if test="condition.id != null">AND id = #{condition.id}</if>
+      <if test="condition.resourceLocationId != null">AND resource_location_id = #{condition.resourceLocationId}</if>
+      <if test="condition.operationResourceId != null">AND operation_resource_id = #{condition.operationResourceId}</if>
+      <if test="condition.order != null">AND `order` = #{condition.order}</if>
+      <if test="condition.weekBegin != null">AND week_begin = #{condition.weekBegin}</if>
+      <if test="condition.weekEnd != null">AND week_end = #{condition.weekEnd}</if>
+      <if test="condition.createTime != null">AND create_time = #{condition.createTime}</if>
+      <if test="condition.modifyTime != null">AND modify_time = #{condition.modifyTime}</if>
+      <if test="condition.status != null">AND status = #{condition.status}</if>
+      <if test="!condition.expressionChainList.empty">
+        AND
+        <foreach collection="condition.expressionChainList" item="expressionChain" open="(" separator="OR" close=")">
+          <if test="!expressionChain.expressionList.empty">
+            <foreach collection="expressionChain.expressionList" item="expression" separator="AND">
+              <choose>
+                <when test="expression.type == 0">
+                  ${expression.column} ${expression.operator}
+                </when>
+                <when test="expression.type == 1">
+                  ${expression.column} ${expression.operator} #{expression.value}
+                </when>
+                <when test="expression.type == 2">
+                  ${expression.column} ${expression.operator} #{expression.value} AND #{expression.value1}
+                </when>
+                <when test="expression.type == 3">
+                  ${expression.column} ${expression.operator}
+                  <foreach collection="expression.values" item="value" open="(" separator="," close=")">
+                    #{value}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </if>
+        </foreach>
+      </if>
+    </if>
+  </sql>
+
+  <sql id="sql_pagination_start">
+  <![CDATA[
+  ]]>
+  </sql>
+
+  <sql id="sql_pagination_end">
+  <![CDATA[
+    LIMIT #{offset,javaType=Integer}, #{limit,javaType=Integer}
+  ]]>
+  </sql>
+
+  <insert id="insert" parameterType="java.util.Map">
+    <selectKey keyProperty="entity.id" resultType="Integer" order="AFTER">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    INSERT INTO operation_resource_weekly_sorting (
+      <include refid="sql_insert_column_list" />
+    ) VALUES (
+      <include refid="sql_insert_property_list" />
+    )
+  </insert>
+
+  <select id="get" parameterType="java.util.Map" resultMap="operationResourceWeeklySortingPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_weekly_sorting
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="getById" parameterType="java.util.Map" resultMap="operationResourceWeeklySortingPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_weekly_sorting
+    WHERE id = #{id}
+  </select>
+
+  <select id="find" parameterType="java.util.Map" resultMap="operationResourceWeeklySortingPO">
+    <if test="offset != null">
+      <include refid="sql_pagination_start" />
+    </if>
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_weekly_sorting
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+    <if test="offset != null">
+      <include refid="sql_pagination_end" />
+    </if>
+  </select>
+
+  <select id="findByIdList" parameterType="java.util.Map" resultMap="operationResourceWeeklySortingPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_weekly_sorting
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+  </select>
+
+  <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+    SELECT count(${count_column}) AS count_ FROM operation_resource_weekly_sorting
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="aggregate" parameterType="java.util.Map" resultType="java.util.HashMap">
+    SELECT ${aggregate_sql} FROM operation_resource_weekly_sorting
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <update id="update" parameterType="java.util.Map">
+    UPDATE operation_resource_weekly_sorting
+    <include refid="sql_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="updateById" parameterType="java.util.Map">
+    UPDATE operation_resource_weekly_sorting
+    <include refid="sql_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateByIdList" parameterType="java.util.Map">
+    UPDATE operation_resource_weekly_sorting
+    <include refid="sql_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <update id="forceUpdate" parameterType="java.util.Map">
+    UPDATE operation_resource_weekly_sorting
+    <include refid="sql_force_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="forceUpdateById" parameterType="java.util.Map">
+    UPDATE operation_resource_weekly_sorting
+    <include refid="sql_force_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="forceUpdateByIdList" parameterType="java.util.Map">
+    UPDATE operation_resource_weekly_sorting
+    <include refid="sql_force_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <delete id="remove" parameterType="java.util.Map">
+    DELETE FROM operation_resource_weekly_sorting
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </delete>
+
+  <delete id="removeById" parameterType="java.util.Map">
+    DELETE FROM operation_resource_weekly_sorting
+    WHERE id = #{id}
+  </delete>
+
+  <delete id="removeByIdList" parameterType="java.util.Map">
+    DELETE FROM operation_resource_weekly_sorting
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </delete>
+</mapper>

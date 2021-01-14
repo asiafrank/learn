@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="operationResourceLocationDAO">
+  <resultMap id="operationResourceLocationPO" type="com.example.appoperation.db.po.OperationResourceLocationPO">
+    <result property="id" column="id" />
+    <result property="resourceName" column="resource_name" />
+    <result property="appType" column="app_type" />
+    <result property="resourceType" column="resource_type" />
+    <result property="carouselNum" column="carousel_num" />
+    <result property="comments" column="comments" />
+    <result property="operateUser" column="operate_user" />
+    <result property="imageSize" column="image_size" />
+    <result property="imageExtension" column="image_extension" />
+    <result property="hasCover" column="has_cover" />
+    <result property="hasAlias" column="has_alias" />
+    <result property="hasBgm" column="has_bgm" />
+    <result property="hasAnimation" column="has_animation" />
+    <result property="createTime" column="create_time" />
+    <result property="modifyTime" column="modify_time" />
+    <result property="status" column="status" />
+  </resultMap>
+
+  <sql id="sql_insert_column_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,id</if>
+      <if test="entity.resourceName != null">,resource_name</if>
+      <if test="entity.appType != null">,app_type</if>
+      <if test="entity.resourceType != null">,resource_type</if>
+      <if test="entity.carouselNum != null">,carousel_num</if>
+      <if test="entity.comments != null">,comments</if>
+      <if test="entity.operateUser != null">,operate_user</if>
+      <if test="entity.imageSize != null">,image_size</if>
+      <if test="entity.imageExtension != null">,image_extension</if>
+      <if test="entity.hasCover != null">,has_cover</if>
+      <if test="entity.hasAlias != null">,has_alias</if>
+      <if test="entity.hasBgm != null">,has_bgm</if>
+      <if test="entity.hasAnimation != null">,has_animation</if>
+      <if test="entity.createTime != null">,create_time</if>
+      <if test="entity.modifyTime != null">,modify_time</if>
+      <if test="entity.status != null">,status</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_insert_property_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,#{entity.id}</if>
+      <if test="entity.resourceName != null">,#{entity.resourceName}</if>
+      <if test="entity.appType != null">,#{entity.appType}</if>
+      <if test="entity.resourceType != null">,#{entity.resourceType}</if>
+      <if test="entity.carouselNum != null">,#{entity.carouselNum}</if>
+      <if test="entity.comments != null">,#{entity.comments}</if>
+      <if test="entity.operateUser != null">,#{entity.operateUser}</if>
+      <if test="entity.imageSize != null">,#{entity.imageSize}</if>
+      <if test="entity.imageExtension != null">,#{entity.imageExtension}</if>
+      <if test="entity.hasCover != null">,#{entity.hasCover}</if>
+      <if test="entity.hasAlias != null">,#{entity.hasAlias}</if>
+      <if test="entity.hasBgm != null">,#{entity.hasBgm}</if>
+      <if test="entity.hasAnimation != null">,#{entity.hasAnimation}</if>
+      <if test="entity.createTime != null">,#{entity.createTime}</if>
+      <if test="entity.modifyTime != null">,#{entity.modifyTime}</if>
+      <if test="entity.status != null">,#{entity.status}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_column_list">
+    id
+    ,resource_name
+    ,app_type
+    ,resource_type
+    ,carousel_num
+    ,comments
+    ,operate_user
+    ,image_size
+    ,image_extension
+    ,has_cover
+    ,has_alias
+    ,has_bgm
+    ,has_animation
+    ,create_time
+    ,modify_time
+    ,status
+  </sql>
+
+  <sql id="sql_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="entity != null">
+        <if test="entity.id != null">,id = #{entity.id}</if>
+        <if test="entity.resourceName != null">,resource_name = #{entity.resourceName}</if>
+        <if test="entity.appType != null">,app_type = #{entity.appType}</if>
+        <if test="entity.resourceType != null">,resource_type = #{entity.resourceType}</if>
+        <if test="entity.carouselNum != null">,carousel_num = #{entity.carouselNum}</if>
+        <if test="entity.comments != null">,comments = #{entity.comments}</if>
+        <if test="entity.operateUser != null">,operate_user = #{entity.operateUser}</if>
+        <if test="entity.imageSize != null">,image_size = #{entity.imageSize}</if>
+        <if test="entity.imageExtension != null">,image_extension = #{entity.imageExtension}</if>
+        <if test="entity.hasCover != null">,has_cover = #{entity.hasCover}</if>
+        <if test="entity.hasAlias != null">,has_alias = #{entity.hasAlias}</if>
+        <if test="entity.hasBgm != null">,has_bgm = #{entity.hasBgm}</if>
+        <if test="entity.hasAnimation != null">,has_animation = #{entity.hasAnimation}</if>
+        <if test="entity.createTime != null">,create_time = #{entity.createTime}</if>
+        <if test="entity.modifyTime != null">,modify_time = #{entity.modifyTime}</if>
+        <if test="entity.status != null">,status = #{entity.status}</if>
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="sql_force_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="_parameter.containsKey('entity_id')">,id = #{entity_id, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_resourceName')">,resource_name = #{entity_resourceName, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_appType')">,app_type = #{entity_appType, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_resourceType')">,resource_type = #{entity_resourceType, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_carouselNum')">,carousel_num = #{entity_carouselNum, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_comments')">,comments = #{entity_comments, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_operateUser')">,operate_user = #{entity_operateUser, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_imageSize')">,image_size = #{entity_imageSize, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_imageExtension')">,image_extension = #{entity_imageExtension, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_hasCover')">,has_cover = #{entity_hasCover, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_hasAlias')">,has_alias = #{entity_hasAlias, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_hasBgm')">,has_bgm = #{entity_hasBgm, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_hasAnimation')">,has_animation = #{entity_hasAnimation, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_createTime')">,create_time = #{entity_createTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_modifyTime')">,modify_time = #{entity_modifyTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_status')">,status = #{entity_status, jdbcType=BIT}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_condition">
+    <if test="condition != null">
+      <if test="condition.id != null">AND id = #{condition.id}</if>
+      <if test="condition.resourceName != null">AND resource_name = #{condition.resourceName}</if>
+      <if test="condition.appType != null">AND app_type = #{condition.appType}</if>
+      <if test="condition.resourceType != null">AND resource_type = #{condition.resourceType}</if>
+      <if test="condition.carouselNum != null">AND carousel_num = #{condition.carouselNum}</if>
+      <if test="condition.comments != null">AND comments = #{condition.comments}</if>
+      <if test="condition.operateUser != null">AND operate_user = #{condition.operateUser}</if>
+      <if test="condition.imageSize != null">AND image_size = #{condition.imageSize}</if>
+      <if test="condition.imageExtension != null">AND image_extension = #{condition.imageExtension}</if>
+      <if test="condition.hasCover != null">AND has_cover = #{condition.hasCover}</if>
+      <if test="condition.hasAlias != null">AND has_alias = #{condition.hasAlias}</if>
+      <if test="condition.hasBgm != null">AND has_bgm = #{condition.hasBgm}</if>
+      <if test="condition.hasAnimation != null">AND has_animation = #{condition.hasAnimation}</if>
+      <if test="condition.createTime != null">AND create_time = #{condition.createTime}</if>
+      <if test="condition.modifyTime != null">AND modify_time = #{condition.modifyTime}</if>
+      <if test="condition.status != null">AND status = #{condition.status}</if>
+      <if test="!condition.expressionChainList.empty">
+        AND
+        <foreach collection="condition.expressionChainList" item="expressionChain" open="(" separator="OR" close=")">
+          <if test="!expressionChain.expressionList.empty">
+            <foreach collection="expressionChain.expressionList" item="expression" separator="AND">
+              <choose>
+                <when test="expression.type == 0">
+                  ${expression.column} ${expression.operator}
+                </when>
+                <when test="expression.type == 1">
+                  ${expression.column} ${expression.operator} #{expression.value}
+                </when>
+                <when test="expression.type == 2">
+                  ${expression.column} ${expression.operator} #{expression.value} AND #{expression.value1}
+                </when>
+                <when test="expression.type == 3">
+                  ${expression.column} ${expression.operator}
+                  <foreach collection="expression.values" item="value" open="(" separator="," close=")">
+                    #{value}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </if>
+        </foreach>
+      </if>
+    </if>
+  </sql>
+
+  <sql id="sql_pagination_start">
+  <![CDATA[
+  ]]>
+  </sql>
+
+  <sql id="sql_pagination_end">
+  <![CDATA[
+    LIMIT #{offset,javaType=Integer}, #{limit,javaType=Integer}
+  ]]>
+  </sql>
+
+  <insert id="insert" parameterType="java.util.Map">
+    <selectKey keyProperty="entity.id" resultType="Integer" order="AFTER">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    INSERT INTO operation_resource_location (
+      <include refid="sql_insert_column_list" />
+    ) VALUES (
+      <include refid="sql_insert_property_list" />
+    )
+  </insert>
+
+  <select id="get" parameterType="java.util.Map" resultMap="operationResourceLocationPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_location
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="getById" parameterType="java.util.Map" resultMap="operationResourceLocationPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_location
+    WHERE id = #{id}
+  </select>
+
+  <select id="find" parameterType="java.util.Map" resultMap="operationResourceLocationPO">
+    <if test="offset != null">
+      <include refid="sql_pagination_start" />
+    </if>
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_location
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+    <if test="offset != null">
+      <include refid="sql_pagination_end" />
+    </if>
+  </select>
+
+  <select id="findByIdList" parameterType="java.util.Map" resultMap="operationResourceLocationPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM operation_resource_location
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+  </select>
+
+  <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+    SELECT count(${count_column}) AS count_ FROM operation_resource_location
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="aggregate" parameterType="java.util.Map" resultType="java.util.HashMap">
+    SELECT ${aggregate_sql} FROM operation_resource_location
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <update id="update" parameterType="java.util.Map">
+    UPDATE operation_resource_location
+    <include refid="sql_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="updateById" parameterType="java.util.Map">
+    UPDATE operation_resource_location
+    <include refid="sql_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateByIdList" parameterType="java.util.Map">
+    UPDATE operation_resource_location
+    <include refid="sql_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <update id="forceUpdate" parameterType="java.util.Map">
+    UPDATE operation_resource_location
+    <include refid="sql_force_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="forceUpdateById" parameterType="java.util.Map">
+    UPDATE operation_resource_location
+    <include refid="sql_force_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="forceUpdateByIdList" parameterType="java.util.Map">
+    UPDATE operation_resource_location
+    <include refid="sql_force_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <delete id="remove" parameterType="java.util.Map">
+    DELETE FROM operation_resource_location
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </delete>
+
+  <delete id="removeById" parameterType="java.util.Map">
+    DELETE FROM operation_resource_location
+    WHERE id = #{id}
+  </delete>
+
+  <delete id="removeByIdList" parameterType="java.util.Map">
+    DELETE FROM operation_resource_location
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </delete>
+</mapper>

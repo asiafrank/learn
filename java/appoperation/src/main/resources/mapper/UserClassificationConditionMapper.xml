@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="userClassificationConditionDAO">
+  <resultMap id="userClassificationConditionPO" type="com.example.appoperation.db.po.UserClassificationConditionPO">
+    <result property="id" column="id" />
+    <result property="name" column="name" />
+    <result property="shortExpression" column="short_expression" />
+    <result property="fullExpression" column="full_expression" />
+    <result property="effectiveTime" column="effective_time" />
+    <result property="appType" column="app_type" />
+    <result property="operateUser" column="operate_user" />
+    <result property="createTime" column="create_time" />
+    <result property="modifyTime" column="modify_time" />
+    <result property="status" column="status" />
+    <result property="usedBy" column="used_by" />
+  </resultMap>
+
+  <sql id="sql_insert_column_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,id</if>
+      <if test="entity.name != null">,name</if>
+      <if test="entity.shortExpression != null">,short_expression</if>
+      <if test="entity.fullExpression != null">,full_expression</if>
+      <if test="entity.effectiveTime != null">,effective_time</if>
+      <if test="entity.appType != null">,app_type</if>
+      <if test="entity.operateUser != null">,operate_user</if>
+      <if test="entity.createTime != null">,create_time</if>
+      <if test="entity.modifyTime != null">,modify_time</if>
+      <if test="entity.status != null">,status</if>
+      <if test="entity.usedBy != null">,used_by</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_insert_property_list">
+    <trim prefix="" prefixOverrides=",">
+      <if test="entity.id != null">,#{entity.id}</if>
+      <if test="entity.name != null">,#{entity.name}</if>
+      <if test="entity.shortExpression != null">,#{entity.shortExpression}</if>
+      <if test="entity.fullExpression != null">,#{entity.fullExpression}</if>
+      <if test="entity.effectiveTime != null">,#{entity.effectiveTime}</if>
+      <if test="entity.appType != null">,#{entity.appType}</if>
+      <if test="entity.operateUser != null">,#{entity.operateUser}</if>
+      <if test="entity.createTime != null">,#{entity.createTime}</if>
+      <if test="entity.modifyTime != null">,#{entity.modifyTime}</if>
+      <if test="entity.status != null">,#{entity.status}</if>
+      <if test="entity.usedBy != null">,#{entity.usedBy}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_column_list">
+    id
+    ,name
+    ,short_expression
+    ,full_expression
+    ,effective_time
+    ,app_type
+    ,operate_user
+    ,create_time
+    ,modify_time
+    ,status
+    ,used_by
+  </sql>
+
+  <sql id="sql_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="entity != null">
+        <if test="entity.id != null">,id = #{entity.id}</if>
+        <if test="entity.name != null">,name = #{entity.name}</if>
+        <if test="entity.shortExpression != null">,short_expression = #{entity.shortExpression}</if>
+        <if test="entity.fullExpression != null">,full_expression = #{entity.fullExpression}</if>
+        <if test="entity.effectiveTime != null">,effective_time = #{entity.effectiveTime}</if>
+        <if test="entity.appType != null">,app_type = #{entity.appType}</if>
+        <if test="entity.operateUser != null">,operate_user = #{entity.operateUser}</if>
+        <if test="entity.createTime != null">,create_time = #{entity.createTime}</if>
+        <if test="entity.modifyTime != null">,modify_time = #{entity.modifyTime}</if>
+        <if test="entity.status != null">,status = #{entity.status}</if>
+        <if test="entity.usedBy != null">,used_by = #{entity.usedBy}</if>
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="sql_force_update_set">
+    <trim prefix="SET" prefixOverrides=",">
+      <if test="_parameter.containsKey('entity_id')">,id = #{entity_id, jdbcType=INTEGER}</if>
+      <if test="_parameter.containsKey('entity_name')">,name = #{entity_name, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_shortExpression')">,short_expression = #{entity_shortExpression, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_fullExpression')">,full_expression = #{entity_fullExpression, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_effectiveTime')">,effective_time = #{entity_effectiveTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_appType')">,app_type = #{entity_appType, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_operateUser')">,operate_user = #{entity_operateUser, jdbcType=VARCHAR}</if>
+      <if test="_parameter.containsKey('entity_createTime')">,create_time = #{entity_createTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_modifyTime')">,modify_time = #{entity_modifyTime, jdbcType=TIMESTAMP}</if>
+      <if test="_parameter.containsKey('entity_status')">,status = #{entity_status, jdbcType=BIT}</if>
+      <if test="_parameter.containsKey('entity_usedBy')">,used_by = #{entity_usedBy, jdbcType=BIT}</if>
+    </trim>
+  </sql>
+
+  <sql id="sql_condition">
+    <if test="condition != null">
+      <if test="condition.id != null">AND id = #{condition.id}</if>
+      <if test="condition.name != null">AND name = #{condition.name}</if>
+      <if test="condition.shortExpression != null">AND short_expression = #{condition.shortExpression}</if>
+      <if test="condition.fullExpression != null">AND full_expression = #{condition.fullExpression}</if>
+      <if test="condition.effectiveTime != null">AND effective_time = #{condition.effectiveTime}</if>
+      <if test="condition.appType != null">AND app_type = #{condition.appType}</if>
+      <if test="condition.operateUser != null">AND operate_user = #{condition.operateUser}</if>
+      <if test="condition.createTime != null">AND create_time = #{condition.createTime}</if>
+      <if test="condition.modifyTime != null">AND modify_time = #{condition.modifyTime}</if>
+      <if test="condition.status != null">AND status = #{condition.status}</if>
+      <if test="condition.usedBy != null">AND used_by = #{condition.usedBy}</if>
+      <if test="!condition.expressionChainList.empty">
+        AND
+        <foreach collection="condition.expressionChainList" item="expressionChain" open="(" separator="OR" close=")">
+          <if test="!expressionChain.expressionList.empty">
+            <foreach collection="expressionChain.expressionList" item="expression" separator="AND">
+              <choose>
+                <when test="expression.type == 0">
+                  ${expression.column} ${expression.operator}
+                </when>
+                <when test="expression.type == 1">
+                  ${expression.column} ${expression.operator} #{expression.value}
+                </when>
+                <when test="expression.type == 2">
+                  ${expression.column} ${expression.operator} #{expression.value} AND #{expression.value1}
+                </when>
+                <when test="expression.type == 3">
+                  ${expression.column} ${expression.operator}
+                  <foreach collection="expression.values" item="value" open="(" separator="," close=")">
+                    #{value}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </if>
+        </foreach>
+      </if>
+    </if>
+  </sql>
+
+  <sql id="sql_pagination_start">
+  <![CDATA[
+  ]]>
+  </sql>
+
+  <sql id="sql_pagination_end">
+  <![CDATA[
+    LIMIT #{offset,javaType=Integer}, #{limit,javaType=Integer}
+  ]]>
+  </sql>
+
+  <insert id="insert" parameterType="java.util.Map">
+    <selectKey keyProperty="entity.id" resultType="Integer" order="AFTER">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    INSERT INTO user_classification_condition (
+      <include refid="sql_insert_column_list" />
+    ) VALUES (
+      <include refid="sql_insert_property_list" />
+    )
+  </insert>
+
+  <select id="get" parameterType="java.util.Map" resultMap="userClassificationConditionPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM user_classification_condition
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="getById" parameterType="java.util.Map" resultMap="userClassificationConditionPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM user_classification_condition
+    WHERE id = #{id}
+  </select>
+
+  <select id="find" parameterType="java.util.Map" resultMap="userClassificationConditionPO">
+    <if test="offset != null">
+      <include refid="sql_pagination_start" />
+    </if>
+    SELECT
+      <include refid="sql_column_list" />
+    FROM user_classification_condition
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+    <if test="offset != null">
+      <include refid="sql_pagination_end" />
+    </if>
+  </select>
+
+  <select id="findByIdList" parameterType="java.util.Map" resultMap="userClassificationConditionPO">
+    SELECT
+      <include refid="sql_column_list" />
+    FROM user_classification_condition
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+    <if test="orderBy != null">
+      ORDER BY ${orderBy}
+    </if>
+  </select>
+
+  <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+    SELECT count(${count_column}) AS count_ FROM user_classification_condition
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <select id="aggregate" parameterType="java.util.Map" resultType="java.util.HashMap">
+    SELECT ${aggregate_sql} FROM user_classification_condition
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </select>
+
+  <update id="update" parameterType="java.util.Map">
+    UPDATE user_classification_condition
+    <include refid="sql_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="updateById" parameterType="java.util.Map">
+    UPDATE user_classification_condition
+    <include refid="sql_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateByIdList" parameterType="java.util.Map">
+    UPDATE user_classification_condition
+    <include refid="sql_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <update id="forceUpdate" parameterType="java.util.Map">
+    UPDATE user_classification_condition
+    <include refid="sql_force_update_set" />
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </update>
+
+  <update id="forceUpdateById" parameterType="java.util.Map">
+    UPDATE user_classification_condition
+    <include refid="sql_force_update_set" />
+    WHERE id = #{id}
+  </update>
+
+  <update id="forceUpdateByIdList" parameterType="java.util.Map">
+    UPDATE user_classification_condition
+    <include refid="sql_force_update_set" />
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </update>
+
+  <delete id="remove" parameterType="java.util.Map">
+    DELETE FROM user_classification_condition
+    <trim prefix="WHERE" prefixOverrides="AND">
+      <include refid="sql_condition" />
+    </trim>
+  </delete>
+
+  <delete id="removeById" parameterType="java.util.Map">
+    DELETE FROM user_classification_condition
+    WHERE id = #{id}
+  </delete>
+
+  <delete id="removeByIdList" parameterType="java.util.Map">
+    DELETE FROM user_classification_condition
+    WHERE id IN
+    <foreach collection="idList" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    <include refid="sql_condition" />
+  </delete>
+</mapper>

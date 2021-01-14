@@ -167,15 +167,17 @@ public class HBaseComponent {
         String namespaceTableName = activeDaysTable.getNamespaceTableName();
         byte[] cf = activeDaysTable.getByteCF();
         Put p = new Put(toBytes(po.getUserId()));
-        p.addColumn(cf, c_activityDays1, toBytes("10"));
-        p.addColumn(cf, c_activityDays3, toBytes("30"));
-        p.addColumn(cf, c_activityDays7, toBytes("70"));
-        p.addColumn(cf, c_activityDays14, toBytes("140"));
-        p.addColumn(cf, c_activityDays30, toBytes("300"));
-        p.addColumn(cf, c_activityDays60, toBytes("600"));
+        p.addColumn(cf, c_activityDays1, toBytes(po.getActivityDays1()));
+        p.addColumn(cf, c_activityDays3, toBytes(po.getActivityDays3()));
+        p.addColumn(cf, c_activityDays7, toBytes(po.getActivityDays7()));
+        p.addColumn(cf, c_activityDays14, toBytes(po.getActivityDays14()));
+        p.addColumn(cf, c_activityDays30, toBytes(po.getActivityDays30()));
+        p.addColumn(cf, c_activityDays60, toBytes(po.getActivityDays60()));
 
         LocalDateTime now = LocalDateTime.now();
         String nowStr = now.format(formatter);
+        po.setDataCreationDate(nowStr);
+
         p.addColumn(cf, c_dataCreationDate, toBytes(nowStr));
         try {
             try (Table table = connection.getTable(TableName.valueOf(namespaceTableName))) {

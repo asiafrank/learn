@@ -25,8 +25,8 @@ public class SpelTest {
         ExpressionParser expressionParser = new SpelExpressionParser();
         Expression expr = expressionParser.parseExpression("activeDays(1,'123', #param) or activeDays(10,'567', #param)");
 
-        Map<Integer, String> param = new HashMap<>();
-        param.put(1, "-----");
+        Map<String, Object> param = new HashMap<>();
+        param.put("1", "-----");
 
         EvaluationContext ctx = new StandardEvaluationContext(c);
         ctx.setVariable("param", param);

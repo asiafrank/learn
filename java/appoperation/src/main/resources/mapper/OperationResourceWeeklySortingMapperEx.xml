@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="operationResourceWeeklySortingDAO">
+
+  <select id="findResource" parameterType="java.util.Map" resultMap="operationResourceDAO.operationResourcePO">
+    SELECT
+    r.id
+    ,r.title
+    ,r.effect_begin
+    ,r.effect_end
+    ,r.resource_location_id
+    ,r.banner_url
+    ,r.cover_url
+    ,r.display_aliases
+    ,r.have_flash
+    ,r.qrcode_title
+    ,r.sound_url
+    ,r.img_high_screen
+    ,r.img_normal_screen
+    ,r.img_wide_screen
+    ,r.protocol_type
+    ,r.protocol_content
+    ,r.common_param
+    ,r.comments
+    ,r.operate_user
+    ,r.create_time
+    ,r.modify_time
+    ,r.status
+    FROM operation_resource_weekly_sorting AS s
+    LEFT JOIN operation_resource AS r ON s.operation_resource_id = r.id
+    WHERE s.status = 1 AND r.status = 1
+      AND s.resource_location_id = #{locationId}
+      AND s.week_begin = #{weekBegin}
+    ORDER BY s.`order`
+  </select>
+</mapper>
