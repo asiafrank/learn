@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zhangxiaofan 2021/01/14-15:13
@@ -84,7 +85,7 @@ public class OperationResourceComponent {
      */
     public List<OperationResourceWrapper> getResourceList(Integer locationId) {
         LocalTime dayStartTime = LocalTime.of(0, 0, 0, 0);
-        LocalDateTime today = LocalDateTime.of(LocalDate.now(), dayStartTime);
+        LocalDateTime today = LocalDateTime.of(LocalDate.of(2021, 1, 13), dayStartTime);
         long todayLong = DateUtils.asLong(today);
 
         List<OperationResourcePO> resourceList = getResourceListByWeeklySort(locationId, todayLong);
@@ -113,7 +114,7 @@ public class OperationResourceComponent {
             List<UserClassificationConditionPO> rules = ruleListOps.get(key);
             if (Objects.isNull(rules)) {
                 rules = userClassificationConditionService.findUserClassificationsByResourceId(resourceId);
-                ruleListOps.set(key, rules);
+                ruleListOps.set(key, rules, 10, TimeUnit.SECONDS);
             }
             map.put(resourceId, rules);
         }

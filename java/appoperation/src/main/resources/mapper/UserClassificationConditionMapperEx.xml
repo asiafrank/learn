@@ -8,20 +8,18 @@
   <select id="findUserClassificationsByResourceId" parameterType="Integer"
           resultMap="userClassificationConditionPO">
     SELECT
-    u.id                        AS u_id
-    ,u.name                      AS u_name
-    ,u.short_expression          AS u_short_expression
-    ,u.full_expression           AS u_full_expression
-    ,u.effective_time            AS u_effective_time
-    ,u.app_type                  AS u_app_type
-    ,u.operate_user              AS u_operate_user
-    ,u.create_time               AS u_create_time
-    ,u.modify_time               AS u_modify_time
-    ,u.status                    AS u_status
+    u.id
+    ,u.name
+    ,u.short_expression
+    ,u.full_expression
+    ,u.effective_time
+    ,u.app_type
+    ,u.operate_user
+    ,u.create_time
+    ,u.modify_time
+    ,u.status
     FROM operation_resource_condition_relation AS r
-              ON r.operation_resource_id = rs.id AND r.status = 1
-    LEFT JOIN user_classification_condition AS u
-              ON u.id = r.classification_condition_id AND u.status = 1
-    WHERE r.operation_resource_id = #{resourceId}
+    LEFT JOIN user_classification_condition AS u ON u.id = r.classification_condition_id AND u.status = 1
+    WHERE r.status = 1 AND r.operation_resource_id = #{resourceId}
   </select>
 </mapper>
