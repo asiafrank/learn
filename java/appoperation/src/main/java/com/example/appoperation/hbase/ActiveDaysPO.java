@@ -2,6 +2,8 @@ package com.example.appoperation.hbase;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * 用户活跃天数
  * # days: 1昨天  3过去3天，7过去7天，14过去14天，30过去30天，60过去60天
@@ -11,7 +13,7 @@ import lombok.Data;
  * @author zhangxiaofan 2021/01/11-10:40
  */
 @Data
-public class ActiveDaysPO {
+public class ActiveDaysPO implements Serializable {
     private Integer userId;
     private Integer activityDays1;
     private Integer activityDays3;

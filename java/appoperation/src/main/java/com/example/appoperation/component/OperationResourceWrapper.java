@@ -12,5 +12,5 @@ import java.util.List;
 @Data
 public class OperationResourceWrapper {
     private OperationResourcePO resourcePO;
-    private List<UserClassificationConditionPO> rulePO;
+    private List<UserClassificationConditionPO> ruleList;
 }

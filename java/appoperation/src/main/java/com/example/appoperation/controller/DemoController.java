@@ -1,5 +1,6 @@
-package com.example.appoperation;
+package com.example.appoperation.controller;
 
+import com.example.appoperation.component.HBaseComponent;
 import com.example.appoperation.component.OperationResourceComponent;
 import com.example.appoperation.component.OperationResourceWrapper;
 import com.example.appoperation.db.base.Page;
@@ -9,7 +10,6 @@ import com.example.appoperation.db.service.OperationResourceService;
 import com.example.appoperation.hbase.ActiveDaysPO;
 import com.example.appoperation.redis.UserInfoPO;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -44,21 +44,6 @@ public class DemoController {
 
     // userinfo:{userId}
     private final String REDIS_USER_BASE_INFO_PREFIX = "userinfo:";
-
-    /*
-    TODO: 客户端请求接口，传递 userId，设备类型，资源位ID
-          1. 从 redis 中获取资源位ID 的资源列表
-          2. 从 redis 中获取 userId 基本信息
-          3. 从 hbase 中获取 userId 对应的计算信息部分
-          4. 遍历资源列表，每个资源的用户分群计算，返回 true，false
-          5. 只返回前 5 个命中的资源列表
-
-     TODO:性能提升实验
-          a.以上1-3步，串行 QPS 实验，并行 QPS 实验。加 guava cache 实验
-          b.第 4 步，并发看看提升多少性能
-          c.将针对每个 userId 和图片Id，图片表达式计算结果缓存在 local cache 或 redis
-            看看提升多少性能。
-     */
 
     /**
      * curl http://127.0.0.1:18092/sync-load?device=iPad&userId=60038515
@@ -115,32 +100,6 @@ public class DemoController {
     public ResponseEntity<Page<OperationResourcePO>> pageOperationResourceList() {
         Page<OperationResourcePO> page = operationResourceService.find(Pageable.of(1, 10));
         return ResponseEntity.ok(page);
-    }
-
-    //---------- 辅助代码 ----------------------
-
-    // string device to int deviceType
-    private static int getDeviceTypeInt(String device) {
-        if (StringUtils.isBlank(device)) {
-            return UserInfoPO.DeviceType.Android;
-        }
-        String d = device.toLowerCase();
-        switch (d) {
-            case "ipad":
-                return UserInfoPO.DeviceType.iPad;
-            case "iphone":
-                return UserInfoPO.DeviceType.iPhone;
-            case "ipod":
-                return UserInfoPO.DeviceType.iPod;
-            case "androidpad":
-                return UserInfoPO.DeviceType.AndroidPad;
-            case "androidwatch":
-                return UserInfoPO.DeviceType.AndroidWatch;
-            case "x86":
-                return UserInfoPO.DeviceType.x86;
-            default: // 是默认 Android
-                return UserInfoPO.DeviceType.Android;
-        }
     }
 
 }

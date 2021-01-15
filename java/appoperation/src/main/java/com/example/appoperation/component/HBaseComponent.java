@@ -1,4 +1,4 @@
-package com.example.appoperation;
+package com.example.appoperation.component;
 
 import com.example.appoperation.hbase.ActiveDaysPO;
 import com.example.appoperation.hbase.TableInfo;

@@ -3,8 +3,8 @@ package com.example.appoperation.db.query;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.appoperation.db.common.base.Expression;
-import com.example.appoperation.db.common.base.ExpressionChain;
+import com.example.appoperation.db.base.Expression;
+import com.example.appoperation.db.base.ExpressionChain;
 import com.example.appoperation.db.po.UserClassificationConditionPO;
 
 public class UserClassificationConditionQuery extends UserClassificationConditionPO {

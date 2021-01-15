@@ -2,6 +2,7 @@ package com.example.appoperation.redis;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
  * @author zhangxiaofan 2021/01/14-11:05
  */
 @Data
-public class UserInfoPO {
+public class UserInfoPO implements Serializable {
     private Integer userId;
     /**
      * 1男，2女，3未知

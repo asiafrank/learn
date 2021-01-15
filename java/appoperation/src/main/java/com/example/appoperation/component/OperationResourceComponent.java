@@ -1,8 +1,6 @@
 package com.example.appoperation.component;
 
-import com.example.appoperation.db.base.OrderBy;
 import com.example.appoperation.db.po.*;
-import com.example.appoperation.db.query.OperationResourceWeeklySortingQuery;
 import com.example.appoperation.db.service.OperationResourceService;
 import com.example.appoperation.db.service.OperationResourceWeeklySortingService;
 import com.example.appoperation.db.service.UserClassificationConditionService;
@@ -102,7 +100,7 @@ public class OperationResourceComponent {
             OperationResourceWrapper w = new OperationResourceWrapper();
             w.setResourcePO(po);
             List<UserClassificationConditionPO> rules = userClassificationMap.get(resourceId);
-            w.setRulePO(rules);
+            w.setRuleList(rules);
             wrappers.add(w);
         }
         return wrappers;
