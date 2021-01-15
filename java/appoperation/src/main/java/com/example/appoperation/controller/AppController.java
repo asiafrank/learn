@@ -57,9 +57,34 @@ public class AppController {
 
     private final CalculateComponent calculateComponent = new CalculateComponent();
 
+    /*
+    -server -Xmx1g -Xms1g -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions
+    -XX:MaxGCPauseMillis=100 -XX:G1NewSizePercent=8 -XX:InitiatingHeapOccupancyPercent=30
+     -XX:MaxTenuringThreshold=1 -XX:G1HeapRegionSize=32m
+     -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5
+      -XX:GCLogFileSize=20M -XX:+PrintGCDetails -XX:+PrintGCDateStamps
+       -XX:+PrintGCCause -Xloggc:gc-%t.log -verbose:gc -XX:+UnlockDiagnosticVMOptions
+       -jar kdadmin-main-web.jar --spring.profiles.active=dev --java.net.preferIPv4Stack=true
+     */
+
     /**
      * 多图
      * curl "http://127.0.0.1:18092/app/multiImg?resourceLocationId=1&device=iPad&userId=88888888"
+     *
+     * 压测：https://github.com/wg/wrk/blob/master/README.md
+     * ./wrk -t12 -c400 -d30s "http://127.0.0.1:18092/app/multiImg?resourceLocationId=1&device=iPad&userId=88888888"
+     *
+     * 无优化，压测结果. JVM:
+     * -server -Xmx2G -Xms2G -XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCCause -verbose:gc
+     * 12 threads and 400 connections
+     *   Thread Stats   Avg      Stdev     Max   +/- Stdev
+     *     Latency   217.62ms   95.88ms 918.02ms   83.17%
+     *     Req/Sec   155.52     39.32   270.00     74.51%
+     *   55465 requests in 30.10s, 230.26MB read
+     *   Socket errors: connect 0, read 689, write 0, timeout 0
+     * Requests/sec:   1842.64
+     * Transfer/sec:      7.65MB
+     *
      */
     @GetMapping("/multiImg")
     public ResponseEntity<List<OperationResourcePO>> multiImg(

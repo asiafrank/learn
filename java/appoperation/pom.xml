@@ -15,7 +15,7 @@
     <description>hbase,redis project for Spring Boot</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>8</java.version>
         <alihbase-client.version>2.0.8</alihbase-client.version>
         <mybatis.spring.starter>2.0.1</mybatis.spring.starter>
         <mysql.connector.version>8.0.16</mysql.connector.version>
