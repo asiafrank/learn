@@ -98,7 +98,7 @@ public class AppConfig {
     @Bean(name = "threadPoolExecutor")
     public ThreadPoolExecutor threadPoolExecutor() {
         return new ThreadPoolExecutor(
-                30, 35,
+                40, 45,
                 1,
                 TimeUnit.MINUTES,
                 new ArrayBlockingQueue<>(20000),

@@ -92,6 +92,17 @@ public class AppController {
      * Transfer/sec:      7.65MB
      *
      * 线程池并发优化，压测结果：
+     * 40个线程，qps 2657.13
+     * Running 30s test @ http://127.0.0.1:18092/app/multiImg?resourceLocationId=1&device=iPad&userId=88888888
+     *   12 threads and 400 connections
+     *   Thread Stats   Avg      Stdev     Max   +/- Stdev
+     *     Latency   148.33ms   19.52ms 256.39ms   79.34%
+     *     Req/Sec   222.54     39.36   323.00     68.02%
+     *   79975 requests in 30.10s, 332.02MB read
+     *   Socket errors: connect 0, read 511, write 0, timeout 0
+     * Requests/sec:   2657.13
+     * Transfer/sec:     11.03MB
+     *
      * 30个线程，qps 2553
      * Running 30s test @ http://127.0.0.1:18092/app/multiImg?resourceLocationId=1&device=iPad&userId=88888888
      *   12 threads and 400 connections
