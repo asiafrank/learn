@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author zhangxiaofan 2021/01/15-09:22
@@ -55,6 +58,9 @@ public class AppController {
     @Autowired
     private UserComponent userComponent;
 
+    @Autowired
+    private ThreadPoolExecutor exec;
+
     private final CalculateComponent calculateComponent = new CalculateComponent();
 
     /*
@@ -85,23 +91,52 @@ public class AppController {
      * Requests/sec:   1842.64
      * Transfer/sec:      7.65MB
      *
+     * 线程池并发优化，压测结果：
+     * 30个线程，qps 2553
+     * Running 30s test @ http://127.0.0.1:18092/app/multiImg?resourceLocationId=1&device=iPad&userId=88888888
+     *   12 threads and 400 connections
+     *   Thread Stats   Avg      Stdev     Max   +/- Stdev
+     *     Latency   154.33ms   27.84ms 333.86ms   85.91%
+     *     Req/Sec   214.48     47.95   333.00     71.13%
+     *   76862 requests in 30.10s, 319.10MB read
+     *   Socket errors: connect 0, read 526, write 0, timeout 0
+     * Requests/sec:   2553.63
+     * Transfer/sec:     10.60MB
+     *
+     * 20个线程，qps 2295
+     * Running 30s test @ http://127.0.0.1:18092/app/multiImg?resourceLocationId=1&device=iPad&userId=88888888
+     *   12 threads and 400 connections
+     *   Thread Stats   Avg      Stdev     Max   +/- Stdev
+     *     Latency   171.51ms   31.05ms 306.97ms   73.86%
+     *     Req/Sec   192.30     45.76   320.00     66.81%
+     *   69025 requests in 30.07s, 286.55MB read
+     *   Socket errors: connect 0, read 536, write 0, timeout 0
+     * Requests/sec:   2295.40
+     * Transfer/sec:      9.53MB
+     *
+     * 结果，线程池并发优化效果明显.
      */
     @GetMapping("/multiImg")
     public ResponseEntity<List<OperationResourcePO>> multiImg(
             @RequestParam Integer resourceLocationId,
             @RequestParam Integer userId,
-            @RequestParam String device) {
-        UserInfoPO user = userComponent.getUserById(userId);
+            @RequestParam String device) throws ExecutionException, InterruptedException {
+
+        // 并行获取 userInfoPO, activeDays, resourceList
+        Future<UserInfoPO> userInfoFuture = exec.submit(() -> userComponent.getUserById(userId));
+        Future<ActiveDaysPO> activeDaysFuture = exec.submit(() -> hBaseComponent.getActiveDays(userId));
+        Future<List<OperationResourceWrapper>> resourceListFuture = exec.submit(() -> operationResourceComponent.getResourceList(resourceLocationId));
+
+        UserInfoPO user = userInfoFuture.get();
         user.setDeviceType(DeviceTypeUtils.getDeviceTypeInt(device));
 
-        ActiveDaysPO activeDays = hBaseComponent.getActiveDays(userId);
+        ActiveDaysPO activeDays = activeDaysFuture.get();
 
         Map<String, Object> param = new HashMap<>();
         param.put("user", user);
         param.put("activeDays", activeDays);
 
-        List<OperationResourceWrapper> resourceList = operationResourceComponent.getResourceList(resourceLocationId);
-
+        List<OperationResourceWrapper> resourceList = resourceListFuture.get();
         List<OperationResourcePO> resultList = new ArrayList<>(); // 该用户命中的资源 list
 
         ExpressionParser expressionParser = new SpelExpressionParser();
