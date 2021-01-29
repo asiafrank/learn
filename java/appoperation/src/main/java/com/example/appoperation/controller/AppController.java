@@ -44,9 +44,14 @@ public class AppController {
           c.将针对每个 userId 和图片Id，图片表达式计算结果缓存在 local cache 或 redis
             看看提升多少性能。
 
-      TODO: 其他服务发送标签的 RocketMQ 消息（比如：一个用户购买了课程，发送某个课程的标签）
+      TODO: 标签计算进程：其他服务发送标签的 RocketMQ 消息（比如：一个用户购买了课程，发送某个课程的标签）
             接收消息后，将用户群放到 roaringBitMap 中，并且以 标签Id 作为 key，roaringBitMap 序列化为 value
             放入 redis 中（先放入 HBase 里，避免丢失）。
+            roaringBitmap 计算写入 HBase 30s写入一次。
+
+      最终版本应该是取消表达式，标签表由 clickhouse 维护，
+      直接使用 clickhouse 的 roaringBitmap 来做 or  and 计算即可
+      并且 resource 对 userId 的命中结果存入 redis 以及 local cache
      */
 
     @Autowired
