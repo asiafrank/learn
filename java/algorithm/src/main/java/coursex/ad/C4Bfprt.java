@@ -2,6 +2,9 @@ package coursex.ad;
 
 import com.asiafrank.util.Printer;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
+
 /**
  * 在一个无序数组中，求第 k 小的数。
  *
@@ -63,7 +66,7 @@ public class C4Bfprt {
         int pivotIndex = l + (int)(Math.random() * (r - l + 1));
         int pivot = arr[pivotIndex];
 
-        int[] range = partition(arr, l, r, pivot);
+        int[] range = partition0(arr, l, r, pivot);
         int left = range[0], right = range[1];
         if (left <= k && right >= k) { // = pivot 部分包含 k，则 arr[left] 就是第 k 小的数
             return arr[left];
@@ -86,19 +89,20 @@ public class C4Bfprt {
      * @param pivot 选出的数
      * @return 长度为2的数组,[0] 元素是 '= pivot' 的左边界，[1] 为右边界
      */
-    private static int[] partition(int[] arr, int l, int r, int pivot) {
+    private static int[] partition0(int[] arr, int l, int r, int pivot) {
         int left = l - 1; // < 的部分右边界
         int right = r + 1; // > 的部分左边界
 
         int i = l;
         while (i < right) {
-            if (arr[i] > pivot) {
+            if (arr[i] > pivot) { // [i] > pivot, 则 [i] 与 > 区域左一个交换，i 不变, >区域左扩1
                 right--;
                 swap(arr, i, right);
-            } else if (arr[i] < pivot) {
+            } else if (arr[i] < pivot) { // [i] < pivot, 则 [i] 与 <区域 右一个交换，i++，<区域右扩1
                 left++;
+                swap(arr, i, left);
                 i++;
-            } else if (arr[i] == pivot){
+            } else if (arr[i] == pivot){ // [i] == pivot, 则 i++
                 i++;
             }
         }
@@ -111,11 +115,155 @@ public class C4Bfprt {
         arr[j] = t;
     }
 
+    // -------------------------
     // 解法二：bfprt
 
+
+    public static class MaxHeapComparator implements Comparator<Integer> {
+        @Override
+        public int compare(Integer o1, Integer o2) {
+            return o2 - o1;
+        }
+    }
+
+    // 利用大根堆，时间复杂度O(N*logK)
+    public static int minKth1(int[] arr, int k) {
+        PriorityQueue<Integer> maxHeap = new PriorityQueue<>(new MaxHeapComparator());
+        for (int i = 0; i < k; i++) {
+            maxHeap.add(arr[i]);
+        }
+        for (int i = k; i < arr.length; i++) {
+            if (arr[i] < maxHeap.peek()) {
+                maxHeap.poll();
+                maxHeap.add(arr[i]);
+            }
+        }
+        return maxHeap.peek();
+    }
+
+    // 改写快排，时间复杂度O(N)
+    public static int minKth2(int[] array, int k) {
+        int[] arr = copyArray(array);
+        return process2(arr, 0, arr.length - 1, k - 1);
+    }
+
+    public static int[] copyArray(int[] arr) {
+        int[] ans = new int[arr.length];
+        for (int i = 0; i != ans.length; i++) {
+            ans[i] = arr[i];
+        }
+        return ans;
+    }
+
+    public static int process2(int[] arr, int L, int R, int index) {
+        if (L == R) {
+            return arr[L];
+        }
+        int pivot = arr[L + (int) (Math.random() * (R - L + 1))];
+        int[] range = partition(arr, L, R, pivot);
+        if (index >= range[0] && index <= range[1]) {
+            return arr[index];
+        } else if (index < range[0]) {
+            return process2(arr, L, range[0] - 1, index);
+        } else {
+            return process2(arr, range[1] + 1, R, index);
+        }
+    }
+
+    public static int[] partition(int[] arr, int L, int R, int pivot) {
+        int less = L - 1;
+        int more = R + 1;
+        int cur = L;
+        while (cur < more) {
+            if (arr[cur] < pivot) {
+                swap(arr, ++less, cur++);
+            } else if (arr[cur] > pivot) {
+                swap(arr, cur, --more);
+            } else {
+                cur++;
+            }
+        }
+        return new int[] { less + 1, more - 1 };
+    }
+
+    // 利用bfprt算法，时间复杂度O(N)
+    public static int minKth3(int[] array, int k) {
+        int[] arr = copyArray(array);
+        return bfprt(arr, 0, arr.length - 1, k - 1);
+    }
+
+    public static int bfprt(int[] arr, int L, int R, int index) {
+        if (L == R) {
+            return arr[L];
+        }
+        int pivot = medianOfMedians(arr, L, R);
+        int[] range = partition(arr, L, R, pivot);
+        if (index >= range[0] && index <= range[1]) {
+            return arr[index];
+        } else if (index < range[0]) {
+            return bfprt(arr, L, range[0] - 1, index);
+        } else {
+            return bfprt(arr, range[1] + 1, R, index);
+        }
+    }
+
+    public static int medianOfMedians(int[] arr, int L, int R) {
+        int size = R - L + 1;
+        int offset = size % 5 == 0 ? 0 : 1;
+        int[] mArr = new int[size / 5 + offset];
+        for (int team = 0; team < mArr.length; team++) {
+            int teamFirst = L + team * 5;
+            mArr[team] = getMedian(arr, teamFirst, Math.min(R, teamFirst + 4));
+        }
+        return bfprt(mArr, 0, mArr.length - 1, mArr.length / 2);
+    }
+
+    public static int getMedian(int[] arr, int L, int R) {
+        insertionSort(arr, L, R);
+        return arr[(L + R) / 2];
+    }
+
+    public static void insertionSort(int[] arr, int L, int R) {
+        for (int i = L + 1; i <= R; i++) {
+            for (int j = i - 1; j >= L && arr[j] > arr[j + 1]; j--) {
+                swap(arr, j, j + 1);
+            }
+        }
+    }
+
+    // for test
+    public static int[] generateRandomArray(int maxSize, int maxValue) {
+        int[] arr = new int[(int) (Math.random() * maxSize) + 1];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = (int) (Math.random() * (maxValue + 1));
+        }
+        return arr;
+    }
+
     public static void main(String[] args) {
-        int[] arr = new int[] {2, 4, 5, 6, 3, 9, 3};
+        test1();
+
+        int[] arr = new int[] {2, 4, 5, 6, 1, 9, 3};
         int rs = findKthMin(arr, 2);
         System.out.println(rs);
+    }
+
+    private static void test1() {
+        int testTime = 1000000;
+        int maxSize = 100;
+        int maxValue = 100;
+        System.out.println("test begin");
+        for (int i = 0; i < testTime; i++) {
+            int[] arr = generateRandomArray(maxSize, maxValue);
+            int k = (int) (Math.random() * arr.length) + 1;
+            int ans1 = minKth1(arr, k);
+            int ans2 = minKth2(arr, k);
+            int ans3 = minKth3(arr, k);
+            int rs = findKthMin(arr, k - 1);
+            if (ans1 != ans2 || ans2 != ans3 || ans3 != rs) {
+                System.out.println("Oops!");
+            }
+        }
+        System.out.println("test finish");
     }
 }

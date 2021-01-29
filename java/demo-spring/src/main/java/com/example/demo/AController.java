@@ -13,11 +13,11 @@ public class AController {
     @GetMapping("/hello")
     @ResponseBody
     public String hello() throws InterruptedException {
-        System.out.println(Thread.currentThread().getName() + " start," + new Date());
+//        System.out.println(Thread.currentThread().getName() + " start," + new Date());
 
-        TimeUnit.SECONDS.sleep(10);
+//        TimeUnit.SECONDS.sleep(10);
 
-        System.out.println(Thread.currentThread().getName() + " end," + new Date());
+//        System.out.println(Thread.currentThread().getName() + " end," + new Date());
         return "hello";
     };
 }
