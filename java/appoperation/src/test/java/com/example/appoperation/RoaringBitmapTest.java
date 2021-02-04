@@ -103,6 +103,7 @@ public class RoaringBitmapTest {
             }
 
             // 序列化
+            b2.runOptimize();
             int s = b2.serializedSizeInBytes();
             buf = ByteBuffer.allocate(s);
             b2.serialize(buf);
