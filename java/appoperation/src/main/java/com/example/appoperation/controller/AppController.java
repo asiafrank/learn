@@ -1,11 +1,22 @@
 package com.example.appoperation.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.degrade.circuitbreaker.CircuitBreaker;
+import com.alibaba.csp.sentinel.slots.block.degrade.circuitbreaker.EventObserverRegistry;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.example.appoperation.component.*;
 import com.example.appoperation.db.po.OperationResourcePO;
 import com.example.appoperation.db.po.UserClassificationConditionPO;
 import com.example.appoperation.hbase.ActiveDaysPO;
 import com.example.appoperation.redis.UserInfoPO;
+import com.example.appoperation.service.AppOperationService;
 import com.example.appoperation.util.DeviceTypeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -18,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -29,6 +41,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 @RestController
 @RequestMapping("/app")
 public class AppController {
+
+    private static final Logger log = LoggerFactory.getLogger(AppController.class);
 
     /*
     TODO: 客户端请求接口，传递 userId，设备类型，资源位ID
@@ -54,20 +68,6 @@ public class AppController {
       并且 resource 对 userId 的命中结果存入 redis 以及 local cache
      */
 
-    @Autowired
-    private HBaseComponent hBaseComponent;
-
-    @Autowired
-    private OperationResourceComponent operationResourceComponent;
-
-    @Autowired
-    private UserComponent userComponent;
-
-    @Autowired
-    private ThreadPoolExecutor exec;
-
-    private final CalculateComponent calculateComponent = new CalculateComponent();
-
     /*
     -server -Xmx1g -Xms1g -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions
     -XX:MaxGCPauseMillis=100 -XX:G1NewSizePercent=8 -XX:InitiatingHeapOccupancyPercent=30
@@ -77,6 +77,9 @@ public class AppController {
        -XX:+PrintGCCause -Xloggc:gc-%t.log -verbose:gc -XX:+UnlockDiagnosticVMOptions
        -jar kdadmin-main-web.jar --spring.profiles.active=dev --java.net.preferIPv4Stack=true
      */
+
+    @Autowired
+    private AppOperationService appOperationService;
 
     /**
      * 多图
@@ -137,44 +140,7 @@ public class AppController {
             @RequestParam Integer resourceLocationId,
             @RequestParam Integer userId,
             @RequestParam String device) throws ExecutionException, InterruptedException {
-
-        // 并行获取 userInfoPO, activeDays, resourceList
-        Future<UserInfoPO> userInfoFuture = exec.submit(() -> userComponent.getUserById(userId));
-        Future<ActiveDaysPO> activeDaysFuture = exec.submit(() -> hBaseComponent.getActiveDays(userId));
-        Future<List<OperationResourceWrapper>> resourceListFuture = exec.submit(() -> operationResourceComponent.getResourceList(resourceLocationId));
-
-        UserInfoPO user = userInfoFuture.get();
-        user.setDeviceType(DeviceTypeUtils.getDeviceTypeInt(device));
-
-        ActiveDaysPO activeDays = activeDaysFuture.get();
-
-        Map<String, Object> param = new HashMap<>();
-        param.put("user", user);
-        param.put("activeDays", activeDays);
-
-        List<OperationResourceWrapper> resourceList = resourceListFuture.get();
-        List<OperationResourcePO> resultList = new ArrayList<>(); // 该用户命中的资源 list
-
-        ExpressionParser expressionParser = new SpelExpressionParser();
-        EvaluationContext ctx = new StandardEvaluationContext(calculateComponent);
-        ctx.setVariable("param", param);
-        for (OperationResourceWrapper w : resourceList) {
-            OperationResourcePO resourcePO = w.getResourcePO();
-            List<UserClassificationConditionPO> ruleList = w.getRuleList();
-            if (Objects.isNull(ruleList)) { // 没有 rule 对象也算命中
-                resultList.add(resourcePO);
-            }
-
-            for (UserClassificationConditionPO rule : ruleList) {
-                Expression expr = expressionParser.parseExpression(rule.getFullExpression());
-                Boolean r = (Boolean) expr.getValue(ctx);
-
-                if (r == Boolean.TRUE) { // 只要命中一个规则，就算 resourcePO 命中
-                    resultList.add(resourcePO);
-                    break;
-                }
-            }
-        }
-        return ResponseEntity.ok(resultList);
+        List<OperationResourcePO> list = appOperationService.multiImg(resourceLocationId, userId, device);
+        return ResponseEntity.ok(list);
     }
 }

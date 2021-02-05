@@ -3,6 +3,9 @@ package com.example.appoperation;
 import org.junit.Test;
 import org.roaringbitmap.RoaringBitmap;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
  * @author zhangxiaofan 2021/01/15-17:08
  */
@@ -46,7 +49,7 @@ public class RoaringBitmapTest {
         }
         roaringBitmap.runOptimize();
         int size = roaringBitmap.serializedSizeInBytes();
-        System.out.println("size: " + size + "byte"); // 119MB
+        System.out.println("size: " + size + "byte"); // 119MB  近 3亿规模的 userId
     }
 
     @Test
@@ -58,6 +61,58 @@ public class RoaringBitmapTest {
         }
         roaringBitmap.runOptimize();
         int size = roaringBitmap.serializedSizeInBytes();
-        System.out.println("size: " + size + "byte"); // 40KB
+        System.out.println("size: " + size + "byte"); // 40KB  10万规模的userId
+    }
+
+    /**
+     * 10万规模的 userId，增删触发序列化反序列化，消耗多少
+     *
+     * 30万次增删，然后序列化，反序列化，耗时结果：
+     * delta=13503, 14347, 13142 ms
+     * 算 14 秒完成。
+     * 那么每秒能做 21428 次（2万多次）增删
+     */
+    @Test
+    public void serialzedDeserialzedBenchMark() throws IOException {
+        long start = System.currentTimeMillis();
+
+        int userIdCount = 30_0000; // 30 万
+        RoaringBitmap roaringBitmap = new RoaringBitmap();
+        for (int i = 0; i < userIdCount; i+=2) { // 步长为 2, 也就是将近 10万 userId 进入 roaringBitmap
+            roaringBitmap.add(i);
+        }
+        roaringBitmap.runOptimize();
+
+        int size = roaringBitmap.serializedSizeInBytes();
+        ByteBuffer buf = ByteBuffer.allocate(size);
+        roaringBitmap.serialize(buf);
+        byte[] serializedBytes = buf.array();
+
+        // 循环 30_0000 次，看耗时多少
+
+        for (int i = 0; i < 30_0000; i++) {
+            // 反序列化
+            buf = ByteBuffer.wrap(serializedBytes);
+            RoaringBitmap b2 = new RoaringBitmap();
+            b2.deserialize(buf);
+
+            if (i % 2 == 0) {
+                b2.add(i);
+            } else {
+                b2.remove(i);
+            }
+
+            // 序列化
+            b2.runOptimize();
+            int s = b2.serializedSizeInBytes();
+            buf = ByteBuffer.allocate(s);
+            b2.serialize(buf);
+            serializedBytes = buf.array();
+        }
+
+        long end = System.currentTimeMillis();
+        long delta = end - start;
+        System.out.println("delta=" + delta);
+        // delta=13503, 14347, 13142 ms
     }
 }
