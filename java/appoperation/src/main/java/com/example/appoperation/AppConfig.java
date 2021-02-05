@@ -1,11 +1,14 @@
 package com.example.appoperation;
 
+import com.alibaba.csp.sentinel.adapter.servlet.CommonFilter;
+import com.alibaba.csp.sentinel.annotation.aspectj.SentinelResourceAspect;
 import com.example.appoperation.component.HBaseComponent;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -15,8 +18,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import javax.servlet.Filter;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.*;
@@ -122,5 +125,20 @@ public class AppConfig {
                 r.run();
             }
         }
+    }
+
+    @Bean
+    public FilterRegistrationBean sentinelFilterRegistration() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new CommonFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("sentinelFilter");
+        registration.setOrder(1);
+        return registration;
+    }
+
+    @Bean
+    public SentinelResourceAspect sentinelResourceAspect() {
+        return new SentinelResourceAspect();
     }
 }
