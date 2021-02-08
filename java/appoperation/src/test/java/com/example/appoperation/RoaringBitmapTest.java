@@ -39,6 +39,8 @@ public class RoaringBitmapTest {
      * RoaringBitmap 原理见：https://blog.csdn.net/tonywu1992/article/details/104746214
      *
      * 实验结果：10亿里占用 1/3 的 userId 放入 roaringBitmap 中，占用空间 125123808 byte = 119MB
+     *
+     * 数字都是奇数或偶数时，roaringbitmap 反而消耗内存大，所以不理想
      */
     @Test
     public void sizeTest() {
@@ -52,11 +54,31 @@ public class RoaringBitmapTest {
         System.out.println("size: " + size + "byte"); // 119MB  近 3亿规模的 userId
     }
 
+    /**
+     * 10万规模的用户 bitmap 消耗 10万/8/1024=12KB
+     * 数字都是奇数或偶数时，roaringbitmap 反而消耗内存大
+     */
     @Test
     public void size10wTest() {
         int userIdCount = 30_0000; // 30 万
         RoaringBitmap roaringBitmap = new RoaringBitmap();
         for (int i = 0; i < userIdCount; i+=2) { // 步长为 2, 也就是将近 10万 userId 进入 roaringBitmap
+            roaringBitmap.add(i);
+        }
+        roaringBitmap.runOptimize();
+        int size = roaringBitmap.serializedSizeInBytes();
+        System.out.println("size: " + size + "byte"); // 40KB  10万规模的userId
+    }
+
+    /**
+     * 10万连续userId 的用户，bitmap 消耗10万/8/1024=12KB
+     * roaringBitmap 消耗 25byte
+     */
+    @Test
+    public void size10wTest2() {
+        int userIdCount = 10_0000; // 10 万
+        RoaringBitmap roaringBitmap = new RoaringBitmap();
+        for (int i = 0; i < userIdCount; i++) {
             roaringBitmap.add(i);
         }
         roaringBitmap.runOptimize();
