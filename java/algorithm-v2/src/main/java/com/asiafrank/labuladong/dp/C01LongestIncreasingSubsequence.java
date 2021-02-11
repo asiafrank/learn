@@ -1,16 +1,16 @@
 package com.asiafrank.labuladong.dp;
 
 /**
- * 最长公共子序列
- * 求最长公共子序列长度
+ * 最长递增子序列
+ * 求最长递增子序列长度
  *
  * @author zhangxiaofan 2021/02/07-16:59
  */
 public class C01LongestIncreasingSubsequence {
     /**
-     * dp[i] = x 的含义是第 i 个位置的元素 num[i] 为结尾的最长公共子序列长度为 x
+     * dp[i] = x 的含义是第 i 个位置的元素 num[i] 为结尾的最长递增子序列长度为 x
      * @param nums 数组
-     * @return 最长公共子序列的长度
+     * @return 最长递增子序列的长度
      */
     public static int lisLength(int[] nums) {
         int[] dp = new int[nums.length]; // 初始都是 0
