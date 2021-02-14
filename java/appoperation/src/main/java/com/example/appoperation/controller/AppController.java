@@ -15,6 +15,9 @@ import com.example.appoperation.hbase.ActiveDaysPO;
 import com.example.appoperation.redis.UserInfoPO;
 import com.example.appoperation.service.AppOperationService;
 import com.example.appoperation.util.DeviceTypeUtils;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zhangxiaofan 2021/01/15-09:22
@@ -80,6 +84,18 @@ public class AppController {
 
     @Autowired
     private AppOperationService appOperationService;
+
+    // 缓存例子，缓存 List<OperationResourcePO>, key: userId
+    private LoadingCache<Key, List<OperationResourcePO>> cache = CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+//            .removalListener()
+            .build(new CacheLoader<Key, List<OperationResourcePO>>() {
+                @Override
+                public List<OperationResourcePO> load(Key k) throws Exception {
+                    return appOperationService.multiImg(k.resourceLocationId, k.userId, k.device);
+                }
+            });
 
     /**
      * 多图
@@ -140,7 +156,55 @@ public class AppController {
             @RequestParam Integer resourceLocationId,
             @RequestParam Integer userId,
             @RequestParam String device) throws ExecutionException, InterruptedException {
-        List<OperationResourcePO> list = appOperationService.multiImg(resourceLocationId, userId, device);
+        Key k = new Key();
+        k.userId = userId;
+        k.resourceLocationId = resourceLocationId;
+        k.device = device;
+        List<OperationResourcePO> list = cache.get(k);
+//        List<OperationResourcePO> list = appOperationService.multiImg(resourceLocationId, userId, device);
         return ResponseEntity.ok(list);
+    }
+
+    private static class Key {
+        private Integer userId;
+        private Integer resourceLocationId;
+        private String device;
+
+        public Integer getUserId() {
+            return userId;
+        }
+
+        public void setUserId(Integer userId) {
+            this.userId = userId;
+        }
+
+        public Integer getResourceLocationId() {
+            return resourceLocationId;
+        }
+
+        public void setResourceLocationId(Integer resourceLocationId) {
+            this.resourceLocationId = resourceLocationId;
+        }
+
+        public String getDevice() {
+            return device;
+        }
+
+        public void setDevice(String device) {
+            this.device = device;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Key key = (Key) o;
+            return Objects.equals(userId, key.userId) && Objects.equals(resourceLocationId, key.resourceLocationId) && Objects.equals(device, key.device);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(userId, resourceLocationId, device);
+        }
     }
 }
