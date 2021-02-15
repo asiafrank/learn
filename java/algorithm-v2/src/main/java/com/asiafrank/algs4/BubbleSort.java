@@ -4,6 +4,8 @@ import com.asiafrank.utils.Printer;
 
 /**
  * 冒泡排序
+ * O(n^2)
+ * 稳定
  * @author zhangxiaofan 2021/02/14-15:48
  */
 public class BubbleSort {
