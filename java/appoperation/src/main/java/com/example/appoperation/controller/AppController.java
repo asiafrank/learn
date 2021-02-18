@@ -87,7 +87,7 @@ public class AppController {
 
     // 缓存例子，缓存 List<OperationResourcePO>, key: userId
     private LoadingCache<Key, List<OperationResourcePO>> cache = CacheBuilder.newBuilder()
-            .maximumSize(1000)
+            .maximumSize(10_0000) // 10万的 cache
             .expireAfterWrite(10, TimeUnit.MINUTES)
 //            .removalListener()
             .build(new CacheLoader<Key, List<OperationResourcePO>>() {
