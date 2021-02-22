@@ -30,6 +30,7 @@ public class A1B1C1ChannelExample {
         Thread t1 = new Thread(()->{
             // 打印 26 字母
             for (int i = 0; i < 26; i++) {
+                // 先 print，再 put，最后 take
                 System.out.print((char)('A' + i));
                 try {
                     channel_1_2.put(Boolean.TRUE); // 向 t2 发消息，让 t2 运行
@@ -42,13 +43,14 @@ public class A1B1C1ChannelExample {
 
         Thread t2 = new Thread(()->{
             for (int i = 0; i < 26; i++) {
-                System.out.print(i + 1);
+                // 先 take，后 put， 再 print
                 try {
-                    channel_2_1.put(Boolean.TRUE); // 向 t1 发消息，让 t1 运行
                     channel_1_2.take(); // 从 t1 那儿收到消息，才能运行
+                    channel_2_1.put(Boolean.TRUE); // 向 t1 发消息，让 t1 运行
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                System.out.print(i + 1);
             }
         }, "t2");
 
