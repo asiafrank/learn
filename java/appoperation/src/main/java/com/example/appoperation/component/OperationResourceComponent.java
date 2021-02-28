@@ -6,6 +6,7 @@ import com.example.appoperation.db.service.OperationResourceWeeklySortingService
 import com.example.appoperation.db.service.UserClassificationConditionService;
 import com.example.appoperation.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
@@ -63,6 +64,8 @@ public class OperationResourceComponent {
     private ValueOperations<String, List<OperationResourceWeeklySortingPO>> resourceWeeklySortingListOps;
     @Resource(name="redisTemplate")
     private ValueOperations<String, List<UserClassificationConditionPO>> ruleListOps;
+    @Resource(name="redisTemplate")
+    private ListOperations<String, UserClassificationConditionPO> listOps;
 
     @Autowired
     private OperationResourceService operationResourceService;

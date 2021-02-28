@@ -1,12 +1,21 @@
 package com.example.appoperation.component;
 
+import com.example.appoperation.controller.AppController;
+import com.example.appoperation.db.po.OperationResourcePO;
 import com.example.appoperation.hbase.ActiveDaysPO;
 import com.example.appoperation.redis.UserInfoPO;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
+import org.roaringbitmap.RoaringBitmap;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 分群计算的 component
@@ -74,5 +83,35 @@ public class CalculateComponent {
         UserInfoPO user = (UserInfoPO)param.get("user");
         Integer age = user.getAge();
         return age >= min && age <= max;
+    }
+
+    // 缓存 label 的用户分群, key: labelId, value: roaringBitmap
+    private LoadingCache<Integer, RoaringBitmap> cache = CacheBuilder.newBuilder()
+                                                   .maximumSize(10_0000) // 10万的 cache
+                                                   .expireAfterWrite(10, TimeUnit.MINUTES)
+//            .removalListener()
+                                                   .build(new CacheLoader<Integer, RoaringBitmap>() {
+                   @Override
+                   public RoaringBitmap load(Integer k) throws Exception {
+                       // FIXME: 从 HBase 获取 label 的 RoaringBitmap
+                       return new RoaringBitmap();
+                   }
+               });
+
+    /**
+     * 是否包含 label
+     * @param labelIds 标签
+     * @return true, 命中
+     */
+    public boolean label(int[] labelIds, Map<String, Object> param) throws ExecutionException {
+        UserInfoPO user = (UserInfoPO)param.get("user");
+        Integer userId = user.getUserId();
+        for (int labelId : labelIds) {
+            RoaringBitmap bitmap = cache.get(labelId);
+            if (bitmap.contains(userId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
