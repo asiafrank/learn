@@ -34,6 +34,8 @@ public class Q198HouseRobber {
      * 主函数
      */
     public static int houseRobber(int[] arr) {
+        if (arr.length == 1)
+            return arr[0];
         return houseRobber0(arr, 0);
     }
 
