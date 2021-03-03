@@ -37,6 +37,6 @@ public class C01LongestIncreasingSubsequence {
     public static void main(String[] args) {
         int[] nums = new int[] {1, 4, 3, 4, 2, 3};
         int len = lisLength(nums);
-        System.out.println(len); //
+        System.out.println(len); // 3
     }
 }
