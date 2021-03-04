@@ -1,5 +1,7 @@
 package com.asiafrank.leetcode;
 
+import com.asiafrank.utils.TreeNode;
+
 /**
  * 236. 二叉树的最近公共祖先
  * https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-tree/
@@ -12,12 +14,6 @@ package com.asiafrank.leetcode;
  * @author zhangxiaofan 2021/03/03-09:42
  */
 public class C236LowestCommonAncestor {
-
-    public static class TreeNode {
-        int val;
-        TreeNode left;
-        TreeNode right;
-    }
 
     /**
      * 最终返回值如果是 null 则没有找到最近公共祖先
