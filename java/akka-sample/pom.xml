@@ -24,7 +24,7 @@
     <aopalliance.version>1.0</aopalliance.version>
     <servlet.version>3.1.0</servlet.version>
     <freemarker.version>2.3.20</freemarker.version>
-    <logback.version>1.1.7</logback.version>
+    <logback.version>1.2.0</logback.version>
     <jsoup.version>1.10.1</jsoup.version>
     <plugin.compiler.version>3.6.0</plugin.compiler.version>
     <jackson.jdk8.version>2.8.6</jackson.jdk8.version>
