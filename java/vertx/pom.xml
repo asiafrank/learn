@@ -16,7 +16,7 @@
   <properties>
     <vertx.version>3.5.0</vertx.version>
     <hikaricp.version>2.6.1</hikaricp.version>
-    <postgresql.version>9.4.1212</postgresql.version>
+    <postgresql.version>42.2.25</postgresql.version>
     <plugin.compiler.version>3.6.0</plugin.compiler.version>
   </properties>
 
