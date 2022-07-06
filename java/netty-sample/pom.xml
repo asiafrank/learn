@@ -13,7 +13,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <netty>4.1.23.Final</netty>
     <groovy>2.5.0-rc-1</groovy>
-    <python>2.7.0</python>
+    <python>2.7.2</python>
     <jna>4.5.1</jna>
     <junit>4.12</junit>
   </properties>
